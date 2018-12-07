@@ -30,6 +30,8 @@
         <script>ScarabQueue.push(['testMode']);</script>
     <?php endif;?>
 
+    <script>ScarabQueue.push('availability_zone', 'rec');</script>
+
     <?php if ($currentCategory = $block->getCurrentCategory()): ?>
         <script>ScarabQueue.push(['category', '<?php echo $currentCategory; ?>']);</script>
     <?php endif; ?>
@@ -44,34 +46,32 @@
 
     <?php /* Script for an Ajax to avoid caching Issues */ ?>
     <?php if ($helper->isAjaxUpdateEnabled()) : ?>
+        <div id="webextend-code"></div>
         <script>
             require([
                 'jquery',
                 'prototype'
             ], function(jQuery){
-                document.observe('dom:loaded', function() {
-                    var unique_key_value = Math.random()*Math.random();
-                    jQuery.ajax({
-                        url: '<?php echo $block->getAjaxUpdateUrl() ?>',
-                        data: {
-                            'unique_key': unique_key_value,
-                            'full_action_name': '<?php echo $block->getPageHandle(); ?>'
-                        },
-                        type: 'GET',
-                        dataType: 'json',
-                        success: function (result) {
-                            if (result.status == 1) {
-                                jQuery('#webextend-code').html(result.content);
-                            }
-                        },
-                        error: function (xhr, textStatus, thrownError) {
-                            console.log("Emarsys WebExtend Ajax Error: " + thrownError);
+                var unique_key_value = Math.random() * Math.random();
+                jQuery.ajax({
+                    url: '<?php echo $block->getAjaxUpdateUrl() ?>',
+                    data: {
+                        'unique_key': unique_key_value,
+                        'full_action_name': '<?php echo $block->getPageHandle(); ?>'
+                    },
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (result) {
+                        if (result.status == 1) {
+                            jQuery('#webextend-code').html(result.content);
                         }
-                    });
+                    },
+                    error: function (xhr, textStatus, thrownError) {
+                        console.log("Emarsys WebExtend Ajax Error: " + thrownError);
+                    }
                 });
             });
         </script>
-        <div id="webextend-code"></div>
     <?php else: ?>
         <?php echo $this->getChildHtml('emarsys.javascripttracking'); ?>
     <?php endif; ?>

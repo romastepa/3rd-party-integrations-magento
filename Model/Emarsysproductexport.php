@@ -169,7 +169,17 @@ class Emarsysproductexport extends AbstractModel
                 $collection->addCategoriesFilter(['nin' => $excludedCategories]);
             }
 
-            $this->stockFilter->addInStockFilterToCollection($collection);
+            //If we have multistock (custom module) we have to add
+            //{{table}}.website_id = $store->getWebsiteId() to condition
+            $collection->joinField(
+                'inventory_in_stock',
+                'cataloginventory_stock_item',
+                'is_in_stock',
+                'product_id = entity_id',
+                null,
+                'left'
+            );
+
             return $collection;
         } catch (\Exception $e) {
             $this->logger->critical($e->getMessage());
@@ -267,7 +277,7 @@ class Emarsysproductexport extends AbstractModel
                                     $value = $value * $rate;
                                 }
                             }
-                            $this->_preparedData[$productId][$map[$key]] = $value;
+                            $this->_preparedData[$productId][$map[$key]] = str_replace(array("\n", "\r"), '', $value);
                         }
                     }
                 }
