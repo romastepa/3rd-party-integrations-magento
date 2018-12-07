@@ -741,6 +741,8 @@ class Product extends AbstractModel
     {
         set_time_limit(0);
 
+        $result = false;
+
         $logsArray['job_code'] = 'product';
         $logsArray['status'] = 'started';
         $logsArray['messages'] = __('Bulk product export started');
@@ -812,17 +814,18 @@ class Product extends AbstractModel
                         foreach ($collection as $product) {
                             $catIds = $product->getCategoryIds();
                             $categoryNames = $this->getCategoryNames($catIds, $storeId);
-                            $products[$product->getId()] = array(
+                            $product->setStoreId($storeId);
+                            $products[$product->getId()] = [
                                 'entity_id' => $product->getId(),
                                 'params' => serialize(array(
                                     'default_store' => ($storeId == $defaultStoreID) ? $storeId : 0,
                                     'store' => $store['store']->getCode(),
                                     'store_id' => $store['store']->getId(),
-                                    'data' => $this->_getProductData($magentoAttributeNames[$storeId], $product, $categoryNames),
+                                    'data' => $this->_getProductData($magentoAttributeNames[$storeId], $product, $categoryNames, $store['store']),
                                     'header' => $header,
                                     'currency_code' => $currencyStoreCode,
                                 ))
-                            );
+                            ];
                         }
 
                         if (!empty($products)) {
@@ -835,8 +838,8 @@ class Product extends AbstractModel
                 if (!empty($store)) {
                     list($csvFilePath, $outputFile) = $this->productExportModel->saveToCsv($websiteId);
                     $bulkDir = $this->customerResourceModel->getDataFromCoreConfig(
-                        EmarsysDataHelper::XPATH_EMARSYS_FTP_BULK_EXPORT_DIR, 
-                        ScopeInterface::SCOPE_WEBSITES, 
+                        EmarsysDataHelper::XPATH_EMARSYS_FTP_BULK_EXPORT_DIR,
+                        ScopeInterface::SCOPE_WEBSITES,
                         $websiteId
                     );
                     $outputFile = $bulkDir . $outputFile;
@@ -844,7 +847,6 @@ class Product extends AbstractModel
                 }
             }
 
-            $logsArray['id'] = $logId;
             if ($this->_errorCount) {
                 $logsArray['status'] = 'error';
                 $logsArray['messages'] = __('Product export have an error. Please check.');
@@ -854,19 +856,27 @@ class Product extends AbstractModel
             }
             $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
             $this->logsHelper->manualLogsUpdate($logsArray);
+            $result = true;
         } catch (\Exception $e) {
             $msg = $e->getMessage();
-            $logsArray['id'] = $logId;
+            $logsArray['messages'] = __('consolidatedCatalogExport Exception');
+            $logsArray['status'] = 'error';
+            $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
+            $this->logsHelper->manualLogsUpdate($logsArray);
+
             $logsArray['emarsys_info'] = __('consolidatedCatalogExport Exception');
             $logsArray['description'] = __("Exception " . $msg);
             $logsArray['message_type'] = 'Error';
             $this->logsHelper->logs($logsArray);
+
             if ($mode == EmarsysDataHelper::ENTITY_EXPORT_MODE_MANUAL) {
                 $this->messageManager->addErrorMessage(
                     __("Exception " . $msg)
                 );
             }
         }
+
+        return $result;
     }
 
     /**
@@ -957,7 +967,9 @@ class Product extends AbstractModel
                 }
             }
         }
-        unlink($csvFilePath);
+        if (file_exists($csvFilePath)) {
+            unlink($csvFilePath);
+        }
     }
 
     /**
@@ -1123,10 +1135,11 @@ class Product extends AbstractModel
      * @param $magentoAttributeNames
      * @param \Magento\Catalog\Model\Product $productData
      * @param $categoryNames
+     * @param \Magento\Store\Model\Store $store
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function _getProductData($magentoAttributeNames, $productData, $categoryNames)
+    protected function _getProductData($magentoAttributeNames, $productData, $categoryNames, $store)
     {
         $attributeData = [];
         foreach ($magentoAttributeNames as $attributeName) {
@@ -1151,19 +1164,19 @@ class Product extends AbstractModel
                 } elseif (is_array($attributeOption)) {
                     $attributeData[] = implode(',', $attributeOption);
                 } elseif ($attributeName == 'image') {
-                    $mediaUrl = $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
+                    $mediaUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
                     $imgUrl = $mediaUrl . 'catalog/product' . $attributeOption;
                     $attributeData[] = str_replace('pub/', '', $imgUrl);
                 } elseif ($attributeName == 'url_key') {
-                    $attributeData[] = $productData->getProductUrl();
+                    $attributeData[] = $store->getBaseUrl() . $productData->getRequestPath();
                 } else {
                     $attributeData[] = $attributeOption;
                 }
             } else {
                 if ($attributeName == 'url_key') {
-                    $attributeData[] = $productData->getProductUrl();
+                    $attributeData[] = $store->getBaseUrl() . $productData->getRequestPath();
                 } elseif ($attributeName == 'image') {
-                    $mediaUrl = $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
+                    $mediaUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA);
                     $imgUrl = $mediaUrl . 'catalog/product' . $attributeOption;
                     $attributeData[] = str_replace('pub/', '', $imgUrl);
                 } else {
