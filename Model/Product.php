@@ -302,7 +302,7 @@ class Product extends AbstractModel
                     foreach ($headerOld as $el) {
                         $header[] = $el;
                         if ($el == 'available') {
-                            $header[] = 'availability_rec';
+                            $header[] = 'available_rec';
                         }
                     }
 
@@ -691,7 +691,7 @@ class Product extends AbstractModel
                             $attributeData[] = 'FALSE';
                         }
 
-                        //'availability_rec':
+                        //'available_rec':
                         if ($status && $inStock && $visibility) {
                             $attributeData[] = 'TRUE';
                         } else {
