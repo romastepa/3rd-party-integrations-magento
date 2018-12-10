@@ -37,9 +37,8 @@ class Form extends \Magento\Backend\Block\Widget\Form
         return parent::_beforeToHtml();
     }
 
-    public function getStoreId()
+    public function getWebsiteId()
     {
-        $storeId = $this->getRequest()->getParam('store');
-        return $storeId;
+        return $this->getRequest()->getParam('website');
     }
 }

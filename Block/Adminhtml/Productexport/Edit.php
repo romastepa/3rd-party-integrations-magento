@@ -51,9 +51,9 @@ class Edit extends Container
         $this->_objectId = 'entity_id';
         $this->_blockGroup = 'Emarsys_Emarsys';
         $this->_controller = 'adminhtml_productexport';
-        $storeId = $this->getRequest->getParam('store');
-        if ($storeId != '') {
-            $url = $this->getUrl("emarsys_emarsys/productexport/productExport", ["storeId" => $storeId]);
+        $websiteId = $this->getRequest->getParam('website');
+        if ($websiteId != '') {
+            $url = $this->getUrl("emarsys_emarsys/productexport/productExport", ["website" => $websiteId]);
         } else {
             $url = $this->getUrl("emarsys_emarsys/productexport/productExport");
         }
@@ -63,7 +63,7 @@ class Edit extends Container
         $this->buttonList->remove('back');
         $this->buttonList->remove('save');
         $this->buttonList->remove('reset');
-        if (isset($storeId)) {
+        if (isset($websiteId)) {
             $this->buttonList->add(
                 'showreport',
                 [

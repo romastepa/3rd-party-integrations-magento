@@ -40,6 +40,7 @@ class CustomRenderer extends \Magento\Framework\Data\Form\Element\AbstractElemen
 
     /**
      * @return string
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getElementHtml()
     {
@@ -63,16 +64,13 @@ class CustomRenderer extends \Magento\Framework\Data\Form\Element\AbstractElemen
      * @param $parentId
      * @param int $level
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getTreeCategories($parentId, $level = 1)
     {
-        $storeId = $this->http->getParam('store');
-        $websiteId = $this->storeManagerInterface->getStore($storeId)->getWebsiteId();
-        $categoriesExcluded = $this->scopeConfigInterface->getValue(
-            'emarsys_predict/feed_export/excludedcategories',
-            'websites',
-            $websiteId
-        );
+        $website = $this->http->getParam('website');
+        $website = $this->storeManagerInterface->getWebsite($website);
+        $categoriesExcluded = $website->getConfig('emarsys_predict/feed_export/excludedcategories');
         $categoriesExcluded = explode(',', $categoriesExcluded);
         $allCategories = $this->categoryFactory->create()->getCollection()
             ->addAttributeToFilter('parent_id', ['eq' => $parentId]);

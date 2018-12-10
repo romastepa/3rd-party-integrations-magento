@@ -6,9 +6,9 @@
  */
 ?>
 
-<?php $storeId = $block->getStoreId(); ?>
+<?php $websiteId = $block->getWebsiteId(); ?>
 
-<script>
+<script type="text/javascript">
     function bulkExportData(url) {
         var status = confirm("Data uploaded previously will be overwritten. Do you want to continue?");
         if (status == true) {
@@ -101,13 +101,13 @@
     function bulkExport(entity) {
         var url = '';
         if (entity == 'customer') {
-            url = '<?php echo $this->getUrl("emarsys_emarsys/customerexport/index", ["store" => $storeId]) ?>';
+            url = '<?php echo $this->getUrl("emarsys_emarsys/customerexport/index", ["website" => $websiteId]) ?>';
         } else if (entity == 'subscriber') {
-            url = '<?php echo $this->getUrl("emarsys_emarsys/subscriberexport/index", ["store" => $storeId]) ?>';
+            url = '<?php echo $this->getUrl("emarsys_emarsys/subscriberexport/index", ["website" => $websiteId]) ?>';
         } else if (entity == 'order') {
-            url = '<?php echo $this->getUrl("emarsys_emarsys/orderexport/index", ["store" => $storeId]) ?>';
+            url = '<?php echo $this->getUrl("emarsys_emarsys/orderexport/index", ["website" => $websiteId]) ?>';
         } else if (entity == 'product') {
-            url = '<?php echo $this->getUrl("emarsys_emarsys/productexport/index", ["store" => $storeId]) ?>';
+            url = '<?php echo $this->getUrl("emarsys_emarsys/productexport/index", ["website" => $websiteId]) ?>';
         }
 
         window.location.assign(url);

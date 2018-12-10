@@ -7,7 +7,6 @@
 ?>
 <?php
     $logDet = $block->getLogDetails();
-    $storeId = $block->getStoreId();
     $dateObject = $block->getDateObject();
     $scheduleAt = new DateTime($logDet['created_at']);
     $finishedAt = 'now';

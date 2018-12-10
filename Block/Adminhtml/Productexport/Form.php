@@ -35,10 +35,4 @@ class Form extends \Magento\Backend\Block\Widget\Form
         $this->isFromError = $this->getRequest()->getParam('error') === 'true';
         return parent::_beforeToHtml();
     }
-
-    public function getStoreId()
-    {
-        $storeId = $this->getRequest()->getParam('store');
-        return $storeId;
-    }
 }

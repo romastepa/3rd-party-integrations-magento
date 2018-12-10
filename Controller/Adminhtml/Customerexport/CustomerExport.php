@@ -77,6 +77,16 @@ class CustomerExport extends Action
     protected $emarsysLogs;
 
     /**
+     * @var EmarsysCronHelper
+     */
+    protected $cronHelper;
+
+    /**
+     * @var EmarsysCronDetails
+     */
+    protected $emarsysCronDetails;
+
+    /**
      * CustomerExport constructor.
      * @param Context $context
      * @param DateTime $date
@@ -124,17 +134,15 @@ class CustomerExport extends Action
     {
         try {
             $data = $this->request->getParams();
-            $storeId = $data['storeId'];
-            $store = $this->storeManager->getStore($storeId);
-            $websiteId = $store->getWebsiteId();
-            $data['website'] = $websiteId;
+            $websiteId = $this->request->getParam('website');
+            $website = $this->storeManager->getWebsite($websiteId);
             $resultRedirect = $this->resultRedirectFactory->create();
-            $returnUrl = $this->getUrl("emarsys_emarsys/customerexport/index", ["store" => $storeId]);
+            $returnUrl = $this->getUrl("emarsys_emarsys/customerexport/index", ["website" => $websiteId]);
 
             //check emarsys enable for website
             if ($this->emarsysDataHelper->getEmarsysConnectionSetting($websiteId)) {
                 if (isset($data['fromDate']) && $data['fromDate'] != '') {
-                    $data['fromDate'] = $this->date->date('Y-m-d', strtotime($data['fromDate'])) . ' 00:00:01';
+                    $data['fromDate'] = $this->date->date('Y-m-d', strtotime($data['fromDate'])) . ' 00:00:00';
                 }
 
                 if (isset($data['toDate']) && $data['toDate'] != '') {
@@ -142,7 +150,7 @@ class CustomerExport extends Action
                 }
 
                 //get customer collection
-                $customerCollection = $this->customerResourceModel->getCustomerCollection($data, $storeId);
+                $customerCollection = $this->customerResourceModel->getCustomerCollection($data);
                 if (!empty($customerCollection)) {
                     $cronJobScheduled = false;
                     $cronJobName = '';
@@ -175,17 +183,17 @@ class CustomerExport extends Action
 
                         $this->messageManager->addSuccessMessage(
                             __(
-                                'A cron named "%1" have been scheduled for customers export for the store %2.',
+                                'A cron named "%1" have been scheduled for customers export for the website %2.',
                                 $cronJobName,
-                                $store->getName()
+                                $website->getName()
                             ));
                     } else {
                         //cron job already scheduled
-                        $this->messageManager->addErrorMessage(__('A cron is already scheduled to export customers for the store %1 ', $store->getName()));
+                        $this->messageManager->addErrorMessage(__('A cron is already scheduled to export customers for the website %1 ', $website->getName()));
                     }
                 } else {
                     //no customer found for the store
-                    $this->messageManager->addErrorMessage(__('No Customers Found for the Store %1.', $store->getName()));
+                    $this->messageManager->addErrorMessage(__('No Customers Found for the website %1.', $website->getName()));
                 }
             } else {
                 //emarsys is disabled for this website
@@ -195,7 +203,7 @@ class CustomerExport extends Action
             //add exception to logs
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
+                0,
                 'CustomerExport::execute()'
             );
             //report error

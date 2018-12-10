@@ -13,8 +13,16 @@
     </head>
     <body>
         <referenceContainer name="page.main.actions">
-            <block class="Magento\Backend\Block\Store\Switcher" name="emarsys.store.switcher"
-                   template="Emarsys_Emarsys::emarsys/switcher.phtml"/>
+            <block class="Magento\Backend\Block\Store\Switcher" name="adminhtml.report.grid.store_switcher" as="store_switcher">
+                <arguments>
+                    <argument name="use_confirm" xsi:type="string">1</argument>
+                    <argument name="switch_websites" xsi:type="string">1</argument>
+                    <argument name="switch_store_groups" xsi:type="string">0</argument>
+                    <argument name="switch_store_views" xsi:type="string">0</argument>
+                    <argument name="default_selection_name" xsi:type="string" translate="true">All Websites</argument>
+                    <argument name="show_manage_stores_link" xsi:type="string">0</argument>
+                </arguments>
+            </block>
         </referenceContainer>
         <referenceContainer name="content">
             <block class="Emarsys\Emarsys\Block\Adminhtml\Mapping\MappingButtons" name="emarsys_event_attribute_buttons" template="mapping/field/buttons.phtml" />

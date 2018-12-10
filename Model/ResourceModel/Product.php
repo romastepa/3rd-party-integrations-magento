@@ -27,59 +27,59 @@ class Product extends AbstractDb
 
     /**
      * Truncate Mapping Table
-     * @param null $storeId
+     * @param null $websiteId
      * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function truncateMappingTable($storeId = null)
+    public function truncateMappingTable($websiteId = null)
     {
         return $this->getConnection()->delete(
             $this->getMainTable(),
-            $this->getConnection()->quoteInto("store_id = ?", $storeId)
+            $this->getConnection()->quoteInto("website_id = ?", $websiteId)
         );
     }
 
     /**
-     * @param null $storeId
+     * @param null $websiteId
      * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function deleteUnmappedRows($storeId = null)
+    public function deleteUnmappedRows($websiteId = null)
     {
         return $this->getConnection()->delete(
             $this->getMainTable(),
-            ['store_id = ?' => $storeId, 'emarsys_attr_code = ?' => 0]
+            ['website_id = ?' => $websiteId, 'emarsys_attr_code = ?' => 0]
         );
     }
 
     /**
      * @param $attributeCode
-     * @param null $storeId
+     * @param null $websiteId
      * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function deleteExistingEmarsysAttr($attributeCode, $storeId = null)
+    public function deleteExistingEmarsysAttr($attributeCode, $websiteId = null)
     {
         return $this->getConnection()->delete(
             $this->getMainTable(),
-            ['store_id = ?' => $storeId, 'emarsys_attr_code = ?' => $attributeCode]
+            ['website_id = ?' => $websiteId, 'emarsys_attr_code = ?' => $attributeCode]
         );
     }
 
     /**
      * @param $recommendedDatas
-     * @param null $storeId
+     * @param null $websiteId
      * @return bool
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function deleteRecommendedMappingExistingAttr($recommendedDatas, $storeId = null)
+    public function deleteRecommendedMappingExistingAttr($recommendedDatas, $websiteId = null)
     {
         foreach ($recommendedDatas as $key => $recommendedData) {
             $attributeCode = $recommendedData['emarsys_attr_code'];
 
             $this->getConnection()->delete(
                 $this->getMainTable(),
-                ['store_id = ?' => $storeId, 'emarsys_attr_code = ?' => $attributeCode, 'magento_attr_code != ?' => $key]
+                ['website_id = ?' => $websiteId, 'emarsys_attr_code = ?' => $attributeCode, 'magento_attr_code != ?' => $key]
             );
         }
 
@@ -87,39 +87,39 @@ class Product extends AbstractDb
     }
 
     /**
-     * @param $storeId
+     * @param $websiteId
      * @return string
      */
-    public function getEmarsysAttrCount($storeId)
+    public function getEmarsysAttrCount($websiteId)
     {
         $select = $this->getConnection()
             ->select()
             ->from($this->getTable('emarsys_emarsys_product_attributes'), 'count(*)')
-            ->where("store_id = ?", $storeId);
+            ->where("website_id = ?", $websiteId);
 
         return $this->getConnection()->fetchOne($select);
     }
 
     /**
-     * @param $storeId
+     * @param $websiteId
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function checkProductMapping($storeId)
+    public function checkProductMapping($websiteId)
     {
         $select = $this->getConnection()
             ->select()
             ->from($this->getMainTable(), 'count(*)')
-            ->where("store_id = ?", $storeId);
+            ->where("website_id = ?", $websiteId);
 
         return $this->getConnection()->fetchOne($select);
     }
 
     /**
-     * @param $storeId
+     * @param $websiteId
      * @return array
      */
-    public function updateProductSchema($storeId)
+    public function updateProductSchema($websiteId)
     {
         $productFields = [];
         $productFields[] = ['Item', 'Item', 'String'];
@@ -144,7 +144,7 @@ class Product extends AbstractDb
                 'code' => $productField[0],
                 'label' => $productField[1],
                 'field_type' => $productField[2],
-                'store_id' => $storeId
+                'website_id' => $websiteId
             ];
             $select = $this->getConnection()
                 ->select()
@@ -152,7 +152,7 @@ class Product extends AbstractDb
                 ->where("code = ?", $productField[0])
                 ->where("label = ?", $productField[1])
                 ->where("field_type = ?", $productField[2])
-                ->where("store_id = ?", $storeId);
+                ->where("website_id = ?", $websiteId);
 
             $result = $this->getConnection()->fetchOne($select);
             if (empty($result)) {
@@ -163,7 +163,7 @@ class Product extends AbstractDb
     }
 
 
-    public function getProductAttributeLabelId($storeId)
+    public function getProductAttributeLabelId($websiteId)
     {
         $emarsysCodes = ['Item', 'Title', 'Link', 'Image', 'Category', 'Price'];
         $result = [];
@@ -172,7 +172,7 @@ class Product extends AbstractDb
                 ->select()
                 ->from($this->getTable('emarsys_emarsys_product_attributes'), 'id')
                 ->where("code = ?", $code)
-                ->where("store_id = ?", $storeId);
+                ->where("website_id = ?", $websiteId);
 
             $result[] = $this->getConnection()->fetchOne($select);
         }
@@ -180,10 +180,10 @@ class Product extends AbstractDb
     }
 
     /**
-     * @param $storeId
+     * @param $websiteId
      * @return array
      */
-    public function getRequiredProductAttributesForExport($storeId)
+    public function getRequiredProductAttributesForExport($websiteId)
     {
         $requiredMapping = [];
         $requiredMapping['sku'] = 'item'; // Mage_Attr_Code = Emarsys_Attr_Code
@@ -199,9 +199,9 @@ class Product extends AbstractDb
             $attrData = [];
             $attrData['emarsys_contact_field'] = '';
             $attrData['magento_attr_code'] = $key;
-            $attrData['emarsys_attr_code'] = $this->getEmarsysAttributeIdByCode($value, $storeId);
+            $attrData['emarsys_attr_code'] = $this->getEmarsysAttributeIdByCode($value, $websiteId);
             $attrData['sync_direction'] = '';
-            $attrData['store_id'] = $storeId;
+            $attrData['website_id'] = $websiteId;
             $returnArray[] = $attrData;
         }
 
@@ -211,31 +211,32 @@ class Product extends AbstractDb
     /**
      * Get this value from Emarsys Attributes Table based Code & Store ID
      * @param $code
-     * @param $storeId
+     * @param $websiteId
      * @return mixed
      */
-    public function getEmarsysAttributeIdByCode($code, $storeId)
+    public function getEmarsysAttributeIdByCode($code, $websiteId)
     {
         $select = $this->getConnection()
             ->select()
             ->from($this->getTable('emarsys_emarsys_product_attributes'), 'id')
             ->where("code = ?", $code)
-            ->where("store_id = ?", $storeId);
+            ->where("website_id = ?", $websiteId);
 
         return $this->getConnection()->fetchOne($select);
     }
 
     /**
-     * @param type $storeId
+     * @param int $websiteId
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function getMappedProductAttribute($storeId)
+    public function getMappedProductAttribute($websiteId)
     {
         $select = $this->getConnection()
             ->select()
             ->from($this->getMainTable())
-            ->where('store_id = ?', $storeId);
+            ->where('website_id = ?', $websiteId);
+
         $productAttributes = $this->getConnection()->fetchAll($select);
 
         $emarsysAttributeId = [];
@@ -243,7 +244,7 @@ class Product extends AbstractDb
             $emarsysAttributeId[] = $mapAttribute['emarsys_attr_code'];
         }
 
-        $requiredMapping = $this->getRequiredProductAttributesForExport($storeId);
+        $requiredMapping = $this->getRequiredProductAttributesForExport($websiteId);
         foreach ($requiredMapping as $_requiredMapping) {
             if (!in_array($_requiredMapping['emarsys_attr_code'], $emarsysAttributeId)) {
                 $productAttributes[] = $_requiredMapping;
@@ -261,17 +262,17 @@ class Product extends AbstractDb
 
     /**
      *
-     * @param type $storeId
+     * @param type $websiteId
      * @param type $fieldId
      * @return array
      */
-    public function getEmarsysFieldName($storeId, $fieldId)
+    public function getEmarsysFieldName($websiteId, $fieldId)
     {
         $select = $this->getConnection()
             ->select()
             ->from($this->getTable('emarsys_emarsys_product_attributes'), 'label')
             ->where("id = ?", $fieldId)
-            ->where("store_id = ?", $storeId);
+            ->where("website_id = ?", $websiteId);
 
         return trim(strtolower($this->getConnection()->fetchOne($select)));
     }

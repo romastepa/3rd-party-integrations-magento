@@ -2057,37 +2057,24 @@ class Data extends AbstractHelper
 
     /**
      * @return int
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getFirstStoreId()
     {
-        $firstStoreId = $this->storeManager->getStore()->getId();
-        $listOfStores = $this->storeCollection->create()->addFieldToFilter('store_id', ['neq' => 0]);
 
-        if ($listOfStores) {
-            $firstStoreId = $listOfStores->getFirstItem()->getStoreId();
-        }
+        $stores = $this->storeManager->getStores();
+        $store = current($stores);
 
-        return $firstStoreId;
+        return $store->getId();
     }
 
     /**
-     * @param $websiteId
      * @return int
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getFirstStoreIdOfWebsite($websiteId)
+    public function getFirstWebsiteId()
     {
-        $firstStoreId = $this->storeManager->getStore()->getId();
-        $listOfStores = $this->storeCollection->create()
-            ->addFieldToFilter('website_id', $websiteId)
-            ->addFieldToFilter('store_id', ['neq' => 0]);
-
-        if ($listOfStores) {
-            $firstStoreId = $listOfStores->getFirstItem()->getStoreId();
-        }
-
-        return $firstStoreId;
+        $websites = $this->storeManager->getWebsites();
+        $website = current($websites);
+        return $website->getId();
     }
 
     /**

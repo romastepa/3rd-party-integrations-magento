@@ -104,8 +104,6 @@ class Cron extends \Magento\Backend\Block\Widget\Grid\Extended
         $this->setSaveParametersInSession(true);
         $this->setUseAjax(true);
         $this->setVarNameFilter('frontend_label');
-        $storeId = $this->getRequest()->getParam('store');
-        $this->session->setData('storeId', $storeId);
     }
 
     /**
@@ -137,10 +135,7 @@ class Cron extends \Magento\Backend\Block\Widget\Grid\Extended
                 $count++;
             }
         }
-        $storeId = $this->getRequest()->getParam('store');
-        if ($storeId == 0) {
-            $storeId = 1;
-        }
+
         $this->setCollection($collection);
         return parent::_prepareCollection();
     }

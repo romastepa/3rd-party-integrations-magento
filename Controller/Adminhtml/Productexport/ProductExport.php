@@ -101,9 +101,8 @@ class ProductExport extends Action
         try {
             //collect params
             $data = $this->request->getParams();
-            $storeId = $data['storeId'];
-            $store = $this->storeManager->getStore($storeId);
-            $websiteId = $store->getWebsiteId();
+            $websiteId = $this->request->getParam('website');
+            $website = $this->storeManager->getWebsite($websiteId);
 
             //check emarsys enabled for the website
             if ($this->emarsysDataHelper->getEmarsysConnectionSetting($websiteId)) {
@@ -111,7 +110,6 @@ class ProductExport extends Action
                 //check feed export enabled for the website
                 if ($this->emarsysDataHelper->isCatalogExportEnabled($websiteId)) {
                     $productCollection = $this->productCollectionFactory->create()->getCollection()
-                        ->addStoreFilter($storeId)
                         ->addWebsiteFilter($websiteId)
                         ->addAttributeToFilter('visibility', ["neq" => 1]);
 
@@ -134,25 +132,25 @@ class ProductExport extends Action
 
                                 $this->messageManager->addSuccessMessage(
                                     __(
-                                        'A cron named "%1" have been scheduled to export products for the store %2.',
+                                        'A cron named "%1" have been scheduled to export products for the website %2.',
                                         EmarsysCronHelper::CRON_JOB_CATALOG_BULK_EXPORT,
-                                        $store->getName()
+                                        $website->getName()
                                     ));
                             } else {
                                 //cron job already scheduled
-                                $this->messageManager->addErrorMessage(__('A cron is already scheduled to export products for the store %1 ', $store->getName()));
+                                $this->messageManager->addErrorMessage(__('A cron is already scheduled to export products for the website %1 ', $website->getName()));
                             }
                         } else {
                             //no products attribute mapping found for this store
-                            $this->messageManager->addErrorMessage(__('Product Attributes are not mapped for the store %1 ', $store->getName()));
+                            $this->messageManager->addErrorMessage(__('Product Attributes are not mapped for the website %1 ', $website->getName()));
                         }
                     } else {
                         //no products found for this store
-                        $this->messageManager->addErrorMessage(__('No Product found for the store %1 ', $store->getName()));
+                        $this->messageManager->addErrorMessage(__('No Product found for the website %1 ', $website->getName()));
                     }
                 } else {
                     //catalog feed export is disabled for this website
-                    $this->messageManager->addErrorMessage(__('Catalog Feed Export is Disabled for the store %1.', $store->getName()));
+                    $this->messageManager->addErrorMessage(__('Catalog Feed Export is Disabled for the website %1.', $website->getName()));
                 }
             } else {
                 //emarsys is disabled for this website
@@ -162,7 +160,7 @@ class ProductExport extends Action
             //add exception to logs
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
+                0,
                 'ProductExport::execute()'
             );
             //report error
@@ -170,7 +168,7 @@ class ProductExport extends Action
         }
 
         $resultRedirect = $this->resultRedirectFactory->create();
-        $url = $this->getUrl("emarsys_emarsys/productexport/index", ["store" => $storeId]);
+        $url = $this->getUrl("emarsys_emarsys/productexport/index", ["website" => $websiteId]);
 
         return $resultRedirect->setPath($url);
     }

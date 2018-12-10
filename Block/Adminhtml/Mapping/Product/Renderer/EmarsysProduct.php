@@ -1,57 +1,66 @@
 <?php
-
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
+
 namespace Emarsys\Emarsys\Block\Adminhtml\Mapping\Product\Renderer;
 
-use Magento\Framework\DataObject;
+use Emarsys\{Emarsys\Helper\Data as EmarsysDataHelper,
+    Emarsys\Model\ResourceModel\Product\CollectionFactory,
+    Emarsys\Model\ResourceModel\Sync};
+
+use Magento\{
+    Backend\Model\Session,
+    Framework\DataObject
+};
 
 /**
  * Class EmarsysProduct
+ *
  * @package Emarsys\Emarsys\Block\Adminhtml\Mapping\Product\Renderer
  */
 class EmarsysProduct extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\AbstractRenderer
 {
     /**
-     * @var \Magento\Backend\Model\Session
+     * @var Session
      */
     protected $session;
 
     /**
-     * @var \Emarsys\Emarsys\Model\ResourceModel\Product\Collection
+     * @var CollectionFactory
      */
     protected $collectionFactory;
 
     /**
-     * @var \Magento\Backend\Helper\Data
-     */
-    protected $backendHelper;
-
-    /**
-     * @var \Emarsys\Emarsys\Model\ResourceModel\Sync
+     * @var Sync
      */
     protected $syncResourceModel;
 
     /**
+     * @var EmarsysDataHelper
+     */
+    protected $emarsysHelper;
+
+    /**
      * EmarsysProduct constructor.
-     * @param \Magento\Backend\Model\Session $session
-     * @param \Emarsys\Emarsys\Model\ResourceModel\Product\CollectionFactory $collectionFactory
-     * @param \Emarsys\Emarsys\Model\ResourceModel\Sync $syncResourceModel
-     * @param \Magento\Backend\Helper\Data $backendHelper
+     *
+     * @param Session $session
+     * @param CollectionFactory $collectionFactory
+     * @param Sync $syncResourceModel
+     * @param EmarsysDataHelper $emarsysHelper
      */
     public function __construct(
-        \Magento\Backend\Model\Session $session,
-        \Emarsys\Emarsys\Model\ResourceModel\Product\CollectionFactory $collectionFactory,
-        \Emarsys\Emarsys\Model\ResourceModel\Sync $syncResourceModel,
-        \Magento\Backend\Helper\Data $backendHelper
+        Session $session,
+        CollectionFactory $collectionFactory,
+        Sync $syncResourceModel,
+        EmarsysDataHelper $emarsysHelper
     ) {
         $this->session = $session;
         $this->collectionFactory = $collectionFactory;
         $this->syncResourceModel = $syncResourceModel;
-        $this->backendHelper = $backendHelper;
+        $this->emarsysHelper = $emarsysHelper;
     }
 
     /**
@@ -63,19 +72,18 @@ class EmarsysProduct extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\
         global $colValue;
         $colValue = '';
         $attributeCode = $row->getData('attribute_code');
-        $entityTypeId = $row->getEntityTypeId();
-        $url = $this->backendHelper->getUrl('*/*/saveRow');
+        $url = $this->getUrl('*/*/saveRow');
         $coulmnAttr = 'emarsys_attr_code';
         $collection = $this->collectionFactory->create()->addFieldToFilter('magento_attr_code', $row->getAttributeCode());
         $session = $this->session->getData();
 
-        $gridSessionStoreId = 1;
-        if (isset($session['storeId'])) {
-            $gridSessionStoreId = $session['storeId'];
-            if ($gridSessionStoreId == 0) {
-                $gridSessionStoreId = 1;
+        $gridSessionWebsiteId = $this->emarsysHelper->getFirstWebsiteId();
+        if (isset($session['websiteId'])) {
+            $gridSessionWebsiteId = $session['websiteId'];
+            if ($gridSessionWebsiteId == 0) {
+                $gridSessionWebsiteId = $this->emarsysHelper->getFirstWebsiteId();
             }
-            $collection->addFieldToFilter('store_id', $gridSessionStoreId);
+            $collection->addFieldToFilter('website_id', $gridSessionWebsiteId);
         }
 
         $data = $collection->getData();
@@ -83,8 +91,8 @@ class EmarsysProduct extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\
             $colValue = $col['emarsys_attr_code'];
         }
 
-        $emarsysProductAttributes = $this->syncResourceModel->getAttributes('product', $gridSessionStoreId);
-        $emarsysCustomProductAttributes = $this->syncResourceModel->getAttributes('customproductattributes', $gridSessionStoreId);
+        $emarsysProductAttributes = $this->syncResourceModel->getAttributes('product', $gridSessionWebsiteId);
+        $emarsysCustomProductAttributes = $this->syncResourceModel->getAttributes('customproductattributes', $gridSessionWebsiteId);
 
         $html = '<select name="directions" class="admin__control-select"  style="width:200px;" onchange="changeValue(\'' . $url . '\', \'' . $attributeCode . '\', \'' . $coulmnAttr . '\', this.value);">
            <option value="0">Please Select</option>';

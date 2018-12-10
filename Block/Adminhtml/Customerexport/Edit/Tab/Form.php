@@ -55,9 +55,8 @@ class Form extends Generic
      */
     protected function _prepareForm()
     {
-        $params = $this->request->getParams();
-        $storeId = $params['store'];
-        $store = $this->storeManager->getStore($storeId);
+        $websiteId = $this->getRequest()->getParam('website');
+        $website = $this->storeManager->getWebsite($websiteId);
 
         $form = $this->_formFactory->create();
         $this->setForm($form);
@@ -65,11 +64,11 @@ class Form extends Generic
         $values = [];
         $values['customer'] = 'Customer';
         $values['subscriber'] = 'Subscriber';
-        $smartInsightEnable = $store->getConfig(EmarsysDataHelper::XPATH_SMARTINSIGHT_ENABLED);
+        $smartInsightEnable = $website->getConfig(EmarsysDataHelper::XPATH_SMARTINSIGHT_ENABLED);
         if ($smartInsightEnable == 1) {
             $values['order'] = 'Order';
         }
-        $productExportStatus = $store->getConfig(EmarsysDataHelper::XPATH_PREDICT_ENABLE_NIGHTLY_PRODUCT_FEED);
+        $productExportStatus = $website->getConfig(EmarsysDataHelper::XPATH_PREDICT_ENABLE_NIGHTLY_PRODUCT_FEED);
         if ($productExportStatus == 1 || $smartInsightEnable == 1) {
             $values['product'] = 'Product';
         }

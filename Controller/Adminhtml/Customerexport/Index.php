@@ -23,6 +23,16 @@ class Index extends Action
     protected $resultPageFactory;
 
     /**
+     * @var \Magento\Backend\Model\Session
+     */
+    protected $adminSession;
+
+    /**
+     * @var Data
+     */
+    protected $emarsysHelper;
+
+    /**
      * Index constructor.
      * @param Context $context
      * @param Data $emarsysHelper
@@ -45,12 +55,14 @@ class Index extends Action
      */
     public function execute()
     {
-        $store = $this->getRequest()->getParam('store');
-        if (!$store) {
-            $storeId = $this->emarsysHelper->getFirstStoreId();
-            return $this->resultRedirectFactory->create()->setUrl($this->getUrl('*/*', ['store' => $storeId]));
+        $websiteId = $this->getRequest()->getParam('website');
+        if (!$websiteId) {
+            return $this->resultRedirectFactory->create()->setUrl(
+                $this->getUrl(
+                    '*/*',
+                    ['website' => $this->emarsysHelper->getFirstWebsiteId()]
+            ));
         }
-        $data = $this->adminSession->getFormData(true);
         $page = $this->resultPageFactory->create();
         $page->getLayout()->getBlock("head");
         $this->_setActiveMenu('Emarsys_Emarsys::emarsys_emarsysadminindex9');

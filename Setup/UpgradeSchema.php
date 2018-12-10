@@ -72,6 +72,39 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     \Magento\Framework\DB\Ddl\Table::ACTION_CASCADE
                 );
             }
+
+            $emrattributeTable = $setup->getTable('emarsys_emarsys_product_attributes');
+            if ($connection->isTableExists($emrattributeTable)) {
+                $connection->changeColumn(
+                    $emrattributeTable,
+                    'store_id',
+                    'website_id',
+                    [
+                        'type' => \Magento\Framework\DB\Ddl\Table::TYPE_SMALLINT,
+                        'length' => null,
+                        'default' => 0,
+                        'unsigned' => true,
+                        'nullable' => false,
+                        'comment' => 'website id'
+                    ]
+                );
+            }
+            $productMappingTable = $setup->getTable('emarsys_product_mapping');
+            if ($connection->isTableExists($productMappingTable)) {
+                $connection->changeColumn(
+                    $productMappingTable,
+                    'store_id',
+                    'website_id',
+                    [
+                        'type' => \Magento\Framework\DB\Ddl\Table::TYPE_SMALLINT,
+                        'length' => null,
+                        'default' => 0,
+                        'unsigned' => true,
+                        'nullable' => false,
+                        'comment' => 'website id'
+                    ]
+                );
+            }
         }
         $setup->endSetup();
     }

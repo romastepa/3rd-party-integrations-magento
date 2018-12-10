@@ -115,8 +115,6 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         $this->setDefaultDir('DESC');
         $this->setSaveParametersInSession(true);
         $this->setVarNameFilter('frontend_label');
-        $storeId = $this->getRequest()->getParam('store');
-        $this->session->setData('storeId', $storeId);
     }
 
     /**

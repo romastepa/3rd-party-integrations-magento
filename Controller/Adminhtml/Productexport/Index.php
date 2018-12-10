@@ -47,6 +47,14 @@ class Index extends Action
      */
     public function execute()
     {
+        $websiteId = $this->getRequest()->getParam('website');
+        if (!$websiteId) {
+            return $this->resultRedirectFactory->create()->setUrl(
+                $this->getUrl(
+                    '*/*',
+                    ['website' => $this->emarsysHelper->getFirstWebsiteId()]
+                ));
+        }
         $data = $this->adminSession->getFormData(true);
         $page = $this->resultPageFactory->create();
         $page->getLayout()->getBlock("head");

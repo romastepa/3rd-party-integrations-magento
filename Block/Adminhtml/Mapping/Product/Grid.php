@@ -92,9 +92,10 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         $this->setUseAjax(false);
         $this->setVarNameFilter('grid_record');
         $this->session->setData('gridData', '');
-        $storeId = $this->getRequest()->getParam('store');
+        $websiteId = $this->getRequest()->getParam('website');
         $methods = $this->_collection->addVisibleFilter();
         $productMethods = [];
+
         foreach ($methods as $productCode => $productModel) {
             $productMethods['product'] = $productCode;
             $rowObj = $this->dataObjectFactory->create();
@@ -105,10 +106,11 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         $gridArray = [];
         foreach ($this->dataCollection as $col) {
             $attrCode = $col->getAttributeCode();
-            $gridArray[$attrCode] = ['emarsys_attr_code' => 'please select', 'store_id' => $storeId];
+            $gridArray[$attrCode] = ['emarsys_attr_code' => 'please select', 'website_id' => $websiteId];
         }
+
         $this->session->setData('gridData', $gridArray);
-        $this->session->setData('storeId', $storeId);
+        $this->session->setData('websiteId', $websiteId);
     }
 
     /**
@@ -123,6 +125,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
 
     /**
      * @return $this
+     * @throws \Exception
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     protected function _prepareColumns()

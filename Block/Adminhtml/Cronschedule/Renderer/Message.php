@@ -25,9 +25,8 @@ class Message extends AbstractRenderer
      * Params constructor.
      * @param BackendHelper $backendHelper
      */
-    public function __construct(
-        BackendHelper $backendHelper
-    ) {
+    public function __construct(BackendHelper $backendHelper)
+    {
         $this->backendHelper = $backendHelper;
     }
 
@@ -44,8 +43,7 @@ class Message extends AbstractRenderer
         $html = '';
 
         if ($row->getData('messages')) {
-            $html .= '<a href="#" onclick="openMyPopup(\'' . $requestUrl .
-                '\')" >' . 'View' . '</a>';
+            $html .= '<a href="#" onclick="openMyPopup(\'' . $requestUrl . '\')" >' . 'View' . '</a>';
         }
 
         return $html;

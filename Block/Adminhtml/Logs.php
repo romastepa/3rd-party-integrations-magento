@@ -79,12 +79,6 @@ class Logs extends \Magento\Backend\Block\Template
         return $collection->getData();
     }
 
-    public function getStoreId()
-    {
-        $storeId = $this->getRequest()->getParam('store');
-        return $storeId;
-    }
-
     /**
      * @return Timezone
      */

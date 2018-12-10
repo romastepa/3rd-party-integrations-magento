@@ -25,9 +25,8 @@ class Params extends AbstractRenderer
      * Params constructor.
      * @param BackendHelper $backendHelper
      */
-    public function __construct(
-        BackendHelper $backendHelper
-    ) {
+    public function __construct(BackendHelper $backendHelper)
+    {
         $this->backendHelper = $backendHelper;
     }
 
