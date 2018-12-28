@@ -2,8 +2,9 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
+
 namespace Emarsys\Emarsys\Model\Template;
 
 use Magento\Framework\App\TemplateTypesInterface;
@@ -14,6 +15,9 @@ use Symfony\Component\Config\Definition\Exception\Exception;
 use Magento\Framework\Mail\Template\FactoryInterface;
 use Magento\Framework\Mail\Template\SenderResolverInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Catalog\Model\ProductFactory;
+use Emarsys\Emarsys\Helper\Data\Proxy as EmarsysHelper;
+use Magento\Framework\App\Request\Http;
 
 /**
  * Class TransportBuilder
@@ -22,9 +26,14 @@ use Magento\Store\Model\StoreManagerInterface;
 class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
 {
     /**
-     * @var string
+     * @var Http
      */
-    public $productCollObj = '';
+    protected $requestHttp;
+
+    /**
+     * @var EmarsysHelper
+     */
+    protected $emarsysHelperData;
 
     /**
      * @var StoreManagerInterface
@@ -32,23 +41,38 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     protected $storeManager;
 
     /**
+     * @var ProductFactory
+     */
+    protected $productFactory;
+
+    /**
      * TransportBuilder constructor.
-     * @param StoreManagerInterface $storeManager
      * @param FactoryInterface $templateFactory
      * @param MessageInterface $message
      * @param SenderResolverInterface $senderResolver
      * @param ObjectManagerInterface $objectManager
      * @param TransportInterfaceFactory $mailTransportFactory
+     * @param StoreManagerInterface $storeManager
+     * @param ProductFactory $productFactory
+     * @param EmarsysHelper $emarsysHelperData
+     * @param Http $requestHttp
      */
     public function __construct(
-        StoreManagerInterface $storeManager,
         FactoryInterface $templateFactory,
         MessageInterface $message,
         SenderResolverInterface $senderResolver,
         ObjectManagerInterface $objectManager,
-        TransportInterfaceFactory $mailTransportFactory
-    ) {
+        TransportInterfaceFactory $mailTransportFactory,
+        EmarsysHelper $emarsysHelperData,
+        ProductFactory $productFactory,
+        StoreManagerInterface $storeManager,
+        Http $requestHttp
+    )
+    {
+        $this->emarsysHelperData = $emarsysHelperData;
+        $this->productFactory = $productFactory;
         $this->storeManager = $storeManager;
+        $this->requestHttp = $requestHttp;
         parent::__construct(
             $templateFactory,
             $message,
@@ -62,6 +86,10 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
      * Get mail transport
      *
      * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Zend_Json_Exception
+     * @throws \Zend_Mail_Exception
      */
     public function prepareMessage()
     {
@@ -74,91 +102,123 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
 
         $body = $template->processTemplate();
 
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $this->productCollObj = $objectManager->create('\Magento\Catalog\Model\Product');
         $storeId = $template->getEmailStoreId();
-        /** @var \Emarsys\Emarsys\Helper\Data $dataHelper */
-        $dataHelper = $objectManager->create('\Emarsys\Emarsys\Helper\Data');
-        $scopeConfig = $objectManager->create('\Magento\Framework\App\Config\ScopeConfigInterface');
-        $request = $objectManager->get('\Magento\Framework\App\Request\Http');
+        $store = $this->storeManager->getStore($storeId);
+        $templateIdentifier = $this->templateIdentifier;
+        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
 
-        list($magentoEventID, $configPath) = $dataHelper->getMagentoEventIdAndPath(
-            $this->templateIdentifier,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+        list($magentoEventID, $configPath) = $this->emarsysHelperData->getMagentoEventIdAndPath(
+            $templateIdentifier,
+            $storeScope,
             $storeId
         );
 
         if (!$magentoEventID) {
             $this->message->setMessageType($types[$template->getType()])
                 ->setBody($body)
-                ->setSubject($template->getSubject())
+                ->setSubject(html_entity_decode($template->getSubject(), ENT_QUOTES))
                 ->setEmarsysData([
                     "emarsysPlaceholders" => '',
                     "emarsysEventId" => '',
-                    "store_id" => $storeId
+                    "store_id" => $storeId,
                 ]);
             return $this;
         }
-        $enableOptin = $scopeConfig->getValue('opt_in/optin_enable/enable_optin', 'websites', $this->storeManager->getStore($storeId)->getWebsiteId());
+
+        $enableOptin = $store->getConfig('opt_in/optin_enable/enable_optin');
         if ($enableOptin) {
-            $handle = $request->getFullActionName();
+            $handle = $this->requestHttp->getFullActionName();
         }
-        $emarsysEventMappingID = $dataHelper->getEmarsysEventMappingId($magentoEventID, $storeId);
+
+        $emarsysEventMappingID = $this->emarsysHelperData->getEmarsysEventMappingId($magentoEventID, $storeId);
         if (!$emarsysEventMappingID) {
             $this->message->setMessageType($types[$template->getType()])
                 ->setBody($body)
-                ->setSubject($template->getSubject())
+                ->setSubject(html_entity_decode($template->getSubject(), ENT_QUOTES))
                 ->setEmarsysData([
                     "emarsysPlaceholders" => '',
                     "emarsysEventId" => '',
-                    "store_id" => $storeId
+                    "store_id" => $storeId,
                 ]);
             return $this;
         }
 
-        $emarsysEventApiID = $dataHelper->getEmarsysEventApiId($magentoEventID, $storeId);
+        $emarsysEventApiID = $this->emarsysHelperData->getEmarsysEventApiId($magentoEventID, $storeId);
         if (!$emarsysEventApiID) {
             $this->message->setMessageType($types[$template->getType()])
                 ->setBody($body)
-                ->setSubject($template->getSubject())
+                ->setSubject(html_entity_decode($template->getSubject(), ENT_QUOTES))
                 ->setEmarsysData([
                     "emarsysPlaceholders" => '',
                     "emarsysEventId" => '',
-                    "store_id" => $storeId
+                    "store_id" => $storeId,
                 ]);
             return $this;
         }
 
-        $emarsysPlaceholders = $dataHelper->getPlaceHolders($emarsysEventMappingID);
+        $emarsysPlaceholders = $this->emarsysHelperData->getPlaceHolders($emarsysEventMappingID);
         if (!$emarsysPlaceholders) {
-            $emarsysPlaceholders = $dataHelper->insertFirstimeMappingPlaceholders($emarsysEventMappingID, $storeId);
-            $emarsysPlaceholders = $dataHelper->getPlaceHolders($emarsysEventMappingID);
+            $this->emarsysHelperData->insertFirstTimeMappingPlaceholders($emarsysEventMappingID, $storeId);
+            $emarsysPlaceholders = $this->emarsysHelperData->getPlaceHolders($emarsysEventMappingID);
         }
 
-        $emarsysHeaderPlaceholders = $dataHelper->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
+        $emarsysHeaderPlaceholders = $this->emarsysHelperData->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
         if (!$emarsysHeaderPlaceholders) {
-            $emarsysInsertFirstHeaderPlaceholders = $dataHelper->insertFirstimeHeaderMappingPlaceholders(
+            $this->emarsysHelperData->insertFirstTimeHeaderMappingPlaceholders(
                 $emarsysEventMappingID,
                 $storeId
             );
-            $emarsysHeaderPlaceholders = $dataHelper->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
+            $emarsysHeaderPlaceholders = $this->emarsysHelperData->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
         }
 
-        $emarsysFooterPlaceholders = $dataHelper->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
+        $emarsysFooterPlaceholders = $this->emarsysHelperData->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
         if (!$emarsysFooterPlaceholders) {
-            $emarsysInsertFirstFooterPlaceholders = $dataHelper->insertFirstimeFooterMappingPlaceholders(
+            $this->emarsysHelperData->insertFirstTimeFooterMappingPlaceholders(
                 $emarsysEventMappingID,
                 $storeId
             );
-            $emarsysFooterPlaceholders = $dataHelper->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
+            $emarsysFooterPlaceholders = $this->emarsysHelperData->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
         }
 
         $processedVariables = [];
         if ($order = $template->checkOrder()) {
+            $orderData = [];
             foreach ($order->getAllVisibleItems() as $item) {
                 $orderData[] = $this->getOrderData($item);
             }
             $processedVariables['product_purchases'] = $orderData;
+        }
+
+        /** @var \Magento\Sales\Model\Order\Shipment $shipment */
+        if ($shipment = $template->checkShipment()) {
+            $shipmentData = [];
+            /** @var \Magento\Sales\Model\Order $rmaOrder */
+            $shipmentOrder = $shipment->getOrder();
+            /** @var \Magento\Sales\Model\Order\Shipment\Item $item */
+            foreach ($shipment->getItems() as $item) {
+                $shipmentOrderItem = $this->getOrderData($shipmentOrder->getItemById($item->getOrderItemId()));
+                $shipmentItem = $this->getShipmentData($item);
+                $shipmentItem['order_item'] = $shipmentOrderItem;
+                $shipmentData[] = $shipmentItem;
+            }
+            $processedVariables['shipment_items'] = $shipmentData;
+
+            $processedVariables['shipment_tracks'] = $this->getShipmentTracks($shipment->getTracks());
+        }
+
+        /** @var \Magento\Rma\Model\Rma $rma */
+        if ($rma = $template->checkRma()) {
+            $returnItems = [];
+            /** @var \Magento\Sales\Model\Order $rmaOrder */
+            $rmaOrder = $rma->getOrder();
+            /** @var \Magento\Rma\Model\Item $item */
+            foreach ($rma->getItemsForDisplay() as $item) {
+                $rmaOrderItem = $this->getOrderData($rmaOrder->getItemById($item->getOrderItemId()));
+                $rmaItem = $this->getRmaData($item);
+                $rmaItem['order_item'] = $rmaOrderItem;
+                $returnItems[] = $rmaItem;
+            }
+            $processedVariables['returned_items'] = $returnItems;
         }
 
         foreach ($emarsysHeaderPlaceholders as $key => $value) {
@@ -168,21 +228,23 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
                 $processedVariables['global'][$key] = $template->getProcessedVariable($value);
             }
         }
+
         foreach ($emarsysPlaceholders as $key => $value) {
             $processedVariables['global'][$key] = $template->getProcessedVariable($value);
         }
+
         foreach ($emarsysFooterPlaceholders as $key => $value) {
             $processedVariables['global'][$key] = $template->getProcessedVariable($value);
         }
+
         $this->message->setMessageType($types[$template->getType()])
             ->setBody($body)
-            ->setSubject($template->getSubject())
+            ->setSubject(html_entity_decode($template->getSubject(), ENT_QUOTES))
             ->setEmarsysData([
                 "emarsysPlaceholders" => $processedVariables,
                 "emarsysEventId" => $emarsysEventApiID,
                 "store_id" => $storeId
             ]);
-
         return $this;
     }
 
@@ -207,14 +269,13 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     /**
      * @param $item
      * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getOrderData($item)
     {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         try {
             $optionGlue = " - ";
             $optionSeparator = " : ";
-
             $unitTaxAmount = $item->getTaxAmount() / $item->getQtyOrdered();
             $order = [
                 'unitary_price_exc_tax' => $this->_formatPrice($item->getPriceInclTax() - $unitTaxAmount),
@@ -222,7 +283,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
                 'unitary_tax_amount' => $this->_formatPrice($unitTaxAmount),
                 'line_total_price_exc_tax' => $this->_formatPrice($item->getRowTotalInclTax() - $item->getTaxAmount()),
                 'line_total_price_inc_tax' => $this->_formatPrice($item->getRowTotalInclTax()),
-                'line_total_tax_amount' => $this->_formatPrice($item->getTaxAmount())
+                'line_total_tax_amount' => $this->_formatPrice($item->getTaxAmount()),
             ];
             $order['product_id'] = $item->getData('product_id');
             $order['product_type'] = $item->getData('product_type');
@@ -238,25 +299,20 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             $order['tax_amount'] = $this->_formatPrice($item->getData('tax_amount'));
             $order['discount_amount'] = $this->_formatPrice($item->getData('discount_amount'));
             $order['price_line_total'] = $this->_formatPrice($order['qty_ordered'] * $order['price']);
-
-            $_product = $this->productCollObj->load($order['product_id']);
-
-            $base_url = $objectManager->get('Magento\Store\Model\StoreManagerInterface')
-                ->getStore($item->getData('store_id'))
-                ->getBaseUrl();
+            $_product = $this->productFactory->create()->load($order['product_id']);
+            $base_url = $this->storeManager->getStore($item->getData('store_id'))->getBaseUrl();
             $base_url = trim($base_url, '/');
             $order['_external_image_url'] = $base_url . '/media/catalog/product' . $_product->getData('thumbnail');
             $order['_url'] = $base_url . "/" . $_product->getUrlPath();
             $order['_url_name'] = $order['product_name'];
             $order['product_description'] = $_product->getData('description');
             $order['short_description'] = $_product->getData('short_description');
+
             $attributes = $_product->getAttributes();
             $prodData = $_product->getData();
             foreach ($attributes as $attribute) {
                 if ($attribute->getFrontendInput() != "gallery") {
-                    if (!isset($prodData[$attribute->getAttributeCode()])) {
-                        //do nothing
-                    } else {
+                    if (isset($prodData[$attribute->getAttributeCode()])) {
                         $order['attribute_' . $attribute->getAttributeCode()] = $prodData[$attribute->getAttributeCode()];
                     }
                 }
@@ -275,13 +331,67 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             $order['additional_data'] = ($item->getData('additional_data') ? $item->getData('additional_data') : "");
 
             return $order;
-        } catch (\Exception $e) {
-            $emarsysLogs = $objectManager->create('\Emarsys\Emarsys\Model\Logs');
-            $emarsysLogs->addErrorLog(
+        } catch (Exception $e) {
+            $this->emarsysHelperData->addErrorLog(
                 $e->getMessage(),
                 $this->storeManager->getStore()->getId(),
                 'TransportBuilder::getOrderData()'
             );
         }
     }
+
+    /**
+     * @param \Magento|Rma\Mode\Item $item
+     * @return array
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Zend_Json_Exception
+     */
+    public function getRmaData($item)
+    {
+        $item = $item->getData();
+        try {
+            if (isset($item['product_options']) && !empty($item['product_options'])) {
+                $productOptions = \Zend_Json::decode($item['product_options']);
+                if ($productOptions) {
+                    $item['product_options'] = $productOptions;
+                }
+            }
+        } catch (Exception $e) {
+            $this->emarsysHelperData->addErrorLog(
+                $e->getMessage(),
+                $this->storeManager->getStore()->getId(),
+                'TransportBuilder::getRmaData()'
+            );
+        }
+
+        return $item;
+    }
+
+    /**
+     * @param \Magento\Sales\Model\Order\Shipment\Item $item
+     * @return array
+     */
+    public function getShipmentData($item)
+    {
+        $item = $item->getData();
+        unset($item['order'], $item['source']);
+
+        return $item;
+    }
+
+    /**
+     * @param array
+     * @return array
+     */
+    public function getShipmentTracks($tracks)
+    {
+        $tracksInfo = [];
+
+        foreach ($tracks as $track) {
+            $tracksInfo[] = $track->getData();
+        }
+
+        return $tracksInfo;
+    }
 }
+

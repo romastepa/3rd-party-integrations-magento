@@ -72,6 +72,32 @@ class Template extends \Magento\Email\Model\Template
     }
 
     /**
+     * @return bool
+     */
+    public function checkRma()
+    {
+        $variables = $this->_getVars();
+        if (isset($variables['rma'])) {
+            return $variables['rma'];
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function checkShipment()
+    {
+        $variables = $this->_getVars();
+        if (isset($variables['shipment'])) {
+            return $variables['shipment'];
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
