@@ -20,6 +20,7 @@ use Magento\Framework\Registry;
 
 /**
  * Class Logs
+ *
  * @package Emarsys\Emarsys\Helper
  */
 class Logs extends AbstractHelper
@@ -71,6 +72,7 @@ class Logs extends AbstractHelper
 
     /**
      * Logs constructor.
+     *
      * @param Context $context
      * @param StoreManagerInterface $storeManager
      * @param LogScheduleFactory $logScheduleFactory
@@ -160,6 +162,7 @@ class Logs extends AbstractHelper
 
     /**
      * Update latest saving manual log record in cron scheduler
+     *
      * @param array $logsArray
      * @return string
      */
@@ -203,7 +206,9 @@ class Logs extends AbstractHelper
 
     /**
      * For saving Logs
+     *
      * @param array $logsArray
+     * @throws \Exception
      */
     public function logs($logsArray = [])
     {
@@ -234,10 +239,10 @@ class Logs extends AbstractHelper
         if ($sendLogReport == '' && $websiteId == 0) {
             $sendLogReport = $this->scopeConfigInterface->getValue('logs/log_setting/log_report');
         }
-        if ($sendLogReport && $logsArray['message_type'] == 'Error') {
+        if ($sendLogReport && @$logsArray['message_type'] == 'Error') {
             if ($sendLogReport) {
-                $title = ucfirst($logsArray['job_code']) . " : Store - " . $logsArray['store_id'];
-                $description = $logsArray['description'];
+                $title = ucfirst(@$logsArray['job_code']) . " : Store - " . @$logsArray['store_id'];
+                $description = @$logsArray['description'];
                 $this->errorLogEmail($title, $description);
             }
         }
@@ -246,6 +251,8 @@ class Logs extends AbstractHelper
     /**
      * @param $title
      * @param $errorMsg
+     * @throws \Magento\Framework\Exception\MailException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function errorLogEmail($title, $errorMsg)
     {
@@ -266,11 +273,11 @@ class Logs extends AbstractHelper
             $templateVars = [
                 'store' => $this->storeManager->getStore(),
                 'sync_name' => $title,
-                'message' => $errorMsg
+                'message' => $errorMsg,
             ];
             $from = [
                 'email' => "support@emarsys.com",
-                'name' => "Support"
+                'name' => "Support",
             ];
             $this->inlineTranslation->suspend();
 
