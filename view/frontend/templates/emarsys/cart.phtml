@@ -1,0 +1,12 @@
+<?php
+/**
+ * @category   Emarsys
+ * @package    Emarsys_Emarsys
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
+ */
+/** @var \Emarsys\Emarsys\Block\JavascriptTracking $block */
+?>
+<script type="text/javascript">
+    ScarabQueue.push(["cart", [<?php echo $block->getCartItemsJsonData() ?>]]);
+    ScarabQueue.push(['go']);
+</script>
