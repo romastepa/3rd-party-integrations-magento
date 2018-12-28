@@ -241,6 +241,9 @@ class ApiExport extends ZendClient
      * Get Static Export Array for Emarsys
      *
      * @return array
+     * @throws \Magento\Framework\Exception\FileSystemException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Zend_Http_Client_Exception
      */
     public function getCatalogExportCsvHeader()
     {
