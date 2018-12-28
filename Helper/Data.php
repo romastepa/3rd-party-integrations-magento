@@ -508,17 +508,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @return bool
-     */
-    public function isAjaxUpdateEnabled()
-    {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_AJAXUPDATE,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-    }
-
-    /**
      * Smart Insight Merchant Id
      * @return bool
      */
@@ -624,20 +613,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @return \Magento\Framework\HTTP\ZendClient
+     * @return EmarsysApi
      */
     public function getClient()
     {
-        $url = $this->_emarsysApiUrl;
-        $username = $this->_username;
-        $password = $this->_secret;
-        $config = [
-            'api_url' => $url,
-            'api_username' => $username,
-            'api_password' => $password,
-        ];
-
-        return $this->modelApi->_construct($config);
+        $this->modelApi->setParams([
+            'api_url' => $this->_emarsysApiUrl,
+            'api_username' => $this->_username,
+            'api_password' => $this->_secret,
+        ]);
+        return $this->modelApi;
     }
 
     /**
@@ -1692,7 +1677,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $store_id
      * @return string
      */
-    public function insertFirstimeFooterMappingPlaceholders($mapping_id, $store_id)
+    public function insertFirstTimeFooterMappingPlaceholders($mapping_id, $store_id)
     {
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create()
@@ -1713,7 +1698,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->emarsysLogs->addErrorLog(
                 htmlentities($e->getMessage()),
                 $store_id,
-                'insertFirstimeFooterMappingPlaceholders'
+                'insertFirstTimeFooterMappingPlaceholders'
             );
         }
     }
@@ -2176,8 +2161,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 'field_id' => $fieldId
             ];
             $this->getEmarsysAPIDetails($subscriber->getStoreId());
-            $this->getClient();
-            $response = $this->modelApi->get('contact/last_change', $payload);
+            $response = $this->getClient()->get('contact/last_change', $payload);
 
             if (isset($response['data']['time'])) {
                 $emarsysTime = $response['data']['time'];
@@ -2294,8 +2278,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 'fieldId' => $fieldId
             ];
             $this->getEmarsysAPIDetails($storeId);
-            $this->getClient();
-            $response = $this->modelApi->post('contact/last_change', $payload);
+            $response = $this->getClient()->post('contact/last_change', $payload);
 
             if (isset($response['data']['result'])) {
                 $emarsysSubscribers = $response['data']['result'];
@@ -2365,7 +2348,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $logsArray['store_id'] = $this->storeManager->getWebsite(current($websiteIds))->getDefaultStore()->getId();
             $logId = $this->logHelper->manualLogs($logsArray);
             $this->getEmarsysAPIDetails(current($websiteIds));
-            $this->getClient();
+
 
             if ($this->isEmarsysEnabled(current($websiteIds))) {
                 $offset = 0;
@@ -2379,8 +2362,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
                     $apiCall = sprintf('export/%s/data/offset=%s&limit=%s', $exportId, $offset, $limit);
                     $mesage = "Request "  . $apiCall;
-                    $response = $this->modelApi->get($apiCall, [], false);
-                    $mesage .= "Response "  . $response;
+                    $response = $this->getClient()->get($apiCall, [], false);
+                    $mesage .= "Response " . json_encode($response);
 
                     $this->logHelper->childLogs($logId, $mesage, current($websiteIds));
                     $offset+=$limit;
@@ -2616,6 +2599,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param $folderName
+     * @param $csvFilePath
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getEmarsysMediaUrlPath($folderName, $csvFilePath)
+    {
+        return $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA)
+            . 'emarsys/' . $folderName . '/' . basename($csvFilePath);
+    }
+
+    /**
      * @param $scope
      * @param $websiteId
      * @return array|bool
@@ -2677,4 +2672,37 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $websiteId
         );
     }
+
+    /**
+     * @param $messages
+     * @param $storeId
+     * @param $info
+     */
+    public function addErrorLog($messages, $storeId, $info)
+    {
+        return $this->emarsysLogs->addErrorLog($messages, $storeId, $info);
+    }
+
+    /**
+     * @param string $fileDirectory
+     * @return bool
+     */
+    public function removeFilesInFolder($fileDirectory)
+    {
+        if ($handle = opendir($fileDirectory)) {
+            while (false !== ($file = readdir($handle))) {
+                if ($file == '.' || $file == '..') {
+                    continue;
+                }
+                $filePath = $fileDirectory . '/' . $file;
+                $fileLastModified = filemtime($filePath);
+                if ((time() - $fileLastModified) > 1 * 24 * 3600) {
+                    unlink($filePath);
+                }
+            }
+            closedir($handle);
+        }
+        return true;
+    }
 }
+

@@ -295,7 +295,20 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
     public function getAjaxUpdateUrl()
     {
         return $this->getUrl(
-            'emarsys/index/ajaxupdate',
+            'emarsys/index/ajaxUpdate',
+            ['_secure' => true]
+        );
+    }
+
+    /**
+     * Get Ajax Update Url
+     *
+     * @return string
+     */
+    public function getAjaxUpdateCartUrl()
+    {
+        return $this->getUrl(
+            'emarsys/index/ajaxUpdateCart',
             ['_secure' => true]
         );
     }

@@ -188,7 +188,6 @@ class SyncContactsSubscriptionData
             $logsArray['action'] = 'synced to emarsys';
             $logsArray['log_action'] = 'sync';
             $logsArray['emarsys_info'] = 'subscription information';
-            $client = $this->emarsysDataHelper->getClient();
 
             $dt = (new \Zend_Date());
             if ($isTimeBased) {
@@ -212,8 +211,7 @@ class SyncContactsSubscriptionData
             $this->logsHelper->logs($logsArray);
 
             $this->emarsysDataHelper->getEmarsysAPIDetails($storeId);
-            $this->emarsysDataHelper->getClient();
-            $response = $this->modelApi->post('contact/getchanges', $payload);
+            $response = $this->emarsysDataHelper->getClient()->post('contact/getchanges', $payload);
 
             $logsArray['description'] = print_r($response,true);
             $logsArray['message_type'] = 'Success';

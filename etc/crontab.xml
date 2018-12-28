@@ -7,7 +7,7 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
-    <group id="default">
+    <group id="emarsys">
         <!-- Customer Related Jobs -->
         <job name="emarsys_initial_db_load" instance="Emarsys\Emarsys\Cron\UploadInitialDb" method="execute">
             <schedule>0 0 30 2 3</schedule>
