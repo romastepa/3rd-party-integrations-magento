@@ -15,7 +15,6 @@ use Symfony\Component\Config\Definition\Exception\Exception;
 use Magento\Framework\Mail\Template\FactoryInterface;
 use Magento\Framework\Mail\Template\SenderResolverInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Catalog\Model\ProductFactory;
 use Emarsys\Emarsys\Helper\Data\Proxy as EmarsysHelper;
 use Magento\Framework\App\Request\Http;
 
@@ -41,11 +40,6 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     protected $storeManager;
 
     /**
-     * @var ProductFactory
-     */
-    protected $productFactory;
-
-    /**
      * TransportBuilder constructor.
      * @param FactoryInterface $templateFactory
      * @param MessageInterface $message
@@ -53,7 +47,6 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
      * @param ObjectManagerInterface $objectManager
      * @param TransportInterfaceFactory $mailTransportFactory
      * @param StoreManagerInterface $storeManager
-     * @param ProductFactory $productFactory
      * @param EmarsysHelper $emarsysHelperData
      * @param Http $requestHttp
      */
@@ -64,13 +57,10 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         ObjectManagerInterface $objectManager,
         TransportInterfaceFactory $mailTransportFactory,
         EmarsysHelper $emarsysHelperData,
-        ProductFactory $productFactory,
         StoreManagerInterface $storeManager,
         Http $requestHttp
-    )
-    {
+    ) {
         $this->emarsysHelperData = $emarsysHelperData;
-        $this->productFactory = $productFactory;
         $this->storeManager = $storeManager;
         $this->requestHttp = $requestHttp;
         parent::__construct(
@@ -243,7 +233,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             ->setEmarsysData([
                 "emarsysPlaceholders" => $processedVariables,
                 "emarsysEventId" => $emarsysEventApiID,
-                "store_id" => $storeId
+                "store_id" => $storeId,
             ]);
         return $this;
     }
@@ -299,8 +289,11 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             $order['tax_amount'] = $this->_formatPrice($item->getData('tax_amount'));
             $order['discount_amount'] = $this->_formatPrice($item->getData('discount_amount'));
             $order['price_line_total'] = $this->_formatPrice($order['qty_ordered'] * $order['price']);
-            $_product = $this->productFactory->create()->load($order['product_id']);
-            $base_url = $this->storeManager->getStore($item->getData('store_id'))->getBaseUrl();
+
+            $_product = $item->getProduct();
+            $_product->setStoreId($item->getStoreId());
+
+            $base_url = $this->storeManager->getStore($item->getStoreId())->getBaseUrl();
             $base_url = trim($base_url, '/');
             $order['_external_image_url'] = $base_url . '/media/catalog/product' . $_product->getData('thumbnail');
             $order['_url'] = $base_url . "/" . $_product->getUrlPath();
@@ -311,9 +304,18 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             $attributes = $_product->getAttributes();
             $prodData = $_product->getData();
             foreach ($attributes as $attribute) {
-                if ($attribute->getFrontendInput() != "gallery") {
+                if ($attribute->getFrontendInput() != "gallery"
+                    && $attribute->getFrontendInput() != 'price'
+                ) {
                     if (isset($prodData[$attribute->getAttributeCode()])) {
-                        $order['attribute_' . $attribute->getAttributeCode()] = $prodData[$attribute->getAttributeCode()];
+                        if (!is_array($prodData[$attribute->getAttributeCode()])
+                            && ($attributeText = $_product->getAttributeText($attribute->getAttributeCode()))
+                        ) {
+                            $text = is_object($attributeText) ? $attributeText->getText() : $attributeText;
+                        } else {
+                            $text = $prodData[$attribute->getAttributeCode()];
+                        }
+                        $order['attribute_' . $attribute->getAttributeCode()] = $text;
                     }
                 }
             }
@@ -341,19 +343,29 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     }
 
     /**
-     * @param \Magento|Rma\Mode\Item $item
+     * @param \Magento\Rma\Model\Item $item
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Zend_Json_Exception
      */
     public function getRmaData($item)
     {
-        $item = $item->getData();
+        $returnItem = [];
         try {
-            if (isset($item['product_options']) && !empty($item['product_options'])) {
-                $productOptions = \Zend_Json::decode($item['product_options']);
+            /** @var \Magento\Rma\Model\Item\Attribute $attribute */
+            foreach ($item->getAttributes() as $attribute) {
+                if (!is_null($item->getData($attribute->getAttributeCode()))) {
+                    if ($attributeText = $attribute->getFrontend()->getValue($item)) {
+                        $returnItem[$attribute->getAttributeCode()] = is_object($attributeText) ? $attributeText->getText() : $attributeText;
+                    } else {
+                        $returnItem[$attribute->getAttributeCode()] = $item->getData($attribute->getAttributeCode());
+                    }
+                }
+            }
+            if ($item->getProductOptions() && !empty($item->getProductOptions())) {
+                $productOptions = \Zend_Json::decode($item->getProductOptions());
                 if ($productOptions) {
-                    $item['product_options'] = $productOptions;
+                    $returnItem['product_options'] = $productOptions;
                 }
             }
         } catch (Exception $e) {
@@ -364,7 +376,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             );
         }
 
-        return $item;
+        return $returnItem;
     }
 
     /**
