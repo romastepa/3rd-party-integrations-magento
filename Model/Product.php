@@ -24,7 +24,10 @@ use Magento\{
     Catalog\Model\CategoryFactory,
     Catalog\Model\Product as ProductModel,
     Store\Model\App\Emulation,
-    Store\Model\StoreManagerInterface
+    Store\Model\StoreManagerInterface,
+    ConfigurableProduct\Model\Product\Type\Configurable as TypeConfigurable,
+    Bundle\Model\Product\Type as TypeBundle,
+    GroupedProduct\Model\Product\Type\Grouped as TypeGrouped
 };
 
 use Emarsys\Emarsys\{
@@ -140,9 +143,22 @@ class Product extends AbstractModel
      * @var State
      */
     protected $state;
+    /**
+     * @var TypeConfigurable
+     */
+    protected $typeConfigurable;
+    /**
+     * @var TypeBundle
+     */
+    protected $typeBundle;
+    /**
+     * @var TypeGrouped
+     */
+    protected $typeGrouped;
 
     /**
      * Product constructor.
+     *
      * @param MessageManagerInterface $messageManager
      * @param ProductModel $productModel
      * @param DateTime $date
@@ -160,6 +176,9 @@ class Product extends AbstractModel
      * @param ApiExport $apiExport
      * @param Image $imageHelper
      * @param Emulation $appEmulation
+     * @param TypeConfigurable $typeConfigurable
+     * @param TypeBundle $typeBundle
+     * @param TypeGrouped $typeGrouped
      * @param Context $context
      * @param Registry $registry
      * @param AbstractResource|null $resource
@@ -184,6 +203,9 @@ class Product extends AbstractModel
         ApiExport $apiExport,
         Image $imageHelper,
         Emulation $appEmulation,
+        TypeConfigurable $typeConfigurable,
+        TypeBundle $typeBundle,
+        TypeGrouped $typeGrouped,
         Context $context,
         Registry $registry,
         AbstractResource $resource = null,
@@ -207,6 +229,9 @@ class Product extends AbstractModel
         $this->apiExport = $apiExport;
         $this->imageHelper = $imageHelper;
         $this->appEmulation = $appEmulation;
+        $this->typeConfigurable = $typeConfigurable;
+        $this->typeBundle = $typeBundle;
+        $this->typeGrouped = $typeGrouped;
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
@@ -633,6 +658,12 @@ class Product extends AbstractModel
                     $this->_credentials[$websiteId][$storeId]['store'] = $store;
                     $this->_credentials[$websiteId][$storeId]['mapped_attributes_names'] = $mappedAttributes;
                     $this->_credentials[$websiteId][$storeId]['merchant_id'] = $merchantId;
+                } else {
+                    $this->_errorCount = true;
+                    $logsArray['emarsys_info'] = __('Catalog Feed Export Mapping Error');
+                    $logsArray['description'] = __('No default mapping for for the store %1.', $store->getName());
+                    $logsArray['message_type'] = 'Error';
+                    $this->logsHelper->logs($logsArray);
                 }
             } else {
                 $this->_errorCount = true;
@@ -749,7 +780,22 @@ class Product extends AbstractModel
                         $attributeData[] = $url;
                         break;
                     case 'url_key':
-                        $attributeData[] = $store->getBaseUrl() . $productObject->getRequestPath();
+                        $url = $store->getBaseUrl() . $productObject->getRequestPath();
+                        if ($productObject->getVisibility() == Visibility::VISIBILITY_NOT_VISIBLE) {
+                            $url = '';
+                            $parentProducts = $this->typeConfigurable->getParentIdsByChild($productObject->getId());
+                            if (empty($parentProducts)) {
+                                $parentProducts = $this->typeBundle->getParentIdsByChild($productObject->getId());
+                                if (empty($parentProducts)) {
+                                    $parentProducts = $this->typeGrouped->getParentIdsByChild($productObject->getId());
+                                }
+                            }
+                            if (!empty($parentProducts)) {
+                                $parentProduct = $this->productModel->load(current($parentProducts));
+                                $url = $store->getBaseUrl() . $parentProduct->getRequestPath();
+                            }
+                        }
+                        $attributeData[] = $url;
                         break;
                     case 'price':
                         $attributeData[] = number_format($attributeOption, 2, '.', '');
@@ -769,7 +815,22 @@ class Product extends AbstractModel
                         $attributeData[] = $url;
                         break;
                     case 'url_key':
-                        $attributeData[] = $store->getBaseUrl() . $productObject->getRequestPath();
+                        $url = $store->getBaseUrl() . $productObject->getRequestPath();
+                        if ($productObject->getVisibility() == Visibility::VISIBILITY_NOT_VISIBLE) {
+                            $url = '';
+                            $parentProducts = $this->typeConfigurable->getParentIdsByChild($productObject->getId());
+                            if (empty($parentProducts)) {
+                                $parentProducts = $this->typeBundle->getParentIdsByChild($productObject->getId());
+                                if (empty($parentProducts)) {
+                                    $parentProducts = $this->typeGrouped->getParentIdsByChild($productObject->getId());
+                                }
+                            }
+                            if (!empty($parentProducts)) {
+                                $parentProduct = $this->productModel->load(current($parentProducts));
+                                $url = $store->getBaseUrl() . $parentProduct->getRequestPath();
+                            }
+                        }
+                        $attributeData[] = $url;
                         break;
                     case 'price':
                         $attributeData[] = number_format($attributeOption, 2, '.', '');
