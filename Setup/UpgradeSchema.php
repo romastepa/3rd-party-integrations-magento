@@ -61,10 +61,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
     protected function removeDataFromCoreConfigData($setup)
     {
         $paths = [
-            'crontab/default/jobs/emarsys_sync/schedule/cron_expr',
-            'crontab/default/jobs/shcema_check/schedule/cron_expr',
-            'crontab/default/jobs/emarsys_smartinsight_sync/schedule/cron_expr',
-            'crontab/default/jobs/emarsys_productexport_sync/schedule/cron_expr',
+            'emarsys_sync/schedule/cron_expr',
+            'shcema_check/schedule/cron_expr',
+            'emarsys_smartinsight_sync/schedule/cron_expr',
+            'emarsys_productexport_sync/schedule/cron_expr',
         ];
 
         foreach ($paths as $path) {
