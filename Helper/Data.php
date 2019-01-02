@@ -1649,7 +1649,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $store_id
      * @return string
      */
-    public function insertFirstimeHeaderMappingPlaceholders($mapping_id, $store_id)
+    public function insertFirstTimeHeaderMappingPlaceholders($mapping_id, $store_id)
     {
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create()
@@ -1667,7 +1667,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->emarsysLogs->addErrorLog(
                 htmlentities($e->getMessage()),
                 $store_id,
-                'insertFirstimeHeaderMappingPlaceholders'
+                'insertFirstTimeHeaderMappingPlaceholders'
             );
         }
     }
