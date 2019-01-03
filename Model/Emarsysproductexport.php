@@ -138,6 +138,8 @@ class Emarsysproductexport extends AbstractModel
      * @param int|object $storeId
      * @param int $currentPageNumber
      * @param array $attributes
+     * @param null|1|0 $includeBundle
+     * @param null|string $excludedCategories
      * @return object
      */
     public function getCatalogExportProductCollection($storeId, $currentPageNumber, $attributes, $includeBundle, $excludedCategories)
@@ -151,7 +153,9 @@ class Emarsysproductexport extends AbstractModel
                 ->setPageSize(self::BATCH_SIZE)
                 ->setCurPage($currentPageNumber)
                 ->addAttributeToSelect($attributes)
-                ->addAttributeToSelect(['visibility']);
+                ->addAttributeToSelect(['visibility', 'request_path'])
+                ->addUrlRewrite()
+                ->addPriceData();
 
             if (is_null($includeBundle)) {
                 $includeBundle = $store->getConfig(EmarsysDataHelper::XPATH_PREDICT_INCLUDE_BUNDLE_PRODUCT);
@@ -168,7 +172,17 @@ class Emarsysproductexport extends AbstractModel
                 $collection->addCategoriesFilter(['nin' => $excludedCategories]);
             }
 
-            $this->stockFilter->addInStockFilterToCollection($collection);
+            //If we have multistock (custom module) we have to add
+            //{{table}}.website_id = $store->getWebsiteId() to condition
+            $collection->joinField(
+                'inventory_in_stock',
+                'cataloginventory_stock_item',
+                'is_in_stock',
+                'product_id = entity_id',
+                null,
+                'left'
+            );
+
             return $collection;
         } catch (\Exception $e) {
             $this->logger->critical($e->getMessage());
@@ -266,7 +280,7 @@ class Emarsysproductexport extends AbstractModel
                                     $value = $value * $rate;
                                 }
                             }
-                            $this->_preparedData[$productId][$map[$key]] = $value;
+                            $this->_preparedData[$productId][$map[$key]] = str_replace(["\n", "\r"], "", $value);
                         }
                     }
                 }
