@@ -141,8 +141,9 @@ class Emarsysproductexport extends AbstractModel
                 ->setPageSize(self::BATCH_SIZE)
                 ->setCurPage($currentPageNumber)
                 ->addAttributeToSelect($attributes)
-                ->addAttributeToSelect(['visibility'])
-                ->addUrlRewrite();
+                ->addAttributeToSelect(['visibility', 'request_path'])
+                ->addUrlRewrite()
+                ->addPriceData();
 
             if (is_null($includeBundle)) {
                 $includeBundle = $store->getConfig(EmarsysHelperData::XPATH_PREDICT_INCLUDE_BUNDLE_PRODUCT);
