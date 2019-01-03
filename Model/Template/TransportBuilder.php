@@ -134,7 +134,6 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         }
 
         $emarsysEventApiID = $this->emarsysHelperData->getEmarsysEventApiId($magentoEventID, $storeId);
-        $emarsysEventApiID = 19;
         if (!$emarsysEventApiID) {
             $this->message->setMessageType($types[$template->getType()])
                 ->setBody($body)
