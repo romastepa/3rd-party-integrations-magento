@@ -134,6 +134,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         }
 
         $emarsysEventApiID = $this->emarsysHelperData->getEmarsysEventApiId($magentoEventID, $storeId);
+        $emarsysEventApiID = 19;
         if (!$emarsysEventApiID) {
             $this->message->setMessageType($types[$template->getType()])
                 ->setBody($body)
@@ -171,6 +172,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         }
 
         $processedVariables = [];
+        /** @var \Magento\Sales\Model\Order $order */
         if ($order = $template->checkOrder()) {
             $orderData = [];
             foreach ($order->getAllVisibleItems() as $item) {
@@ -194,6 +196,21 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             $processedVariables['shipment_items'] = $shipmentData;
 
             $processedVariables['shipment_tracks'] = $this->getShipmentTracks($shipment->getTracks());
+        }
+
+        /** @var \Magento\Sales\Model\Order\Invoice $invoce */
+        if ($invoice = $template->checkInvoice()) {
+            $invoiceData = [];
+            /** @var \Magento\Sales\Model\Order $rmaOrder */
+            $invoiceOrder = $invoice->getOrder();
+            /** @var \Magento\Sales\Model\Order\Invoice\Item $item */
+            foreach ($invoice->getItems() as $item) {
+                $invoiceOrderItem = $this->getOrderData($invoiceOrder->getItemById($item->getOrderItemId()));
+                $invoiceItem = $this->getInvoiceData($item);
+                $invoiceItem['order_item'] = $invoiceOrderItem;
+                $invoiceData[] = $invoiceItem;
+            }
+            $processedVariables['invoice_items'] = $invoiceData;
         }
 
         /** @var \Magento\Rma\Model\Rma $rma */
@@ -343,6 +360,46 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     }
 
     /**
+     * @param \Magento\Sales\Model\Order\Shipment\Item $item
+     * @return array
+     */
+    public function getShipmentData($item)
+    {
+        $item = $item->getData();
+        unset($item['order'], $item['source']);
+
+        return $item;
+    }
+
+    /**
+     * @param array
+     * @return array
+     */
+    public function getShipmentTracks($tracks)
+    {
+        $tracksInfo = [];
+
+        foreach ($tracks as $track) {
+            $tracksInfo[] = $track->getData();
+        }
+
+        return $tracksInfo;
+    }
+
+    /**
+     * @param \Magento\Sales\Model\Order\Invoice\Item $item
+     * @return array
+     */
+    public function getInvoiceData($item)
+    {
+        $item = $item->getData();
+        unset($item['invoice'], $item['order'], $item['source']);
+
+        return $item;
+    }
+
+
+    /**
      * @param \Magento\Rma\Model\Item $item
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -377,33 +434,6 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         }
 
         return $returnItem;
-    }
-
-    /**
-     * @param \Magento\Sales\Model\Order\Shipment\Item $item
-     * @return array
-     */
-    public function getShipmentData($item)
-    {
-        $item = $item->getData();
-        unset($item['order'], $item['source']);
-
-        return $item;
-    }
-
-    /**
-     * @param array
-     * @return array
-     */
-    public function getShipmentTracks($tracks)
-    {
-        $tracksInfo = [];
-
-        foreach ($tracks as $track) {
-            $tracksInfo[] = $track->getData();
-        }
-
-        return $tracksInfo;
     }
 }
 
