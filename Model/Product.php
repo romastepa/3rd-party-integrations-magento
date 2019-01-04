@@ -859,9 +859,9 @@ class Product extends AbstractModel
                     $attributeData[] = $url;
                     break;
                 case 'price':
-                    $price = $attributeOption;
-                    if (!$attributeOption && $productObject->getMinimalPrice()) {
-                        $price = $productObject->getMinimalPrice();
+                    $price = $productObject->getMinimalPrice();
+                    if ($price <= 0.0001) {
+                        $price = $attributeOption;
                     }
                     $attributeData[] = number_format($price, 2, '.', '');
                     break;
