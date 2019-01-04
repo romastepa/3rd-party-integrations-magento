@@ -828,7 +828,6 @@ class Product extends AbstractModel
                 case 'url_key':
                     $url = $productObject->getProductUrl();
                     if ($productObject->getVisibility() == Visibility::VISIBILITY_NOT_VISIBLE) {
-                        $url = '';
                         $parentProducts = $this->typeConfigurable->getParentIdsByChild($productObject->getId());
                         $this->_productTypeInstance = $this->typeConfigurable;
                         if (empty($parentProducts)) {
