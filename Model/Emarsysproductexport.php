@@ -154,8 +154,7 @@ class Emarsysproductexport extends AbstractModel
                 ->setCurPage($currentPageNumber)
                 ->addAttributeToSelect($attributes)
                 ->addAttributeToSelect(['visibility', 'request_path'])
-                ->addUrlRewrite()
-                ->addPriceData();
+                ->addUrlRewrite();
 
             if (is_null($includeBundle)) {
                 $includeBundle = $store->getConfig(EmarsysDataHelper::XPATH_PREDICT_INCLUDE_BUNDLE_PRODUCT);
@@ -180,6 +179,38 @@ class Emarsysproductexport extends AbstractModel
                 'is_in_stock',
                 'product_id = entity_id',
                 null,
+                'left'
+            );
+
+            //Minimal price left join
+            $connection = $collection->getSelect()->getConnection();
+
+            $cond = $connection->prepareSqlCondition('price_index.customer_group_id', 0)
+                . ' ' . \Magento\Framework\DB\Select::SQL_AND . ' '
+                . $connection->prepareSqlCondition('price_index.website_id', $store->getWebsiteId());
+
+            $least = $connection->getLeastSql(['price_index.min_price', 'price_index.tier_price']);
+            $minimalExpr = $connection->getCheckSql(
+                'price_index.tier_price IS NOT NULL',
+                $least,
+                'price_index.min_price'
+            );
+
+            $fields = [
+                'price',
+                'tax_class_id',
+                'final_price',
+                'minimal_price' => $minimalExpr,
+                'min_price',
+                'max_price',
+                'tier_price',
+            ];
+
+            $collection->joinTable(
+                ['price_index' => 'catalog_product_index_price'],
+                'entity_id = entity_id',
+                $fields,
+                $cond,
                 'left'
             );
 
