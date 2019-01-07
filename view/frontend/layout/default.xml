@@ -3,11 +3,10 @@
 /**
 * @category   Emarsys
 * @package    Emarsys_Emarsys
-* @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+* @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
 */
 -->
-<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-1column"
-      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="content.bottom">
             <container name="emarsys.wrapper" htmlTag="div" htmlClass="emarsys-wrapper" after="-" >
@@ -18,6 +17,5 @@
                 </block>
             </container>
         </referenceContainer>
-        <!--<move element="emarsys.wrapper" destination="page.bottom.container" after="-" />-->
     </body>
 </page>

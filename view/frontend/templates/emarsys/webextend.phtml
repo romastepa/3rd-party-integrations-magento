@@ -26,57 +26,69 @@
         })('https:' == document.location.protocol ? 'https://recommender' : 'http://cdn', 'scarab-js-api');
     </script>
 
-    <?php if ($helper->isTestModeEnabled()):?>
+    <?php if ($helper->isTestModeEnabled()): ?>
         <script>ScarabQueue.push(['testMode']);</script>
-    <?php endif;?>
-
-    <?php if ($currentCategory = $block->getCurrentCategory()): ?>
-        <script>ScarabQueue.push(['category', '<?php echo $currentCategory; ?>']);</script>
     <?php endif; ?>
 
-    <?php if ($currentProduct = $block->getCurrentProductSku()): ?>
-        <script>ScarabQueue.push(['view', '<?php echo $currentProduct; ?>']);</script>
-    <?php endif; ?>
+    <div id="webextend-code"></div>
+    <div id="webextend-cart"></div>
+    <script>
+        require([
+            'jquery'
+        ], function (jQuery) {
+            jQuery.ajax({
+                url: '<?php echo $block->getAjaxUpdateUrl() ?>',
+                data: {
+                    'unique_key': Math.floor((Math.random() * 1000000) + 1),
+                    'full_action_name': '<?php echo $block->getPageHandle(); ?>'
+                },
+                type: 'GET',
+                dataType: 'json',
+                success: function (result) {
+                    if (result.status == 1) {
+                        <?php if ($currentCategory = $block->getCurrentCategory()): ?>
+                        ScarabQueue.push(['category', '<?php echo $currentCategory; ?>']);
+                        <?php endif; ?>
 
-    <?php if ($searchResult = $block->getSearchResult()): ?>
-        <script>ScarabQueue.push(['searchTerm', '<?php echo $searchResult; ?>']);</script>
-    <?php endif; ?>
+                        <?php if ($currentProduct = $block->getCurrentProductSku()): ?>
+                        ScarabQueue.push(['view', '<?php echo $currentProduct; ?>']);
+                        <?php endif; ?>
 
-    <?php /* Script for an Ajax to avoid caching Issues */ ?>
-    <?php if ($helper->isAjaxUpdateEnabled()) : ?>
-        <script>
-            require([
-                'jquery',
-                'prototype'
-            ], function(jQuery){
-                document.observe('dom:loaded', function() {
-                    var unique_key_value = Math.random()*Math.random();
-                    jQuery.ajax({
-                        url: '<?php echo $block->getAjaxUpdateUrl() ?>',
-                        data: {
-                            'unique_key': unique_key_value,
-                            'full_action_name': '<?php echo $block->getPageHandle(); ?>'
-                        },
-                        type: 'GET',
-                        dataType: 'json',
-                        success: function (result) {
-                            if (result.status == 1) {
-                                jQuery('#webextend-code').html(result.content);
-                            }
-                        },
-                        error: function (xhr, textStatus, thrownError) {
-                            console.log("Emarsys WebExtend Ajax Error: " + thrownError);
+                        <?php if ($searchResult = $block->getSearchResult()): ?>
+                        ScarabQueue.push(['searchTerm', '<?php echo $searchResult; ?>']);
+                        <?php endif; ?>
+
+                        <?php if ($block->getStoreCode()): ?>
+                        ScarabQueue.push(['availabilityZone', '<?php echo $block->getStoreCode() ?>']);
+                        <?php endif; ?>
+                        jQuery('#webextend-code').html(result.content);
+                    }
+                },
+                error: function (xhr, textStatus, thrownError) {
+                    console.log("Emarsys WebExtend Ajax Error: " + thrownError);
+                }
+            });
+
+            var miniCart = jQuery('[data-block=\'minicart\']');
+            miniCart.on('cartUpdated', function () {
+                jQuery.ajax({
+                    url: '<?php echo $block->getAjaxUpdateCartUrl() ?>',
+                    data: {
+                        'unique_key': Math.random() * Math.random(),
+                        'full_action_name': '<?php echo $block->getPageHandle(); ?>'
+                    },
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (result) {
+                        if (result.status == 1) {
+                            jQuery('#webextend-cart').html(result.content);
                         }
-                    });
+                    },
+                    error: function (xhr, textStatus, thrownError) {
+                        console.log("Emarsys WebExtend Ajax Error: " + thrownError);
+                    }
                 });
             });
-        </script>
-        <div id="webextend-code"></div>
-    <?php else: ?>
-        <?php echo $this->getChildHtml('emarsys.javascripttracking'); ?>
-    <?php endif; ?>
+        });
+    </script>
 <?php endif; ?>
-
-
-
-

@@ -13,35 +13,26 @@
 <!-- This code will embeded on all pages -->
 <?php if ($customerBy == "customer_id" && $customerId = $block->getCustomerId()): ?>
     <script>ScarabQueue.push(["setCustomerId", "<?php echo $customerId; ?>"]);</script>
-<?php else: ?>
-    <?php if ($customerEmail = $block->getCustomerEmailAddress()): ?>
+<?php elseif ($customerEmail = $block->getCustomerEmailAddress()): ?>
         <script>ScarabQueue.push(["setEmail", "<?php echo $customerEmail; ?>"]);</script>
-    <?php endif; ?>
 <?php endif; ?>
 
 <script>ScarabQueue.push(["cart", [<?php echo $block->getCartItemsJsonData() ?>]]);</script>
 
-<?php
-$triggerGoCommand = true;
-if ($orders = $block->getOrderData()) {
-    foreach ($orders as $orderincrementId => $orderData) {
-        if (is_array($orderData)) {
-            $orderPageData = implode($orderData, ',');
-            if (isset($orderPageData)) {
-                echo '<script>ScarabQueue.push(["purchase", {
-                            orderId : "' . $orderincrementId . '",
-                            items : [' . $orderPageData . ']
-                        }]);</script>';
-                echo "<script>ScarabQueue.push(['go']);</script>";
-                $triggerGoCommand = false;
-            }
-        }
-    }
-}
-?>
+<?php if ($orders = $block->getOrderData()): ?>
+    <?php foreach ($orders as $orderIncrementId => $orderData): ?>
+        <?php if (is_array($orderData)): ?>
+            <?php $orderData = implode(',', $orderData); ?>
+            <?php if (!empty($orderData)): ?>
+                <script>
+                    ScarabQueue.push(["purchase", {
+                        orderId : "<?php echo $orderIncrementId; ?>",
+                        items : [<?php echo $orderData; ?>]
+                    }]);
+                </script>
+            <?php endif; ?>
+        <?php endif; ?>
+    <?php endforeach; ?>
+<?php endif; ?>
 
 <?php echo $this->getChildHtml('emarsys.recommendations'); ?>
-
-<?php if ($triggerGoCommand): ?>
-    <script>ScarabQueue.push(['go']);</script>
-<?php endif; ?>

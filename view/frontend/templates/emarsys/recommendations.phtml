@@ -2,102 +2,44 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 
 /** @var \Emarsys\Emarsys\Block\JavascriptTracking $block */
 ?>
-<?php $merchantId = $block->getMerchantId(); ?>
-<?php $webExtendStatus = $this->getJsEnableStatusForAllPages(); ?>
 
-<!-- This code will embeded on all pages -->
-<?php if ($webExtendStatus && !empty($merchantId)): ?>
-    <?php $pageHandleData = $block->getPageHandleStatus(); ?>
-    <?php $triggerGoCommand = false; ?>
-    <?php /* Recommendations Script  */ ?>
-    <?php if ($pageHandleData['status'] == 'Valid' && $pageHandleData['logic'] != ''): ?>
-
-        <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
-            <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
-                <div id="dept1"></div>
-                <div id="dept2"></div>
-                <div id="dept3"></div>
-                <div id="dept10"></div>
-                <script type="text/html" id="<?php echo $pageHandleData['templateId']; ?>">
-                    <![CDATA[
-                    <h4>{{=SC.title}}</h4>
-                    {{ for (var i=0; i < SC.page.products.length; i++) { }}
-                    {{ var p = SC.page.products[i]; }}
-                    <span data-scarabitem="{{= p.id }}" style="display: inline-block" class="rec-item">
-                      <a href="{{=p.link}}" target="_blank"><img src="{{=p.image}}" class="rec-image"
-                                                                 title="{{=p.title}}"></a>
-                  </span>
-                    {{ } }}
-                    ]]>
-                </script>
-                <script>
-                    for (var i = 1; i < 11; i++) {
-                        ScarabQueue.push(['recommend', {
-                            logic: 'DEPARTMENT_' + i,
-                            limit: 5,
-                            containerId: 'dept' + i,
-                            templateId: 'simple-tmpl',
-                            success: function (SC, render) {
-                                if (SC.topicLocalized) {
-                                    SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
-                                    render(SC);
-                                }
-                            }
-                        }]);
-                    }
-                </script>
-                <?php $triggerGoCommand = true; ?>
-            <?php endif; //if ($pageHandleData['logic'] == 'DEPARTMENT') ?>
-
-            <?php if ($pageHandleData['logic'] != 'DEPARTMENT'): ?>
-                <script type="text/html" id="<?php echo $pageHandleData['templateId']; ?>">
-                    <![CDATA[
-                    {{ if (SC.page.products.length) { }}
-                    <div class="scarab-itemlist">
-                        <div class="scarab-prev">◀</div>
-                        {{ for (var i=0; i < SC.page.products.length; i++) { }}
-                        {{ var p = SC.page.products[i]; }}
-              <span data-scarabitem="{{= p.id }}" class="scarab-item">
-                  <a href="{{= p.link }}">
-                      <img src="{{= p.image }}">
-                      {{= p.title }}
-                  </a>
-              </span>
-                        {{ } }}
-                        <div class="scarab-next">▶</div>
-                    </div>
-                    {{ } }}
-                    ]]>
-                </script>
-                <script>
-                    ScarabQueue.push(['recommend', {
-                        logic: '<?php echo $pageHandleData["logic"]; ?>',
-                        containerId: 'recommended-product',
-                        templateId: '<?php echo $pageHandleData['templateId']; ?>',
-                        limit: '6'
-                    }]);
-
-                </script>
-                <div id="recommended-product-container">
-                    <div id="recommended-product"></div>
-                </div>
-                <?php $triggerGoCommand = true; ?>
-            <?php endif; //if ($pageHandleData['logic'] != 'DEPARTMENT') ?>
-        <?php endif; //if ($pageHandleData['logic'] != 'HOME_') ?>
-
-        <?php if ($pageHandleData['logic'] == "HOME_"): ?>
+<?php $pageHandleData = $block->getPageHandleStatus(); ?>
+<?php if ($pageHandleData['status'] == 'Valid' && $pageHandleData['logic'] != ''): ?>
+    <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
+        <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
+            <div id="dept1"></div>
+            <div id="dept2"></div>
+            <div id="dept3"></div>
+            <div id="dept4"></div>
+            <div id="dept5"></div>
+            <div id="dept6"></div>
+            <div id="dept7"></div>
+            <div id="dept8"></div>
+            <div id="dept9"></div>
+            <div id="dept10"></div>
+            <script type="text/html" id="<?php echo $pageHandleData['templateId']; ?>">
+                <![CDATA[
+                <h4>{{=SC.title}}</h4>
+                {{ for (var i=0; i < SC.page.products.length; i++) { }}
+                {{ var p = SC.page.products[i]; }}
+                <span data-scarabitem="{{= p.id }}" style="display: inline-block" class="rec-item">
+                    <a href="{{=p.link}}" target="_blank"><img src="{{=p.image}}" class="rec-image"title="{{=p.title}}"></a>
+                </span>
+                {{ } }}
+                ]]>
+            </script>
             <script>
                 for (var i = 1; i < 11; i++) {
                     ScarabQueue.push(['recommend', {
-                        logic: '<?php echo $pageHandleData['logic'] ?>' + i,
-                        limit: 6,
-                        containerId: 'home' + i,
-                        templateId: '<?php echo $pageHandleData['templateId'] ?>',
+                        logic: 'DEPARTMENT_' + i,
+                        limit: 5,
+                        containerId: 'dept' + i,
+                        templateId: 'simple-tmpl',
                         success: function (SC, render) {
                             if (SC.topicLocalized) {
                                 SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
@@ -107,91 +49,140 @@
                     }]);
                 }
             </script>
+        <?php endif; ?>
 
-            <!-- HOME recommendations will be rendered in div#home1...div#home10 -->
-            <div id="home1"></div>
-            <div id="home2"></div>
-            <div id="home3"></div>
-            <div id="home4"></div>
-            <div id="home5"></div>
-            <div id="home6"></div>
-            <div id="home7"></div>
-            <div id="home8"></div>
-            <div id="home9"></div>
-            <div id="home10"></div>
-
-            <script type="text/html" id="simple-tmpl">
+        <?php if ($pageHandleData['logic'] != 'DEPARTMENT'): ?>
+            <script type="text/html" id="<?php echo $pageHandleData['templateId']; ?>">
                 <![CDATA[
-                <h4>{{=SC.title}}</h4>
-                {{ for (var i=0; i < SC.page.products.length; i++) { }}
-                {{ var p = SC.page.products[i]; }}
-                <span data-scarabitem="{{= p.id }}" style="display: inline-block" class="rec-item">
-              <a href="{{=p.link}}" target="_blank"><img src="{{=p.image}}" class="rec-image" title="{{=p.title}}"></a>
-          </span>
+                {{ if (SC.page.products.length) { }}
+                <div class="scarab-itemlist">
+                    <div class="scarab-prev">◀</div>
+                    {{ for (var i=0; i < SC.page.products.length; i++) { }}
+                    {{ var p = SC.page.products[i]; }}
+                    <span data-scarabitem="{{= p.id }}" class="scarab-item">
+                        <a href="{{= p.link }}"><img src="{{= p.image }}">{{= p.title }}</a>
+                    </span>
+                    {{ } }}
+                    <div class="scarab-next">▶</div>
+                </div>
                 {{ } }}
                 ]]>
             </script>
-            <?php $triggerGoCommand = true; ?>
-        <?php endif; //if ($pageHandleData['logic'] == "HOME_") ?>
-        <style>
-            .rec-item {
-                text-align: center;
-            }
+            <script>
+                ScarabQueue.push(['recommend', {
+                    logic: '<?php echo $pageHandleData["logic"]; ?>',
+                    containerId: 'recommended-product',
+                    templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                    limit: '6'
+                }]);
 
-            .rec-image {
-                max-width: 80px;
-                max-height: 80px;
-            }
+            </script>
+            <div id="recommended-product-container">
+                <div id="recommended-product"></div>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
 
-            .scarab-itemlist {
-                padding: 0px 20px;
-                position: relative;
-                border: 1px solid #C5D7EF;
+    <?php if ($pageHandleData['logic'] == "HOME_"): ?>
+        <script>
+            for (var i = 1; i < 11; i++) {
+                ScarabQueue.push(['recommend', {
+                    logic: '<?php echo $pageHandleData['logic'] ?>' + i,
+                    limit: 6,
+                    containerId: 'home' + i,
+                    templateId: '<?php echo $pageHandleData['templateId'] ?>',
+                    success: function (SC, render) {
+                        if (SC.topicLocalized) {
+                            SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                            render(SC);
+                        }
+                    }
+                }]);
             }
+        </script>
 
-            .scarab-item {
-                display: inline-block;
-                width: 120px;
-                margin: 5px;
-                vertical-align: top;
-                font-size: 12px;
-                font-family: Arial, sans-serif;
-                text-align: center;
-            }
+        <div id="home1"></div>
+        <div id="home2"></div>
+        <div id="home3"></div>
+        <div id="home4"></div>
+        <div id="home5"></div>
+        <div id="home6"></div>
+        <div id="home7"></div>
+        <div id="home8"></div>
+        <div id="home9"></div>
+        <div id="home10"></div>
 
-            .scarab-item img {
-                max-width: 100px;
-                max-height: 100px;
-                display: block;
-                margin: 0px auto;
-                border: 0px;
-            }
+        <script type="text/html" id="simple-tmpl">
+            <![CDATA[
+            <h4>{{=SC.title}}</h4>
+            {{ for (var i=0; i < SC.page.products.length; i++) { }}
+            {{ var p = SC.page.products[i]; }}
+            <span data-scarabitem="{{= p.id }}" style="display: inline-block" class="rec-item">
+                <a href="{{=p.link}}" target="_blank"><img src="{{=p.image}}" class="rec-image" title="{{=p.title}}"></a>
+            </span>
+            {{ } }}
+            ]]>
+        </script>
+    <?php endif; ?>
+    <style>
+        .rec-item {
+            text-align: center;
+        }
 
-            .scarab-prev, .scarab-next {
-                position: absolute;
-                width: 20px;
-                height: 20px;
-                line-height: 20px;
-                top: 50%;
-                margin-top: -10px;
-                cursor: pointer;
-                text-align: center;
-                font-size: 16px;
-                color: #C5D7EF;
-            }
+        .rec-image {
+            max-width: 80px;
+            max-height: 80px;
+        }
 
-            .scarab-prev {
-                left: 0px;
-            }
+        .scarab-itemlist {
+            padding: 0px 20px;
+            position: relative;
+            border: 1px solid #C5D7EF;
+        }
 
-            .scarab-next {
-                right: 0px;
-            }
+        .scarab-item {
+            display: inline-block;
+            width: 120px;
+            margin: 5px;
+            vertical-align: top;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
 
-            .scarab-disabled-button {
-                cursor: default;
-                opacity: 0.4;
-            }
-        </style>
-    <?php endif; //if ($pageHandleData['status'] == 'Valid') ?>
+        .scarab-item img {
+            max-width: 100px;
+            max-height: 100px;
+            display: block;
+            margin: 0px auto;
+            border: 0px;
+        }
+
+        .scarab-prev, .scarab-next {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            top: 50%;
+            margin-top: -10px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 16px;
+            color: #C5D7EF;
+        }
+
+        .scarab-prev {
+            left: 0px;
+        }
+
+        .scarab-next {
+            right: 0px;
+        }
+
+        .scarab-disabled-button {
+            cursor: default;
+            opacity: 0.4;
+        }
+    </style>
 <?php endif; ?>
+<script>ScarabQueue.push(['go']);</script>

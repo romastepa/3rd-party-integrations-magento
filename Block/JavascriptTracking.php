@@ -301,6 +301,19 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Get Ajax Update Url
+     *
+     * @return string
+     */
+    public function getAjaxUpdateCartUrl()
+    {
+        return $this->getUrl(
+            'emarsys/index/ajaxUpdateCart',
+            ['_secure' => true]
+        );
+    }
+
+    /**
      * Get Merchant Id from DB
      *
      * @return array
@@ -574,5 +587,19 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
         }
 
         return $customerEmail;
+    }
+
+    /**
+     * Get Store Code
+     *
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getStoreCode()
+    {
+        if ($this->storeManager->getStore()->isDefault()) {
+            return '';
+        }
+        return $this->storeManager->getStore()->getCode();
     }
 }
