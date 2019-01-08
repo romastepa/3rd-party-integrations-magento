@@ -204,14 +204,11 @@
                     </depends>
                 </field>
             </group>
-            <group id="subscription_checkout_process" type="text" sortOrder="12" showInDefault="1" showInWebsite="1"
-                   showInStore="0">
+            <group id="subscription_checkout_process" type="text" sortOrder="12" showInDefault="0" showInWebsite="1" showInStore="0">
                 <label>Subscription: Checkout process</label>
-                <field id="newsletter_sub_checkout_yes_no" translate="label comment" sortOrder="10" type="select"
-                       showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="newsletter_sub_checkout_yes_no" translate="label comment" sortOrder="10" type="select" showInDefault="0" showInWebsite="1" showInStore="0">
                     <label>Newsletter Subscription on Checkout</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment> <![CDATA[Add the following code snippet in the frontend di.xml file in order to display the NewsLetter Subscription Checkbox in checkout page:<br/><br/><i><textarea disabled rows="6" cols="50">&lt;type name="Magento\Checkout\Block\Checkout\LayoutProcessor"&gt; &lt;plugin name="subscription" type="Emarsys\Emarsys\Plugin\Checkout\Model\Checkout\LayoutProcessor"/&gt;&lt;/type&gt;</textarea></i>]]></comment>
                 </field>
             </group>
         </section>
