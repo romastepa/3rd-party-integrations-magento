@@ -846,7 +846,7 @@ class Order extends AbstractModel
                     }
 
                     if ($rowTotal != '') {
-                        $values[] = '-' . number_format($rowTotal, 2, '.', '');
+                        $values[] = '-' . number_format(abs($rowTotal), 2, '.', '');
                     } else {
                         $values[] = 0;
                     }
