@@ -852,7 +852,7 @@ class Order extends AbstractModel
                     }
 
                     //set quantity
-                    $values[] = $qty;
+                    $values[] = '-' . abs((int)$qty);
 
                     foreach ($emasysFields as $field) {
                         $emarsysOrderFieldValueOrder = trim($field['emarsys_order_field']);
@@ -887,10 +887,10 @@ class Order extends AbstractModel
                     $values[] = 0;
 
                     //set Unit Prices
-                    $values[] = $creditMemo->getAdjustment();
+                    $values[] =  '-' . number_format(abs($creditMemo->getAdjustment()), 2, '.', '');
 
                     //set quantity
-                    $values[] = 1;
+                    $values[] = -1;
 
                     foreach ($emasysFields as $field) {
                         $emarsysOrderFieldValueAdjustment = trim($field['emarsys_order_field']);
