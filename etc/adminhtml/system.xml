@@ -134,47 +134,18 @@
             <class>separator-top</class>
             <label>Contact Synchronization</label>
             <tab>emarsys_connect</tab>
-            <resource>Emarsys_Emarsys::emarsys</resource>
-            <group id="emarsys_emarsys" type="text" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
-                <label>Contact Synchronization Settings</label>
-                <field id="realtime_sync" translate="label comment" sortOrder="24" type="select" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
-                    <label>Realtime-failsafe</label>
+            <resource>Emarsys_Emarsys::settings</resource>
+            <group id="enable" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                <label>Contact Synchronization</label>
+                <field id="contact_feed" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="background_runtime" translate="label comment" sortOrder="25" type="time" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
-                    <label>Background Runtime</label>
-                    <source_model>Emarsys\Emarsys\Model\Config\Source\Backgroundruntime</source_model>
-                </field>
-                <field id="background_frequency" translate="label comment" sortOrder="26" type="select"
-                       showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Background Frequency</label>
-                    <source_model>Emarsys\Emarsys\Model\Config\Source\Frequency</source_model>
-                    <backend_model>Emarsys\Emarsys\Model\Config\CronConfig</backend_model>
-                    <comment>If you select Hourly,Hours and Minutes not applicable together</comment>
-                </field>
-                <field id="unique_field" translate="label comment" sortOrder="27" type="select" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
-                    <label>Unique Field</label>
-                    <source_model>Emarsys\Emarsys\Model\Config\Source\Uniquefield</source_model>
-                </field>
-                <field id="notification_secret_key" translate="label" type="text" sortOrder="30" showInDefault="1"
-                       showInWebsite="0" showInStore="0">
-                    <label>Notification secret key</label>
-                </field>
             </group>
-            <group id="initial_db_load" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
-                <label>Initial DB Load</label>
-                <field id="initial_db_load" translate="label" type="text" sortOrder="10" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
-                    <label>Initial Load DB</label>
-                    <frontend_model>Emarsys\Emarsys\Block\System\Config\Form\InitialLoadDb</frontend_model>
-                </field>
-                <field id="upload_initial_data" translate="button_label" sortOrder="11" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
-                    <button_label>Export</button_label>
-                    <frontend_model>Emarsys\Emarsys\Block\System\Config\Button\UploadInitialDataButton</frontend_model>
+            <group id="emarsys_emarsys" type="text" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+                <label>Contact Synchronization Settings</label>
+                <field id="notification_secret_key" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Notification secret key</label>
                 </field>
             </group>
         </section>
@@ -182,36 +153,27 @@
             <class>separator-top</class>
             <label>Opt-In</label>
             <tab>emarsys_connect</tab>
-            <resource>Emarsys_Emarsys::emarsys</resource>
+            <resource>Emarsys_Emarsys::settings</resource>
             <group id="optin_enable" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
                 <label>Enable Opt In</label>
-                <field id="enable_optin" translate="label" type="select" sortOrder="20" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
+                <field id="enable_optin" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable Opt In</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="opt_in_strategy" translate="label comment" sortOrder="30" type="select" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
+                <field id="opt_in_strategy" translate="label comment" sortOrder="30" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Opt-In Strategy</label>
                     <source_model>Emarsys\Emarsys\Model\Config\Source\OptInStrategy</source_model>
                 </field>
-                <field id="force_optin_confirmation" translate="label" type="select" sortOrder="40" showInDefault="0"
-                       showInWebsite="0" showInStore="0">
+                <field id="force_optin_confirmation" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Force Optin Confirmation</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <depends>
-                        <field id="opt_in_strategy">doubleOptIn</field>
-                    </depends>
                 </field>
             </group>
-            <group id="subscription_checkout_process" type="text" sortOrder="12" showInDefault="1" showInWebsite="1"
-                   showInStore="0">
+            <group id="subscription_checkout_process" type="text" sortOrder="12" showInDefault="0" showInWebsite="1" showInStore="0">
                 <label>Subscription: Checkout process</label>
-                <field id="newsletter_sub_checkout_yes_no" translate="label comment" sortOrder="10" type="select"
-                       showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="newsletter_sub_checkout_yes_no" translate="label comment" sortOrder="10" type="select" showInDefault="0" showInWebsite="1" showInStore="0">
                     <label>Newsletter Subscription on Checkout</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment> <![CDATA[Add the following code snippet in the frontend di.xml file in order to display the NewsLetter Subscription Checkbox in checkout page:<br/><br/><i><textarea disabled rows="6" cols="50">&lt;type name="Magento\Checkout\Block\Checkout\LayoutProcessor"&gt; &lt;plugin name="subscription" type="Emarsys\Emarsys\Plugin\Checkout\Model\Checkout\LayoutProcessor"/&gt;&lt;/type&gt;</textarea></i>]]></comment>
                 </field>
             </group>
         </section>

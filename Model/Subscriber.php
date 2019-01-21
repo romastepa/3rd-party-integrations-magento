@@ -29,7 +29,7 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $emarsysHelper = $objectManager->get('\Emarsys\Emarsys\Helper\Data');
         $websiteId = $this->_storeManager->getStore()->getWebsiteId();
-        if ($emarsysHelper->isEmarsysEnabled($websiteId) == 'false') {
+        if (!$emarsysHelper->isEmarsysEnabled($websiteId)) {
             return parent::subscribe($email);
         } else {
            return $this->subscribeByEmarsys($email);

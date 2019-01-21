@@ -11,7 +11,6 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Registry;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\CustomerFactory;
 use Emarsys\Emarsys\Helper\Data;
 use Emarsys\Emarsys\Model\Api\Contact;
@@ -90,6 +89,7 @@ class AfterAddressSaveObserver implements ObserverInterface
 
     /**
      * @param Observer $observer
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute(Observer $observer)
     {
@@ -108,27 +108,18 @@ class AfterAddressSaveObserver implements ObserverInterface
                 return;
             }
 
-            if (!$this->dataHelper->isEmarsysEnabled($websiteId)) {
+            if (!$this->dataHelper->isContactsSynchronizationEnable($websiteId)) {
                 return;
             }
 
-            $realTimeStatus = $this->customerResourceModel->getDataFromCoreConfig(
-                Data::XPATH_EMARSYS_REALTIME_SYNC,
-                ScopeInterface::SCOPE_WEBSITE,
-                $websiteId
-            );
-
             $storeId = $customerObj->getStoreId();
-            if ($realTimeStatus) {
-                $customerVar = 'create_customer_variable_' . $customerId;
-                if ($this->registry->registry($customerVar) == 'created') {
-                    return;
-                }
-                $this->contactModel->syncContact($customerId, $websiteId, $storeId);
-                $this->registry->register($customerVar, 'created');
-            } else {
-                $this->dataHelper->syncFail($customerId, $websiteId, $storeId, 0, 1);
+
+            $customerVar = 'create_customer_variable_' . $customerId;
+            if ($this->registry->registry($customerVar) == 'created') {
+                return;
             }
+            $this->contactModel->syncContact($customer, $websiteId, $storeId);
+            $this->registry->register($customerVar, 'created');
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),

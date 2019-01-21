@@ -7,10 +7,8 @@
 namespace Emarsys\Emarsys\Cron;
 
 use Emarsys\Emarsys\Helper\Cron as EmarsysCronHelper;
-use Magento\Framework\Json\Helper\Data;
 use Emarsys\Emarsys\Model\WebDav\WebDav;
 use Emarsys\Emarsys\Model\Logs;
-use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class CustomerBulkExportWebDav
@@ -24,11 +22,6 @@ class CustomerBulkExportWebDav
     protected $cronHelper;
 
     /**
-     * @var Data
-     */
-    protected $jsonHelper;
-
-    /**
      * @var WebDav
      */
     protected $webDavModel;
@@ -39,30 +32,19 @@ class CustomerBulkExportWebDav
     protected $emarsysLogs;
 
     /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager ;
-
-    /**
      * CustomerBulkExportWebDav constructor.
      * @param EmarsysCronHelper $cronHelper
-     * @param Data $jsonHelper
      * @param WebDav $webDavModel
      * @param Logs $emarsysLogs
-     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         EmarsysCronHelper $cronHelper,
-        Data $jsonHelper,
         WebDav $webDavModel,
-        Logs $emarsysLogs,
-        StoreManagerInterface $storeManager
+        Logs $emarsysLogs
     ) {
         $this->cronHelper = $cronHelper;
-        $this->jsonHelper = $jsonHelper;
         $this->webDavModel = $webDavModel;
         $this->emarsysLogs = $emarsysLogs;
-        $this->storeManager = $storeManager;
     }
 
     public function execute()
@@ -71,9 +53,13 @@ class CustomerBulkExportWebDav
             $currentCronInfo = $this->cronHelper->getCurrentCronInformation(
                 EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_WEBDAV
             );
-            if (!$currentCronInfo) return;
 
-            $data = $this->jsonHelper->jsonDecode($currentCronInfo->getParams());
+            if (!$currentCronInfo) {
+                return;
+            }
+
+            $data = \Zend_Json::decode($currentCronInfo->getParams());
+
             $this->webDavModel->syncFullContactUsingWebDav(
                 EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_WEBDAV,
                 $data
@@ -81,7 +67,7 @@ class CustomerBulkExportWebDav
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
+                0,
                 'CustomerBulkExportWebDav::execute()'
             );
         }
