@@ -15,7 +15,7 @@ use Magento\{
 };
 use Emarsys\Emarsys\{
     Model\ResourceModel\Customer,
-    Helper\Data as EmarsysHelperData,
+    Helper\Data as EmarsysHelper,
     Helper\Logs,
     Helper\Country as EmarsysCountryHelper
 };
@@ -27,7 +27,7 @@ use Emarsys\Emarsys\{
 class Contact extends \Magento\Framework\DataObject
 {
     /**
-     * @var EmarsysHelperData
+     * @var EmarsysHelper
      */
     protected $emarsysHelper;
 
@@ -72,7 +72,7 @@ class Contact extends \Magento\Framework\DataObject
 
     /**
      * Contact constructor.
-     * @param EmarsysHelperData $emarsysHelper
+     * @param EmarsysHelper $emarsysHelper
      * @param CustomerFactory $customer
      * @param Context $context
      * @param DateTime $date
@@ -84,7 +84,7 @@ class Contact extends \Magento\Framework\DataObject
      * @param array $data
      */
     public function __construct(
-        EmarsysHelperData $emarsysHelper,
+        EmarsysHelper $emarsysHelper,
         CustomerFactory $customer,
         Context $context,
         DateTime $date,
@@ -170,18 +170,18 @@ class Contact extends \Magento\Framework\DataObject
                         $headerIndex = [];
                         $indexCount = 0;
                         foreach ($mappedAttributes as $att) {
-                            if ($att['emarsys_contact_field'] == NULL)
+                            if ($att['emarsys_contact_field'] == NULL) {
                                 continue;
-                            $emarsysField = $this->customerResourceModel->getEmarsysFieldNameContact($att, $storeId);
-                            $headers[$att['magento_custom_attribute_id']] = $emarsysField['name'];
+                            }
+                            $headers[$att['magento_custom_attribute_id']] = $this->customerResourceModel->getEmarsysFieldNameContact($att, $storeId);
                             $headerIndex[$indexCount] = $att['magento_custom_attribute_id'];
                             $indexCount++;
                         }
 
-                        $headers['magento_customer_id'] = EmarsysHelperData::CUSTOMER_ID;
+                        $headers['magento_customer_id'] = EmarsysHelper::CUSTOMER_ID;
                         $headerIndex[$indexCount] = 'magento_customer_id';
                         if (!in_array('Email', $headers)) {
-                            $headers['email'] = EmarsysHelperData::CUSTOMER_EMAIL;
+                            $headers['email'] = EmarsysHelper::CUSTOMER_EMAIL;
                             $indexCount = $indexCount + 1;
                             $headerIndex[$indexCount] = 'email';
                         }
@@ -208,10 +208,10 @@ class Contact extends \Magento\Framework\DataObject
                                 $attributeCode = $this->customerResourceModel->getMagentoAttributeCode($key, $storeId);
 
                                 //code for the custom defined attributes in the array starts
-                                if ($value == EmarsysHelperData::CUSTOMER_ID) {
+                                if ($value == EmarsysHelper::CUSTOMER_ID) {
                                     $index = array_search($key, $headerIndex);
                                     $customerValues[$index] = $customerLoad->getId();
-                                } elseif ($value == EmarsysHelperData::CUSTOMER_EMAIL) {
+                                } elseif ($value == EmarsysHelper::CUSTOMER_EMAIL) {
                                     $index = array_search($key, $headerIndex);
                                     $customerValues[$index] = $customerLoad->getEmail();
                                 } elseif ($attributeCode['entity_type_id'] == 1) {

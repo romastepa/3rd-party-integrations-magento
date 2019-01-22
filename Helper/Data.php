@@ -2161,11 +2161,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         try {
             $fieldId = $this->customerResourceModel->getKeyId(self::OPT_IN, $subscriber->getStoreId());
 
-            $keyValue = $subscriber->getSubscriberEmail();
-
             $payload = [
                 'key_id' => $this->customerResourceModel->getKeyId(self::CUSTOMER_EMAIL, $subscriber->getStoreId()),
-                'key_value' => $keyValue,
+                'key_value' => $subscriber->getSubscriberEmail(),
                 'field_id' => $fieldId,
             ];
 
@@ -2174,7 +2172,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             if (isset($response['data']['time'])) {
                 $emarsysTime = $response['data']['time'];
-                $EmarsysOptinChangeTime = $this->convertToUtc($emarsysTime);
+                $emarsysOptinChangeTime = $this->convertToUtc($emarsysTime);
                 $magentoOptinChangeTime = $subscriber->getChangeStatusAt();
 
                 if (isset($response['data']['current_value'])) {
@@ -2182,7 +2180,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 }
                 $magentoOptinValue = $subscriber->getSubscriberStatus();
 
-                if ((($EmarsysOptinChangeTime == $magentoOptinChangeTime) || ($EmarsysOptinChangeTime >= $magentoOptinChangeTime))
+                if ((($emarsysOptinChangeTime == $magentoOptinChangeTime) || ($emarsysOptinChangeTime >= $magentoOptinChangeTime))
                     && $emarsysOptinValue != $magentoOptinValue
                 ) {
                     if ($emarsysOptinValue == 1) {
@@ -2225,7 +2223,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $acst_date = clone $emarsysDate; // we don't want PHP's default pass object by reference here
             $acst_date->setTimeZone(new \DateTimeZone('UTC'));
 
-            return $EmarsysOptinChangeTime = $acst_date->format('Y-m-d H:i:s');  // UTC:  2011-04-27 2:exit;
+            return $emarsysOptinChangeTime = $acst_date->format('Y-m-d H:i:s');  // UTC:  2011-04-27 2:exit;
 
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(

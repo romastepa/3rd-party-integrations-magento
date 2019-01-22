@@ -176,57 +176,38 @@ class Customer extends AbstractDb
 
     /**
      * @param $attributeCode
+     * @param $storeId
      * @return string
      */
-    public function getCustomerAttributeId($attributeCode)
+    public function getCustomerAttributeId($attributeCode, $storeId)
     {
-        if (strpos($attributeCode, 'BILLADD_') !== false) {
+        if (strpos($attributeCode, 'default_billing_') !== false
+            || strpos($attributeCode, 'default_shipping_') !== false
+        ) {
             $entityTypeId = 2;
-            $attributeCode = str_replace('BILLADD_', '', $attributeCode);
         } else {
             $entityTypeId = 1;
         }
 
         $select = $this->getConnection()
             ->select()
-            ->from($this->getTable('eav_attribute'), 'attribute_id')
-            ->where('attribute_code = ?', $attributeCode)
-            ->where('entity_type_id = ?', $entityTypeId);
+            ->from(['main_table' => $this->getTable('eav_attribute')], 'main_table.attribute_id')
+            ->join(
+                ['emca' => $this->getTable('emarsys_magento_customer_attributes')],
+                $this->getConnection()->quoteInto('emca.attribute_code = main_table.attribute_code AND emca.entity_type_id = ?',  $entityTypeId)
+                . $this->getConnection()->quoteInto(' AND emca.attribute_code_custom = ?', $attributeCode)
+                . $this->getConnection()->quoteInto(' AND emca.store_id = ?', (int)$storeId),
+                []
+            )
+            ->where('main_table.entity_type_id = ?', $entityTypeId);
 
         $attributeId = $this->getConnection()->fetchOne($select);
 
         if ($attributeId) {
             return $attributeId;
         } else {
-            return '';
+            return 0;
         }
-    }
-
-    /**
-     * ?
-     * @param $magentoAttributeCode
-     * @param $emarsysContactId
-     * @param $storeId
-     * @param $entityType
-     * @return string
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function checkSelectedField($magentoAttributeCode, $emarsysContactId, $storeId, $entityType)
-    {
-        $select = $this->getConnection()
-            ->select()
-            ->from(['ecfm' => $this->getMainTable()], ['assigned' => 'count(*)'])
-            ->join(
-                ['eav' => $this->getTable('eav_attribute')],
-                'eav.attribute_id = ecfm.magento_attribute_id',
-                []
-            )
-            ->where('eav.attribute_code = ?', $magentoAttributeCode)
-            ->where('ecfm.emarsys_contact_field = ?', $emarsysContactId)
-            ->where('eav.entity_type_id = ?', $entityType)
-            ->where('ecfm.store_id = ?', $storeId);
-
-        return $this->getConnection()->fetchOne($select);
     }
 
     /**
@@ -369,7 +350,7 @@ class Customer extends AbstractDb
             if ($scope && $scopeId) {
                 return $this->scopeConfigInterface->getValue($path, $scope, $scopeId);
             } else {
-                return  $this->scopeConfigInterface->getValue($path);
+                return $this->scopeConfigInterface->getValue($path);
             }
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog($e->getMessage(), $scopeId, 'getDataFromCoreConfig in Customer.php');
@@ -417,41 +398,6 @@ class Customer extends AbstractDb
             ->where('store_id = ?', $storeId);
 
         return $this->getConnection()->fetchOne($select);
-    }
-
-    /**
-     * @return \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection
-     */
-    public function getAllCustomerAttributes()
-    {
-        $entitiesToMerge = ['customer_address', 'customer'];
-        $entitiesData = [];
-        // get the entities objects and data
-        if (!empty($entitiesToMerge)) {
-            foreach ($entitiesToMerge as $entityCode) {
-                $entity = $this->entityType->loadByCode($entityCode);
-                $entitiesData['id'][] = $entity->getId();
-                $entitiesData['additional'][] = $entity->getAdditionalAttributeTable();
-            }
-        }
-
-        $entitiesData['id'] = array_unique($entitiesData['id']);
-        $entitiesData['additional'] = array_unique($entitiesData['additional']);
-        $customCollection = $this->attribute->getCollection();
-        $customCollection->addFieldToFilter('main_table.entity_type_id', ['in' => $entitiesData['id']]);
-        $customCollection->addFieldToFilter('frontend_label', ['notnull' => true]);
-
-        if (!empty($entitiesData['additional'])) {
-            foreach ($entitiesData['additional'] as $idx => $additionalTable) {
-                $customCollection->join(
-                    ['additional_table_' . $idx => $additionalTable],
-                    'additional_table_' . $idx . '.attribute_id = main_table.attribute_id'
-                );
-            }
-        }
-        $customCollection->setOrder('main_table.entity_type_id', 'asc');
-
-        return $customCollection;
     }
 
     /**
@@ -661,7 +607,7 @@ class Customer extends AbstractDb
             ->where('attribute_code_custom = ?', $attributeCode)
             ->where('store_id = ?', $storeId);
 
-        return $this->getConnection()->fetchRow($select);
+        return $this->getConnection()->fetchOne($select);
     }
 
     /**
