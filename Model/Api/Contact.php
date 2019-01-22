@@ -192,8 +192,8 @@ class Contact
         }
 
         $buildRequest = [];
-
         $emailKey = $this->customerResourceModel->getKeyId(EmarsysHelperData::CUSTOMER_EMAIL, $storeId);
+        $buildRequest['key_id'] = $emailKey;
         if ($emailKey && $customer->getEmail()) {
             $buildRequest[$emailKey] = $customer->getEmail();
         }

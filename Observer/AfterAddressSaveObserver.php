@@ -26,7 +26,7 @@ class AfterAddressSaveObserver implements ObserverInterface
     /**
      * @var Data
      */
-    private $dataHelper;
+    private $emarsysHelper;
 
     /**
      * @var Registry
@@ -61,7 +61,7 @@ class AfterAddressSaveObserver implements ObserverInterface
     /**
      * AfterAddressSaveObserver constructor.
      *
-     * @param Data $dataHelper
+     * @param Data $emarsysHelper
      * @param Registry $registry
      * @param Contact $contactModel
      * @param StoreManagerInterface $storeManager
@@ -70,7 +70,7 @@ class AfterAddressSaveObserver implements ObserverInterface
      * @param CustomerFactory $customerFactory
      */
     public function __construct(
-        Data $dataHelper,
+        Data $emarsysHelper,
         Registry $registry,
         Contact $contactModel,
         StoreManagerInterface $storeManager,
@@ -78,7 +78,7 @@ class AfterAddressSaveObserver implements ObserverInterface
         Logs $emarsysLogs,
         CustomerFactory $customerFactory
     ) {
-        $this->dataHelper = $dataHelper;
+        $this->emarsysHelper = $emarsysHelper;
         $this->registry = $registry;
         $this->contactModel = $contactModel;
         $this->storeManager = $storeManager;
@@ -108,7 +108,7 @@ class AfterAddressSaveObserver implements ObserverInterface
                 return;
             }
 
-            if (!$this->dataHelper->isContactsSynchronizationEnable($websiteId)) {
+            if (!$this->emarsysHelper->isContactsSynchronizationEnable($websiteId)) {
                 return;
             }
 

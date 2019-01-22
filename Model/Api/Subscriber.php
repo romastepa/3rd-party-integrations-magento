@@ -171,8 +171,8 @@ class Subscriber
         $objSubscriber = $this->subscriberFactory->create()->load($subscribeId);
 
         $buildRequest = [];
-        $buildRequest['key_id'] = $this->customerResourceModel->getKeyId(EmarsysHelper::CUSTOMER_EMAIL, $storeId);
         $emailKey = $this->customerResourceModel->getKeyId(EmarsysHelper::CUSTOMER_EMAIL, $storeId);
+        $buildRequest['key_id'] = $emailKey;
         if ($emailKey && $objSubscriber->getSubscriberEmail()) {
             $buildRequest[$emailKey] = $objSubscriber->getSubscriberEmail();
         }
