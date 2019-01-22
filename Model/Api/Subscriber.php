@@ -171,6 +171,7 @@ class Subscriber
         $objSubscriber = $this->subscriberFactory->create()->load($subscribeId);
 
         $buildRequest = [];
+        $buildRequest['key_id'] = $this->customerResourceModel->getKeyId(EmarsysHelperData::CUSTOMER_EMAIL, $storeId);
         $emailKey = $this->customerResourceModel->getKeyId(EmarsysHelperData::CUSTOMER_EMAIL, $storeId);
         if ($emailKey && $objSubscriber->getSubscriberEmail()) {
             $buildRequest[$emailKey] = $objSubscriber->getSubscriberEmail();
@@ -192,7 +193,7 @@ class Subscriber
 
         if (in_array($subscriberStatus, [\Magento\Newsletter\Model\Subscriber::STATUS_NOT_ACTIVE, \Magento\Newsletter\Model\Subscriber::STATUS_UNCONFIRMED])) {
             $buildRequest[$optInEmarsysId] = '';
-        } elseif ($subscriberStatus ==  \Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED) {
+        } elseif ($subscriberStatus == \Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED) {
             $buildRequest[$optInEmarsysId] = 1;
         } else {
             $buildRequest[$optInEmarsysId] = 2;
