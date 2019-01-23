@@ -316,13 +316,13 @@ class Contact
         $addressFields = [];
         $mappedAttributes = $this->getMappedCustomerAttribute($storeId);
         if (count($mappedAttributes)) {
-            if ($customerAddress->getDefaultShipping()) {
+            if ($customerAddress && $customerAddress->getDefaultShipping()) {
                 $primaryShipping = $customerAddress;
             } else {
                 $primaryShipping = $customer->getPrimaryShippingAddress();
             }
 
-            if ($customerAddress->getDefaultBilling()) {
+            if ($customerAddress & $customerAddress->getDefaultBilling()) {
                 $primaryBilling = $customerAddress;
             } else {
                 $primaryBilling = $customer->getPrimaryBillingAddress();
