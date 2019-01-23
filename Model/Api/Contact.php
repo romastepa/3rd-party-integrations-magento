@@ -322,7 +322,7 @@ class Contact
                 $primaryShipping = $customer->getPrimaryShippingAddress();
             }
 
-            if ($customerAddress & $customerAddress->getDefaultBilling()) {
+            if ($customerAddress && $customerAddress->getDefaultBilling()) {
                 $primaryBilling = $customerAddress;
             } else {
                 $primaryBilling = $customer->getPrimaryBillingAddress();
