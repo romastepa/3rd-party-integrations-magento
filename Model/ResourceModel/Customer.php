@@ -563,7 +563,7 @@ class Customer extends AbstractDb
                             $this->getConnection()->insert($this->getTable('emarsys_magento_customer_attributes'), [
                                 'attribute_code' => $attribute['attribute_code'],
                                 'attribute_code_custom' => 'default_billing_' . $attribute['attribute_code'],
-                                'frontend_label' => 'Default Billing ' . $attribute['frontend_label'],
+                                'frontend_label' => 'Default Billing ' . $attribute['frontend_label'] . '(' . $attribute['attribute_code'] . ')',
                                 'entity_type_id' => $attribute['entity_type_id'],
                                 'store_id' => $storeId
                             ]);
@@ -580,7 +580,7 @@ class Customer extends AbstractDb
                             $this->getConnection()->insert($this->getTable('emarsys_magento_customer_attributes'), [
                                 'attribute_code' => $attribute['attribute_code'],
                                 'attribute_code_custom' => 'default_shipping_' . $attribute['attribute_code'],
-                                'frontend_label' => 'Default Shipping ' . $attribute['frontend_label'],
+                                'frontend_label' => 'Default Shipping ' . $attribute['frontend_label'] . '(' . $attribute['attribute_code'] . ')',
                                 'entity_type_id' => $attribute['entity_type_id'],
                                 'store_id' => $storeId
                             ]);

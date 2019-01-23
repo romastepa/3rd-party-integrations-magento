@@ -118,7 +118,7 @@ class AfterAddressSaveObserver implements ObserverInterface
             if ($this->registry->registry($customerVar) == 'created') {
                 return;
             }
-            $this->contactModel->syncContact($customer, $websiteId, $storeId);
+            $this->contactModel->syncContact($customer, $websiteId, $storeId, 0, $customerAddress);
             $this->registry->register($customerVar, 'created');
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(

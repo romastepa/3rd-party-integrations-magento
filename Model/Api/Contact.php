@@ -6,14 +6,13 @@
  */
 namespace Emarsys\Emarsys\Model\Api;
 
-use Magento\{
+use Magento\{Customer\Model\Address,
     Customer\Model\Customer,
     Customer\Model\CustomerFactory,
     Customer\Model\ResourceModel\Customer\Collection as CustomerCollection,
     Framework\Stdlib\DateTime\DateTime,
     Framework\Message\ManagerInterface as MessageManagerInterface,
-    Store\Model\StoreManagerInterface
-};
+    Store\Model\StoreManagerInterface};
 use Emarsys\Emarsys\{
     Helper\Data as EmarsysHelperData,
     Helper\Logs,
@@ -170,9 +169,10 @@ class Contact
      * @param $websiteId
      * @param $storeId
      * @param int $cron
+     * @param null|\Magento\Customer\Model\Address $customerAddress
      * @throws \Exception
      */
-    public function syncContact($customer, $websiteId, $storeId, $cron = 0)
+    public function syncContact($customer, $websiteId, $storeId, $cron = 0, $customerAddress = null)
     {
         $logsArray['job_code'] = 'customer';
         $logsArray['status'] = 'started';
@@ -230,7 +230,7 @@ class Contact
         }
 
         //Fetch Customer's Mapped Address Attributes
-        $customerMappedAddressAttributes = $this->getMappedCustomersAddressAttributes($customer, $storeId);
+        $customerMappedAddressAttributes = $this->getMappedCustomersAddressAttributes($customer, $storeId, $customerAddress);
         foreach ($customerMappedAddressAttributes as $key => $value) {
             $buildRequest[$key] = $value;
         }
@@ -306,24 +306,33 @@ class Contact
      * Fetch Customer's Mapped Address attributes values
      *
      * @param $customer
-     * @param $storeId
+     * @param int $storeId
+     * @param null|\Magento\Customer\Model\Address $customerAddress
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Zend_Json_Exception
      */
-    public function getMappedCustomersAddressAttributes($customer, $storeId)
+    public function getMappedCustomersAddressAttributes($customer, $storeId, $customerAddress = null)
     {
         $addressFields = [];
         $mappedAttributes = $this->getMappedCustomerAttribute($storeId);
         if (count($mappedAttributes)) {
-            $primaryBilling  = $customer->getPrimaryBillingAddress();
-            $primaryShipping = $customer->getPrimaryshippingAddress();
+            if ($customerAddress->getDefaultShipping()) {
+                $primaryShipping = $customerAddress;
+            } else {
+                $primaryShipping = $customer->getPrimaryShippingAddress();
+            }
+
+            if ($customerAddress->getDefaultBilling()) {
+                $primaryBilling = $customerAddress;
+            } else {
+                $primaryBilling = $customer->getPrimaryBillingAddress();
+            }
+
             $mappedCountries = $this->emarsysCountryHelper->getMapping($storeId);
-            $headers = [];
-            $headerIndex = [];
+            $headers = $headerIndex = [];
 
             foreach ($mappedAttributes as $attribute) {
-                if ($attribute['emarsys_contact_field'] == NULL) {
+                if (!$attribute['emarsys_contact_field']) {
                     continue;
                 }
                 $emarsysField = $this->customerResourceModel->getEmarsysFieldNameContact($attribute, $storeId);
@@ -338,31 +347,18 @@ class Contact
                     $isShippingAttr = (strpos($attributeCode['attribute_code_custom'], 'default_shipping_') !== false) ? true : false;
                     $isBillingAttr = (strpos($attributeCode['attribute_code_custom'], 'default_billing_') !== false) ? true : false;
                     $index = array_search($key, $headerIndex);
-                    if ($index == 0) continue;
                     $attrValue = '';
-                    if ($isShippingAttr) {
-                        if ($customer->getDefaultShipping())  {
-                            if ($primaryShipping) {
-                                $attrValue = $primaryShipping->getData($attributeCode['attribute_code']);
-                                if ($attributeCode['attribute_code'] == 'country_id') {
-                                    $attrValue = (isset($mappedCountries[$attrValue]) ? $mappedCountries[$attrValue] : '');
-                                } elseif ($attributeCode['attribute_code'] == 'street') {
-                                    $attrValue = str_replace("\n", ',', $attrValue);
-                                }
-                            }
-                        }
-                    } elseif ($isBillingAttr) {
-                        if ($customer->getDefaultBilling()) {
-                            if ($primaryBilling) {
-                                $attrValue = $primaryBilling->getData($attributeCode['attribute_code']);
-                                if ($attributeCode['attribute_code'] == 'country_id') {
-                                    $attrValue = (isset($mappedCountries[$attrValue]) ? $mappedCountries[$attrValue] : '');
-                                } elseif ($attributeCode['attribute_code'] == 'street') {
-                                    $attrValue = str_replace("\n", ',', $attrValue);
-                                }
-                            }
-                        }
+                    if ($isShippingAttr && $customer->getDefaultShipping() && $primaryShipping) {
+                        $attrValue = $primaryShipping->getData($attributeCode['attribute_code']);
+                    } elseif ($isBillingAttr && $customer->getDefaultBilling() && $primaryBilling) {
+                        $attrValue = $primaryBilling->getData($attributeCode['attribute_code']);
                     }
+                    if ($attributeCode['attribute_code'] == 'country_id') {
+                        $attrValue = (isset($mappedCountries[$attrValue]) ? $mappedCountries[$attrValue] : '');
+                    } elseif ($attributeCode['attribute_code'] == 'street') {
+                        $attrValue = str_replace("\n", ',', $attrValue);
+                    }
+
                     $addressFields[$index] = $attrValue;
                 }
             }
