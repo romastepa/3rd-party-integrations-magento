@@ -348,9 +348,9 @@ class Contact
                     $isBillingAttr = (strpos($attributeCode['attribute_code_custom'], 'default_billing_') !== false) ? true : false;
                     $index = array_search($key, $headerIndex);
                     $attrValue = '';
-                    if ($isShippingAttr && $customer->getDefaultShipping() && $primaryShipping) {
+                    if ($isShippingAttr && $primaryShipping && $primaryShipping->getDefaultShipping()) {
                         $attrValue = $primaryShipping->getData($attributeCode['attribute_code']);
-                    } elseif ($isBillingAttr && $customer->getDefaultBilling() && $primaryBilling) {
+                    } elseif ($isBillingAttr && $primaryBilling && $primaryShipping->getDefaultBilling()) {
                         $attrValue = $primaryBilling->getData($attributeCode['attribute_code']);
                     }
                     if ($attributeCode['attribute_code'] == 'country_id') {
