@@ -135,6 +135,21 @@ class Customer extends AbstractDb
     }
 
     /**
+     * @param $custMageId
+     * @param $magentoAttributeId
+     * @param $storeId
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function deleteMapping($custMageId, $magentoAttributeId, $storeId)
+    {
+        $this->getConnection()->delete($this->getMainTable(),
+            $this->getConnection()->quoteInto('store_id = ?', $storeId)
+            . $this->getConnection()->quoteInto(' AND magento_custom_attribute_id = ?', $custMageId)
+            . $this->getConnection()->quoteInto(' AND magento_attribute_id = ?', $magentoAttributeId)
+        );
+    }
+
+    /**
      * @param array $contactFields
      * @param $storeId
      * @return bool

@@ -114,12 +114,13 @@ class Save extends Action
             $stringArrayData = (array)$stringJSONData;
 
             foreach ($stringArrayData as $key => $value) {
-                if (empty(trim($value))) {
-                    continue;
-                }
                 $custMageId = $this->resourceModelCustomer->getCustAttIdByCode($key, $storeId);
                 $magentoAttributeId = $this->resourceModelCustomer->getCustomerAttributeId($key, $storeId);
                 if (empty($magentoAttributeId)) {
+                    continue;
+                }
+                if (empty(trim($value))) {
+                    $this->resourceModelCustomer->deleteMapping($custMageId, $magentoAttributeId, $storeId);
                     continue;
                 }
                 $attData = $this->customerFactory->create()->getCollection()
