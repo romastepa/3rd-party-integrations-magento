@@ -107,6 +107,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const XPATH_OPTIN_FORCED_CONFIRMATION = 'opt_in/optin_enable/force_optin_confirmation';
 
+    const XPATH_OPTIN_SUBSCRIPTION_CHECKOUT_PROCESS = 'opt_in/subscription_checkout_process/newsletter_sub_checkout_yes_no';
+
     //Smart Insight
     const XPATH_SMARTINSIGHT_ENABLED = 'smart_insight/smart_insight/smartinsight_enabled';
 

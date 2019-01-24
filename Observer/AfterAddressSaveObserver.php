@@ -104,8 +104,10 @@ class AfterAddressSaveObserver implements ObserverInterface
             $defaultBillingId = $customerObj->getDefaultBilling();
             $defaultShippingId = $customerObj->getDefaultShipping();
 
-            if (!in_array($customerAddress->getId(), [$defaultBillingId, $defaultShippingId])) {
-                return;
+            if (!empty($defaultBillingId) || !empty($defaultShippingId)) {
+                if (!in_array($customerAddress->getId(), [$defaultBillingId, $defaultShippingId])) {
+                    return;
+                }
             }
 
             if (!$this->emarsysHelper->isContactsSynchronizationEnable($websiteId)) {

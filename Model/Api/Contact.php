@@ -6,13 +6,15 @@
  */
 namespace Emarsys\Emarsys\Model\Api;
 
-use Magento\{Customer\Model\Address,
+use Magento\{
+    Customer\Model\Address,
     Customer\Model\Customer,
     Customer\Model\CustomerFactory,
     Customer\Model\ResourceModel\Customer\Collection as CustomerCollection,
     Framework\Stdlib\DateTime\DateTime,
     Framework\Message\ManagerInterface as MessageManagerInterface,
-    Store\Model\StoreManagerInterface};
+    Store\Model\StoreManagerInterface
+};
 use Emarsys\Emarsys\{
     Helper\Data as EmarsysHelperData,
     Helper\Logs,
@@ -316,16 +318,17 @@ class Contact
         $addressFields = [];
         $mappedAttributes = $this->getMappedCustomerAttribute($storeId);
         if (count($mappedAttributes)) {
-            if ($customerAddress && $customerAddress->getDefaultShipping()) {
+            $primaryShipping = $customer->getPrimaryShippingAddress();
+            if (($customerAddress && $customerAddress->getDefaultShipping()) || !$primaryShipping) {
                 $primaryShipping = $customerAddress;
-            } else {
-                $primaryShipping = $customer->getPrimaryShippingAddress();
+            } elseif ($customerAddress && $primaryShipping->getId() == $customerAddress->getId()) {
+                $primaryShipping = $customerAddress;
             }
-
-            if ($customerAddress && $customerAddress->getDefaultBilling()) {
+            $primaryBilling = $customer->getPrimaryBillingAddress();
+            if (($customerAddress && $customerAddress->getDefaultBilling()) || !$primaryBilling) {
                 $primaryBilling = $customerAddress;
-            } else {
-                $primaryBilling = $customer->getPrimaryBillingAddress();
+            } elseif ($customerAddress && $primaryBilling->getId() == $customerAddress->getId()) {
+                $primaryBilling = $customerAddress;
             }
 
             $mappedCountries = $this->emarsysCountryHelper->getMapping($storeId);
@@ -348,9 +351,9 @@ class Contact
                     $isBillingAttr = (strpos($attributeCode['attribute_code_custom'], 'default_billing_') !== false) ? true : false;
                     $index = array_search($key, $headerIndex);
                     $attrValue = '';
-                    if ($isShippingAttr && $primaryShipping && $primaryShipping->getDefaultShipping()) {
+                    if ($isShippingAttr && $primaryShipping) {
                         $attrValue = $primaryShipping->getData($attributeCode['attribute_code']);
-                    } elseif ($isBillingAttr && $primaryBilling && $primaryShipping->getDefaultBilling()) {
+                    } elseif ($isBillingAttr && $primaryBilling) {
                         $attrValue = $primaryBilling->getData($attributeCode['attribute_code']);
                     }
                     if ($attributeCode['attribute_code'] == 'country_id') {
