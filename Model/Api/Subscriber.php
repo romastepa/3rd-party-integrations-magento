@@ -439,7 +439,7 @@ class Subscriber
         foreach ($subscriberCollection as $subscriber) {
             $values = [];
             $values[$emailKey] = $subscriber->getSubscriberEmail();
-            $values[$subscriberIdKey] = $subscriber->getEntityId();
+            $values[$subscriberIdKey] = $subscriber->getId();
             if ($subscriber->getCustomerId()) {
                 $values[$customerIdKey] = $subscriber->getCustomerId();
             }
