@@ -201,12 +201,14 @@ class SyncContactsSubscriptionData
             $logsArray['emarsys_info'] = 'subscription information';
 
             $dt = (new \Zend_Date());
+            $timeRange = [];
             if ($isTimeBased) {
                 $timeRange = [$dt->subHour(1)->toString('YYYY-MM-dd'), $dt->addHour(1)->toString('YYYY-MM-dd')];
             }
             $storeId = $this->storeManager->getWebsite(current($websiteId))->getDefaultGroup()->getDefaultStoreId();
             $key_id = $this->customerResourceModel->getKeyId(EmarsysHelperData::SUBSCRIBER_ID, $storeId);
             $optinFiledId = $this->customerResourceModel->getKeyId(EmarsysHelperData::OPT_IN, $storeId);
+            $notificationUrl = $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId);
             $payload = [
                 'distribution_method' => 'local',
                 'origin' => 'all',
@@ -214,10 +216,10 @@ class SyncContactsSubscriptionData
                 'contact_fields' => [$key_id, $optinFiledId],
                 'add_field_names_header' => 1,
                 'time_range' => $timeRange,
-                'notification_url' => $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId),
+                'notification_url' => $notificationUrl,
             ];
 
-            $logsArray['description'] = $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId);
+            $logsArray['description'] = json_encode($payload) . " \n " . $notificationUrl;
             $logsArray['message_type'] = 'Success';
             $this->logsHelper->logs($logsArray);
 
@@ -225,7 +227,7 @@ class SyncContactsSubscriptionData
             $client = $this->emarsysHelperData->getClient();
             $response = $client->post('contact/getchanges', $payload);
 
-            $logsArray['description'] = print_r($response, true);
+            $logsArray['description'] = json_encode($response);
             $logsArray['message_type'] = 'Success';
             $this->logsHelper->logs($logsArray);
 
