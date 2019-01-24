@@ -37,7 +37,7 @@ class RealTimeAdminSubscriber implements ObserverInterface
     /**
      * @var Data
      */
-    protected $dataHelper;
+    protected $emarsysHelper;
 
     /**
      * @var Http
@@ -48,18 +48,18 @@ class RealTimeAdminSubscriber implements ObserverInterface
      * RealTimeAdminSubscriber constructor.
      * @param Subscriber $subscriberModel
      * @param StoreManagerInterface $storeManager
-     * @param Data $dataHelper
+     * @param Data $emarsysHelper
      * @param Http $request
      */
     public function __construct(
         Subscriber $subscriberModel,
         StoreManagerInterface $storeManager,
-        Data $dataHelper,
+        Data $emarsysHelper,
         Http $request
     ) {
         $this->subscriberModel = $subscriberModel;
         $this->storeManager = $storeManager;
-        $this->dataHelper = $dataHelper;
+        $this->emarsysHelper = $emarsysHelper;
         $this->request = $request;
     }
 
@@ -83,7 +83,7 @@ class RealTimeAdminSubscriber implements ObserverInterface
             $frontendFlag = '';
             $this->subscriberModel->syncSubscriber($subscriberId, $storeId, $frontendFlag);
         } else {
-            $this->dataHelper->syncFail($subscriberId, $store->getWebsiteId(), $storeId, 0, 2);
+            $this->emarsysHelper->syncFail($subscriberId, $store->getWebsiteId(), $storeId, 0, 2);
         }
     }
 }
