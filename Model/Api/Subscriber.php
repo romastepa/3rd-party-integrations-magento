@@ -420,57 +420,43 @@ class Subscriber
 
         if ($exportMode == EmarsysCronHelper::CRON_JOB_CUSTOMER_SYNC_QUEUE) {
             $newsLetSubTableName = $this->resourceConnection->getTableName('newsletter_subscriber');
-            $queueCollection = $this->queueModel->create()->getCollection();
-            $queueCollection->addFieldToSelect('entity_id');
-            $queueCollection->addFieldToFilter('main_table.entity_type_id', 2);
-            $queueCollection->addFieldToFilter('main_table.store_id', $storeId);
-            $queueCollection->getSelect()->joinLeft(
+            $subscriberCollection = $this->queueModel->create()->getCollection();
+            $subscriberCollection->addFieldToSelect('entity_id');
+            $subscriberCollection->addFieldToFilter('main_table.entity_type_id', 2);
+            $subscriberCollection->addFieldToFilter('main_table.store_id', $storeId);
+            $subscriberCollection->getSelect()->joinLeft(
                 ['newsletter_subscriber' => $newsLetSubTableName],
                 'main_table.entity_id = newsletter_subscriber.subscriber_id',
                 ['subscriber_email', 'subscriber_confirm_code', 'subscriber_status', 'customer_id']
             );
 
-            $this->updateLastModifiedContacts($queueCollection, $storeId);
-
-            foreach ($queueCollection as $subscriber) {
-                $values = [];
-                $values[$emailKey] = $subscriber->getSubscriberEmail();
-                $values[$subscriberIdKey] = $subscriber->getEntityId();
-                if ($subscriber->getCustomerId()) {
-                    $values[$customerIdKey] = $subscriber->getCustomerId();
-                }
-
-                if ($subscriber['subscriber_status'] != 1) {
-                    $values[$optInEmarsysId] = 2;
-                } else {
-                    $values[$optInEmarsysId] = 1;
-                }
-                $subscriberData[] = $values;
-            }
+            $this->updateLastModifiedContacts($subscriberCollection, $storeId);
         } else {
             $subscriberCollection = $this->subscriberFactory->create()->getCollection()
                 ->addFieldToFilter('store_id', $storeId);
-            foreach ($subscriberCollection as $subscriber) {
-                $values = [];
-                $values[$emailKey] = $subscriber->getSubscriberEmail();
-                $values[$subscriberIdKey] = $subscriber->getEntityId();
-                if ($subscriber->getCustomerId()) {
-                    $values[$customerIdKey] = $subscriber->getCustomerId();
-                }
-
-                $subscriberStatus = $subscriber->getSubscriberStatus();
-
-                if (in_array($subscriberStatus, [\Magento\Newsletter\Model\Subscriber::STATUS_NOT_ACTIVE, \Magento\Newsletter\Model\Subscriber::STATUS_UNCONFIRMED])) {
-                    $values[$optInEmarsysId] = '';
-                } elseif ($subscriberStatus ==  \Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED) {
-                    $values[$optInEmarsysId] = 1;
-                } else {
-                    $values[$optInEmarsysId] = 2;
-                }
-
-                $subscriberData[] = $values;
-            }
         }
+
+        foreach ($subscriberCollection as $subscriber) {
+            $values = [];
+            $values[$emailKey] = $subscriber->getSubscriberEmail();
+            $values[$subscriberIdKey] = $subscriber->getEntityId();
+            if ($subscriber->getCustomerId()) {
+                $values[$customerIdKey] = $subscriber->getCustomerId();
+            }
+
+            $subscriberStatus = $subscriber->getSubscriberStatus();
+
+            if (in_array($subscriberStatus, [\Magento\Newsletter\Model\Subscriber::STATUS_NOT_ACTIVE, \Magento\Newsletter\Model\Subscriber::STATUS_UNCONFIRMED])) {
+                $values[$optInEmarsysId] = '';
+            } elseif ($subscriberStatus ==  \Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED) {
+                $values[$optInEmarsysId] = 1;
+            } else {
+                $values[$optInEmarsysId] = 2;
+            }
+
+            $subscriberData[] = $values;
+        }
+
 
         return $subscriberData;
     }
