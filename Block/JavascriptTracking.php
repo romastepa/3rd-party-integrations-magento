@@ -172,7 +172,7 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
                     $categoryName = implode(" > ", $childCats);
                 }
 
-                $result =  $categoryName;
+                $result = addcslashes($categoryName, "'");
             }
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(

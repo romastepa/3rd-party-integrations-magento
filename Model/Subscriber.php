@@ -138,10 +138,8 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         $optinForcedConfirmation = $this->emarsysHelper->isOptinForcedConfirmationEnabled($store->getWebsiteId());
         $isOwnSubscribes = $isSubscribeOwnEmail;
 
-        if ($this->getStatus() == self::STATUS_UNSUBSCRIBED || $this->getStatus() == self::STATUS_NOT_ACTIVE) {
-            if ($isConfirmNeed && $optinForcedConfirmation) {
-                $this->setStatus(self::STATUS_NOT_ACTIVE);
-            } elseif ($isConfirmNeed && !$optinForcedConfirmation) {
+        if (!$this->getId() || $this->getStatus() == self::STATUS_UNSUBSCRIBED || $this->getStatus() == self::STATUS_NOT_ACTIVE) {
+            if ($isConfirmNeed && ($optinForcedConfirmation || !$optinForcedConfirmation)) {
                 $this->setStatus(self::STATUS_NOT_ACTIVE);
             } else {
                 $this->setStatus(self::STATUS_SUBSCRIBED);
