@@ -7,56 +7,65 @@
 
 namespace Emarsys\Emarsys\Model;
 
-use Emarsys\Emarsys\Model\SendEmail as EmarsysSendEmail;
-use Emarsys\Emarsys\Model\Message as EmarsysMessage;
-use Zend\Mail\Transport\Sendmail;
+use Magento\Framework\Exception\MailException;
+use Magento\Framework\Phrase;
+use Zend\Mail\Message as ZendMessage;
+use Zend\Mail\Transport\Sendmail as zendTransport;
+use Emarsys\Emarsys\Model\SendEmail;
 
-/**
- * Class Transport
- * @package Emarsys\Emarsys\Model
- */
-class Transport extends \Magento\Framework\Mail\Transport
+class Transport implements \Magento\Framework\Mail\TransportInterface
 {
-
     /**
-     * @var Sendmail
+     * @var zendTransport
      */
     protected $zendTransport;
 
     /**
-     * @var EmarsysMessage
+     * @var SendEmail
+     */
+    protected $sendEmail;
+
+    /**
+     * @var MessageInterface
      */
     protected $message;
 
     /**
-     * @var
-     */
-    protected $emarsysSendEmail;
-
-    /**
-     * @param EmarsysMessage $message
-     * @param EmarsysSendEmail $emarsysSendEmail
+     * @param MessageInterface $message
      * @param null|string|array|\Traversable $parameters
      */
     public function __construct(
-        EmarsysMessage $message,
-        EmarsysSendEmail $emarsysSendEmail,
+        MessageInterface $message,
         $parameters = null
     ) {
-        $this->zendTransport = new Sendmail($parameters);
-        $this->emarsysSendEmail = $emarsysSendEmail;
+        $this->zendTransport = new zendTransport($parameters);
+        $this->sendEmail = new SendEmail($parameters);
         $this->message = $message;
     }
 
     /**
-     * @throws \Magento\Framework\Exception\MailException
+     * @throws MailException
      */
     public function sendMessage()
     {
-        $mailSendingStatus = $this->emarsysSendEmail->sendMail($this->message);
+        $errorStatus = $this->sendEmail->sendMail($this->getMessage());
 
-        if ($mailSendingStatus) {
-            parent::sendMessage();
+        if ($errorStatus) {
+            try {
+                $this->zendTransport->send(
+                    ZendMessage::fromString($this->message->getRawMessage())
+                );
+            } catch (\Exception $e) {
+                throw new MailException(new Phrase($e->getMessage()), $e);
+            }
         }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMessage()
+    {
+        return $this->message;
     }
 }
