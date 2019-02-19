@@ -33,14 +33,16 @@ class Transport implements \Magento\Framework\Mail\TransportInterface
 
     /**
      * @param MessageInterface $message
+     * @param SendEmail $sendEmail
      * @param null|string|array|\Traversable $parameters
      */
     public function __construct(
         MessageInterface $message,
+        SendEmail $sendEmail,
         $parameters = null
     ) {
         $this->zendTransport = new ZendTransport($parameters);
-        $this->sendEmail = new SendEmail($parameters);
+        $this->sendEmail = $sendEmail;
         $this->message = $message;
     }
 
