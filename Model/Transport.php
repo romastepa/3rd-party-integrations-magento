@@ -9,8 +9,9 @@ namespace Emarsys\Emarsys\Model;
 
 use Magento\Framework\Exception\MailException;
 use Magento\Framework\Phrase;
+use Magento\Framework\Mail\MessageInterface;
 use Zend\Mail\Message as ZendMessage;
-use Zend\Mail\Transport\Sendmail as zendTransport;
+use Zend\Mail\Transport\Sendmail as ZendTransport;
 use Emarsys\Emarsys\Model\SendEmail;
 
 class Transport implements \Magento\Framework\Mail\TransportInterface
@@ -38,7 +39,7 @@ class Transport implements \Magento\Framework\Mail\TransportInterface
         MessageInterface $message,
         $parameters = null
     ) {
-        $this->zendTransport = new zendTransport($parameters);
+        $this->zendTransport = new ZendTransport($parameters);
         $this->sendEmail = new SendEmail($parameters);
         $this->message = $message;
     }
