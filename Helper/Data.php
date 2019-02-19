@@ -179,6 +179,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const EMARSYS_RELEASE_URL = 'about_emarsys/emarsys_release/release_url';
 
+    const CUSTOMER_EMAIL = 'Email';
+
+    const SUBSCRIBER_ID = 'Magento Subscriber ID';
+
+    const CUSTOMER_ID = 'Magento Customer ID';
+
+    const CUSTOMER_UNIQUE_ID = 'Magento Customer Unique ID';
+
+    const OPT_IN = 'Opt-In';
+
+    const BATCH_SIZE = 1000;
+
     /**
      * @var Context
      */
