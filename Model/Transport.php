@@ -7,71 +7,56 @@
 
 namespace Emarsys\Emarsys\Model;
 
-use Magento\Framework\Mail\MessageInterface;
-use Magento\Framework\Mail\TransportInterface;
+use Emarsys\Emarsys\Model\SendEmail as EmarsysSendEmail;
+use Emarsys\Emarsys\Model\Message as EmarsysMessage;
+use Zend\Mail\Transport\Sendmail;
 
 /**
  * Class Transport
  * @package Emarsys\Emarsys\Model
  */
-class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterface
+class Transport extends \Magento\Framework\Mail\Transport
 {
-    /**
-     * @var MessageInterface|\Zend_Mail
-     */
-    protected $_message;
 
     /**
-     * @var SendEmail
+     * @var Sendmail
      */
-    protected $sendEmail;
+    protected $zendTransport;
 
     /**
-     * Transport constructor.
-     * @param MessageInterface $message
-     * @param SendEmail $sendEmail
-     * @param null $parameters
+     * @var EmarsysMessage
+     */
+    protected $message;
+
+    /**
+     * @var
+     */
+    protected $emarsysSendEmail;
+
+    /**
+     * @param EmarsysMessage $message
+     * @param EmarsysSendEmail $emarsysSendEmail
+     * @param null|string|array|\Traversable $parameters
      */
     public function __construct(
-        MessageInterface $message,
-        SendEmail $sendEmail,
+        EmarsysMessage $message,
+        EmarsysSendEmail $emarsysSendEmail,
         $parameters = null
     ) {
-        if (!$message instanceof \Zend_Mail) {
-            if (!$message instanceof \Magento\Framework\Mail\MailMessageInterface) {
-                throw new \InvalidArgumentException('Invalid message instance');
-            }
-        }
-
-        parent::__construct($parameters);
-        $this->_message = $message;
-        $this->sendEmail = $sendEmail;
+        $this->zendTransport = new Sendmail($parameters);
+        $this->emarsysSendEmail = $emarsysSendEmail;
+        $this->message = $message;
     }
 
     /**
-     * @throws \Zend_Mail_Transport_Exception
+     * @throws \Magento\Framework\Exception\MailException
      */
     public function sendMessage()
     {
-        $mailSendingStatus = $this->sendEmail->sendMail($this->_message);
+        $mailSendingStatus = $this->emarsysSendEmail->sendMail($this->message);
 
         if ($mailSendingStatus) {
-            if ($this->_message instanceof \Zend_Mail) {
-                parent::send($this->_message);
-            }
-            if ($this->_message instanceof \Magento\Framework\Mail\MailMessageInterface) {
-                \Magento\Framework\App\ObjectManager::getInstance()->get(\Zend\Mail\Transport\Sendmail::class)->send(
-                    \Zend\Mail\Message::fromString($this->_message->getRawMessage())
-                );
-            }
+            parent::sendMessage();
         }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getMessage()
-    {
-        return $this->_message;
     }
 }
