@@ -7,17 +7,11 @@
 namespace Emarsys\Emarsys\Controller\Index;
 
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\Json\Helper\Data;
 use Emarsys\Emarsys\Model\Logs;
 use Magento\Store\Model\StoreManagerInterface;
 
 class AjaxUpdate extends \Magento\Framework\App\Action\Action
 {
-    /**
-     * @var Data
-     */
-    protected $jsonHelper;
-
     /**
      * @var Logs
      */
@@ -31,17 +25,14 @@ class AjaxUpdate extends \Magento\Framework\App\Action\Action
     /**
      * AjaxUpdate constructor.
      * @param Context $context
-     * @param Data $jsonHelper
      * @param Logs $emarsysLogs
      * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Context $context,
-        Data $jsonHelper,
         Logs $emarsysLogs,
         StoreManagerInterface $storeManager
     ) {
-        $this->jsonHelper = $jsonHelper;
         $this->storeManager = $storeManager;
         $this->emarsysLogs = $emarsysLogs;
         parent::__construct($context);
@@ -83,7 +74,7 @@ class AjaxUpdate extends \Magento\Framework\App\Action\Action
         }
 
         $this->getResponse()->setHeader('Content-type', 'application/json');
-        $this->getResponse()->setBody($this->jsonHelper->jsonEncode($result));
+        $this->getResponse()->setBody(\Zend_Json::encode($result));
     }
 }
 

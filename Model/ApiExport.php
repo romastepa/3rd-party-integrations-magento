@@ -12,7 +12,6 @@ use Magento\Framework\Controller\Result\RawFactory;
 use Magento\Framework\File\Csv;
 use Magento\Store\Model\StoreManagerInterface;
 use Emarsys\Emarsys\Model\Logs as EmarsysModelLogs;
-use Magento\Framework\Json\Helper\Data as JsonHelper;
 
 /**
  * Class ApiExport
@@ -60,34 +59,25 @@ class ApiExport extends ZendClient
     protected $emarsysLogs;
 
     /**
-     * @var JsonHelper
-     */
-    protected $jasonHelper;
-
-
-    /**
      * ApiExport constructor.
      * @param Data $emarsysHelper
      * @param RawFactory $resultRawFactory
      * @param Csv $csvWriter
      * @param StoreManagerInterface $storeManagerInterface
      * @param Logs $emarsysLogs
-     * @param JsonHelper $jsonHelper
      */
     public function __construct(
         Data $emarsysHelper,
         RawFactory $resultRawFactory,
         Csv $csvWriter,
         StoreManagerInterface $storeManagerInterface,
-        EmarsysModelLogs $emarsysLogs,
-        JsonHelper $jsonHelper
+        EmarsysModelLogs $emarsysLogs
     ) {
         $this->emarsysHelper = $emarsysHelper;
         $this->resultRawFactory = $resultRawFactory;
         $this->csvWriter = $csvWriter;
         $this->storeManagerInterface = $storeManagerInterface;
         $this->emarsysLogs = $emarsysLogs;
-        $this->jasonHelper = $jsonHelper;
     }
 
     /**
@@ -182,7 +172,7 @@ class ApiExport extends ZendClient
             $responseObject = $this->request($method);
             $response = $responseObject;
             if ($jsonDecode) {
-                $response = $this->jasonHelper->jsonDecode($response);
+                $response = \Zend_Json::decode($response);
             }
         } catch (\Exception $e) {
             $storeId = $this->storeManagerInterface->getStore()->getId();

@@ -6,11 +6,7 @@
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <!--<event name="newsletter_subscriber_save_after">
-        <observer name="emarsys_newsletter_subscribers" instance="Emarsys\Emarsys\Observer\RealTimeSubscriber" shared="false"/>
-    </event>-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="customer_register_success">
         <observer name="emarsys_customer_register_success" instance="Emarsys\Emarsys\Observer\CustomerRegisterSuccess" />
     </event>
@@ -20,7 +16,6 @@
     <event name="customer_save_commit_after">
         <observer name="frontend_edit_customer" instance="Emarsys\Emarsys\Observer\RealTimeCustomer"/>
     </event>
-    <!--<event name="customer_address_save_after">-->
     <event name="customer_address_save_commit_after">
         <observer name="emarsys_customer_address_save_after" instance="Emarsys\Emarsys\Observer\AfterAddressSaveObserver" />
     </event>

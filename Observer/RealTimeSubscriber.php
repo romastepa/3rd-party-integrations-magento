@@ -2,17 +2,23 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
+
 namespace Emarsys\Emarsys\Observer;
 
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Emarsys\Emarsys\Model\Api\Subscriber;
-use Emarsys\Emarsys\Model\ResourceModel\Customer;
-use Magento\Framework\App\Request\Http;
-use Emarsys\Emarsys\Helper\Data;
-use Magento\Customer\Model\Session;
+use Magento\{
+    Customer\Model\Session,
+    Framework\Event\Observer,
+    Framework\Event\ObserverInterface,
+    Framework\App\Request\Http,
+    Store\Model\StoreManagerInterface
+};
+use Emarsys\Emarsys\{
+    Model\Api\Subscriber,
+    Model\ResourceModel\Customer,
+    Helper\Data as EmarsysHelperData
+};
 
 /**
  * Class RealTimeSubscriber
@@ -41,9 +47,9 @@ class RealTimeSubscriber implements ObserverInterface
     protected $request;
 
     /**
-     * @var Data
+     * @var EmarsysHelperData
      */
-    protected $dataHelper;
+    protected $emarsysHelper;
 
     /**
      * @var Session
@@ -57,7 +63,7 @@ class RealTimeSubscriber implements ObserverInterface
      * @param Subscriber $subscriberModel
      * @param Customer $customerResourceModel
      * @param Http $request
-     * @param Data $dataHelper
+     * @param EmarsysHelperData $emarsysHelper
      * @param Session $customerSession
      */
     public function __construct(
@@ -65,65 +71,55 @@ class RealTimeSubscriber implements ObserverInterface
         Subscriber $subscriberModel,
         Customer $customerResourceModel,
         Http $request,
-        Data $dataHelper,
+        EmarsysHelperData $emarsysHelper,
         Session $customerSession
     ) {
         $this->subscriberModel = $subscriberModel;
         $this->storeManager = $storeManager;
         $this->customerResourceModel = $customerResourceModel;
         $this->request = $request;
-        $this->dataHelper = $dataHelper;
+        $this->emarsysHelper = $emarsysHelper;
         $this->customerSession = $customerSession;
     }
 
     /**
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param Observer $observer
+     * @return bool|void
+     * @throws \Exception
      */
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    public function execute(Observer $observer)
     {
         $event = $observer->getEvent();
         $subscriber = $event->getSubscriber();
+        $store = $this->storeManager->getStore($subscriber->getStoreId());
         $subscriberId = $subscriber->getId();
-        $store = $this->storeManager->getStore();
         $storeId = $store->getStoreId();
         $websiteId = $store->getWebsiteId();
-        $pageHandle = $this->request->getFullActionName();
 
-        $realtimeStatus = $this->customerResourceModel->getDataFromCoreConfig(
-            'contacts_synchronization/emarsys_emarsys/realtime_sync',
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
-            $websiteId
-        );
-
-        $subscriberObjEmailSaved = $subscriber->getSubscriberEmail();
-
-        $subscriberEmailChangeFlag = false;
-        if (method_exists($subscriber, 'getOrigData') && $subscriberObjEmailSaved != $subscriber->getOrigData('subscriber_email')){
-            $subscriberEmailChangeFlag = true;
+        if ($subscriber->getEmarsysNoExport()
+            || !$this->emarsysHelper->isContactsSynchronizationEnable($websiteId)
+        ) {
+            return true;
         }
 
         $this->customerSession->setWebExtendCustomerEmail($subscriber->getSubscriberEmail());
 
-        if ($realtimeStatus == 1) {
+        try {
             $frontendFlag = 1;
-            $this->dataHelper->realtimeTimeBasedOptinSync($subscriber);
-            $result = $this->subscriberModel->syncSubscriber(
-                $subscriberId,
-                $storeId,
-                $frontendFlag,
-                $pageHandle,
-                $websiteId,
-                0,
-                $subscriberEmailChangeFlag
-            );
+            $this->emarsysHelper->realtimeTimeBasedOptinSync($subscriber);
+            $result = $this->subscriberModel->syncSubscriber($subscriberId, $storeId, $frontendFlag);
 
             if ($result['apiResponseStatus'] == '200') {
-                return;
+                return true;
             }
-        } else {
-            $this->dataHelper->syncFail($subscriberId, $websiteId, $storeId, 0, 2);
+        } catch (\Exception $e) {
+            $this->emarsysHelper->syncFail($subscriberId, $websiteId, $storeId, 0, 2);
+            $this->emarsysHelper->addErrorLog(
+                $e->getMessage(),
+                $storeId,
+                'RealTimeSubscriber::execute'
+            );
         }
+        return false;
     }
 }
-
-

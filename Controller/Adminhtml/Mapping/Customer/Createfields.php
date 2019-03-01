@@ -10,7 +10,6 @@ namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Customer;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
-use Symfony\Component\Config\Definition\Exception\Exception;
 use Emarsys\Emarsys\Model\CustomerFactory;
 use Emarsys\Emarsys\Model\ResourceModel\Customer;
 use Magento\Framework\App\Request\Http;

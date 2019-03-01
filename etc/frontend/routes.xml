@@ -6,8 +6,7 @@
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="../../../../../../lib/internal/Magento/Framework/App/etc/routes.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../../lib/internal/Magento/Framework/App/etc/routes.xsd">
     <router id="standard">
         <route id="emarsys" frontName="emarsys">
             <module name="Emarsys_Emarsys"/>

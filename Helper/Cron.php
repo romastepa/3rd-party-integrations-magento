@@ -12,7 +12,6 @@ use Magento\Cron\Model\Schedule;
 use Emarsys\Emarsys\Model\EmarsysCronDetailsFactory;
 use Magento\Cron\Model\ScheduleFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-use Magento\Framework\Json\Helper\Data as JsonHelper;
 use Emarsys\Emarsys\Model\Logs as Emarsyslogs;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -54,11 +53,6 @@ class Cron extends AbstractHelper
     protected $emarsysCronDetails;
 
     /**
-     * @var JsonHelper
-     */
-    protected $jsonHelper;
-
-    /**
      * @var Logs
      */
     protected $emarsysLogs;
@@ -74,7 +68,6 @@ class Cron extends AbstractHelper
      * @param ScheduleFactory $scheduleFactory
      * @param TimezoneInterface $timezone
      * @param EmarsysCronDetailsFactory $emarsysCronDetails
-     * @param JsonHelper $jsonHelper
      * @param Logs $emarsysLogs
      * @param StoreManagerInterface $storeManager
      */
@@ -83,7 +76,6 @@ class Cron extends AbstractHelper
         ScheduleFactory $scheduleFactory,
         TimezoneInterface $timezone,
         EmarsysCronDetailsFactory $emarsysCronDetails,
-        JsonHelper $jsonHelper,
         Emarsyslogs $emarsysLogs,
         StoreManagerInterface $storeManager
     ) {
@@ -91,7 +83,6 @@ class Cron extends AbstractHelper
         $this->scheduleFactory = $scheduleFactory;
         $this->timezone = $timezone;
         $this->emarsysCronDetails = $emarsysCronDetails;
-        $this->jsonHelper = $jsonHelper;
         $this->emarsysLogs = $emarsysLogs;
         $this->storeManager = $storeManager;
         parent::__construct($context);
@@ -123,7 +114,7 @@ class Cron extends AbstractHelper
 
             if ($cronJobs->getSize()) {
                 foreach ($cronJobs as $job) {
-                    $jobsParams = $this->jsonHelper->jsonDecode($job->getParams());
+                    $jobsParams = \Zend_Json::decode($job->getParams());
 
                     if (is_null($websiteBasedChecking)) {
                         $jobsStoreId = $jobsParams['storeId'];
@@ -186,7 +177,7 @@ class Cron extends AbstractHelper
 
             if ($cronJobs->getSize()) {
                 foreach ($cronJobs as $job) {
-                    $jobsParams = $this->jsonHelper->jsonDecode($job->getParams());
+                    $jobsParams = \Zend_Json::decode($job->getParams());
 
                     if (is_null($websiteBasedChecking)) {
                         $jobsStoreId = $jobsParams['storeId'];

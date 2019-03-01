@@ -44,7 +44,7 @@
         </job>
         <!-- Emarsys reoptin import Job -->
         <job name="emarsys_reoptin_import" instance="Emarsys\Emarsys\Cron\SyncContactsSubscriptionData" method="execute">
-            <schedule>10 0 * * *</schedule>
+            <schedule>10 */2 * * *</schedule>
         </job>
         <!-- Emarsys Schema check Job -->
         <job name="emarsys_schema_check" instance="Emarsys\Emarsys\Cron\EmarsysSchemaCheck" method="execute">
