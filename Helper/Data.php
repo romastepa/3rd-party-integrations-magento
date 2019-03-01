@@ -2593,6 +2593,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param $folderName
+     * @param $csvFilePath
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getEmarsysMediaUrlPath($folderName, $csvFilePath)
+    {
+        return $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA)
+            . 'emarsys/' . $folderName . '/' . basename($csvFilePath);
+    }
+
+    /**
      * @param $scope
      * @param $websiteId
      * @return array|bool
@@ -2653,6 +2665,28 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
             $websiteId
         );
+    }
+
+    /**
+     * @param string $fileDirectory
+     * @return bool
+     */
+    public function removeFilesInFolder($fileDirectory)
+    {
+        if ($handle = opendir($fileDirectory)) {
+            while (false !== ($file = readdir($handle))) {
+                if ($file == '.' || $file == '..') {
+                    continue;
+                }
+                $filePath = $fileDirectory . '/' . $file;
+                $fileLastModified = filemtime($filePath);
+                if ((time() - $fileLastModified) > 1 * 24 * 3600) {
+                    unlink($filePath);
+                }
+            }
+            closedir($handle);
+        }
+        return true;
     }
 
     /**

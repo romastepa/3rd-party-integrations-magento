@@ -36,4 +36,13 @@
     <type name="Magento\Checkout\Block\Checkout\LayoutProcessor">
         <plugin name="emarsys_subscription" type="Emarsys\Emarsys\Plugin\Checkout\Model\Checkout\LayoutProcessor" sortOrder="100"/>
     </type>
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="emarsysProductExport" xsi:type="object">Emarsys\Emarsys\Console\Command\EmarsysProductExport</item>
+                <item name="emarsysOrderExport" xsi:type="object">Emarsys\Emarsys\Console\Command\EmarsysOrderExport</item>
+                <item name="emarsysCustomerExport" xsi:type="object">Emarsys\Emarsys\Console\Command\EmarsysCustomerExport</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

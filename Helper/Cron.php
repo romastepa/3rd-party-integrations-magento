@@ -2,18 +2,21 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Helper;
 
-use Magento\Framework\App\Helper\Context;
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Cron\Model\Schedule;
-use Emarsys\Emarsys\Model\EmarsysCronDetailsFactory;
-use Magento\Cron\Model\ScheduleFactory;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-use Emarsys\Emarsys\Model\Logs as Emarsyslogs;
-use Magento\Store\Model\StoreManagerInterface;
+use Magento\{
+    Framework\App\Helper\AbstractHelper,
+    Framework\App\Helper\Context,
+    Cron\Model\Schedule,
+    Cron\Model\ScheduleFactory,
+    Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface
+};
+use Emarsys\Emarsys\{
+    Model\EmarsysCronDetailsFactory,
+    Model\Logs as Emarsyslogs
+};
 
 /**
  * Class Cron
@@ -37,6 +40,8 @@ class Cron extends AbstractHelper
     //product related
     const CRON_JOB_CATALOG_BULK_EXPORT = 'emarsys_catalog_bulk_export';
 
+    const CRON_JOB_CATALOG_SYNC = 'emarsys_product_sync';
+
     //smart insight related
     const CRON_JOB_SI_SYNC_QUEUE = 'emarsys_smartinsight_sync_queue';
 
@@ -58,33 +63,31 @@ class Cron extends AbstractHelper
     protected $emarsysLogs;
 
     /**
-     * @var StoreManagerInterface
+     * @var TimezoneInterface
      */
-    protected $storeManager ;
+    protected $timezone;
 
     /**
      * Cron constructor.
+     *
      * @param Context $context
      * @param ScheduleFactory $scheduleFactory
-     * @param TimezoneInterface $timezone
      * @param EmarsysCronDetailsFactory $emarsysCronDetails
-     * @param Logs $emarsysLogs
-     * @param StoreManagerInterface $storeManager
+     * @param Emarsyslogs $emarsysLogs
+     * @param TimezoneInterface $timezone
      */
     public function __construct(
         Context $context,
         ScheduleFactory $scheduleFactory,
-        TimezoneInterface $timezone,
         EmarsysCronDetailsFactory $emarsysCronDetails,
         Emarsyslogs $emarsysLogs,
-        StoreManagerInterface $storeManager
+        TimezoneInterface $timezone
     ) {
         $this->context = $context;
         $this->scheduleFactory = $scheduleFactory;
-        $this->timezone = $timezone;
         $this->emarsysCronDetails = $emarsysCronDetails;
         $this->emarsysLogs = $emarsysLogs;
-        $this->storeManager = $storeManager;
+        $this->timezone = $timezone;
         parent::__construct($context);
     }
 
@@ -107,14 +110,17 @@ class Cron extends AbstractHelper
                 );
 
             $cronJobs->getSelect()->join(
-                ['ecd' => 'emarsys_cron_details'],
+                ['ecd' => $cronJobs->getTable('emarsys_cron_details')],
                 'ecd.schedule_id = main_table.schedule_id',
                 ['ecd.params']
             );
 
             if ($cronJobs->getSize()) {
                 foreach ($cronJobs as $job) {
-                    $jobsParams = \Zend_Json::decode($job->getParams());
+                    $jobsParams = json_decode($job->getParams(), true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new \InvalidArgumentException('Unable to unserialize value.');
+                    }
 
                     if (is_null($websiteBasedChecking)) {
                         $jobsStoreId = $jobsParams['storeId'];
@@ -136,7 +142,7 @@ class Cron extends AbstractHelper
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
+                0,
                 'Cron::checkCronjobScheduled()'
             );
 
@@ -153,9 +159,8 @@ class Cron extends AbstractHelper
      * @param null $storeId
      * @param null $websiteBasedChecking
      * @return Schedule
-     * @throws \Magento\Framework\Exception\CronException
      */
-    public function scheduleCronjob($jobCode, $storeId = null, $websiteBasedChecking = null)
+    public function scheduleCronJob($jobCode, $storeId = null, $websiteBasedChecking = null)
     {
         try {
             $cronExist = false;
@@ -169,8 +174,8 @@ class Cron extends AbstractHelper
                     ['in' => [Schedule::STATUS_PENDING]]
                 );
 
-            $cronJobs->getSelect()->join(
-                ['ecd' => 'emarsys_cron_details'],
+            $cronJobs->getSelect()->joinLeft(
+                ['ecd' => $cronJobs->getTable('emarsys_cron_details')],
                 'ecd.schedule_id = main_table.schedule_id',
                 ['ecd.params']
             );
@@ -205,11 +210,13 @@ class Cron extends AbstractHelper
             $cron = $this->scheduleFactory->create();
         }
 
+        /** @var ScheduleFactory $cron */
         $result = $cron->setJobCode($jobCode)
             ->setCronExpr('* * * * *')
             ->setStatus(Schedule::STATUS_PENDING)
             ->setCreatedAt(strftime('%Y-%m-%d %H:%M:%S', $this->timezone->scopeTimeStamp()))
-            ->setScheduledAt(strftime('%Y-%m-%d %H:%M', $this->timezone->scopeTimeStamp()));
+            ->setScheduledAt(strftime('%Y-%m-%d %H:%M:%S', $this->timezone->scopeTimeStamp() + 60));
+
         $cron->save();
 
         return $result;
@@ -239,11 +246,9 @@ class Cron extends AbstractHelper
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
+                0,
                 'Cron::getCurrentCronInformation()'
             );
-
-            return false;
         }
 
         return false;
