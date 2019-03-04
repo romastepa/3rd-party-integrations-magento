@@ -112,8 +112,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     //Smart Insight
     const XPATH_SMARTINSIGHT_ENABLED = 'smart_insight/smart_insight/smartinsight_enabled';
 
-    const XPATH_SMARTINSIGHT_EXPORT_ORDER_STATUS = 'smart_insight/smart_insight/orderexportforstatus';
-
     const XPATH_SMARTINSIGHT_EXPORTGUEST_CHECKOUTORDERS = 'smart_insight/smart_insight/exportguest_checkoutorders';
 
     const XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER = 'smart_insight/smart_insight/exportusing_emailidentifier';
@@ -913,6 +911,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param $websiteId
+     * @return mixed
+     */
+    public function getContactUniqueField($websiteId)
+    {
+        return 'email';
+    }
+
+    /**
      * Get Log file path from configuration
      *
      * @return string
@@ -1663,7 +1670,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $store_id
      * @return string
      */
-    public function insertFirstimeHeaderMappingPlaceholders($mapping_id, $store_id)
+    public function insertFirstTimeHeaderMappingPlaceholders($mapping_id, $store_id)
     {
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create()
@@ -1681,7 +1688,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->emarsysLogs->addErrorLog(
                 htmlentities($e->getMessage()),
                 $store_id,
-                'insertFirstimeHeaderMappingPlaceholders'
+                'insertFirstTimeHeaderMappingPlaceholders'
             );
         }
     }
@@ -1691,7 +1698,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $store_id
      * @return string
      */
-    public function insertFirstimeFooterMappingPlaceholders($mapping_id, $store_id)
+    public function insertFirstTimeFooterMappingPlaceholders($mapping_id, $store_id)
     {
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create()
@@ -1712,7 +1719,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->emarsysLogs->addErrorLog(
                 htmlentities($e->getMessage()),
                 $store_id,
-                'insertFirstimeFooterMappingPlaceholders'
+                'insertFirstTimeFooterMappingPlaceholders'
             );
         }
     }
@@ -2008,12 +2015,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getFirstStoreId()
     {
-        $firstStoreId = $this->storeManager->getStore()->getId();
-        $listOfStores = $this->storeCollection->create()->addFieldToFilter('store_id', ['neq' => 0]);
-
-        if ($listOfStores) {
-            $firstStoreId = $listOfStores->getFirstItem()->getStoreId();
-        }
+        $stores = $this->storeManager->getStores();
+        $store = current($stores);
+        $firstStoreId = $store->getId();
 
         return $firstStoreId;
     }
@@ -2024,13 +2028,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getFirstStoreIdOfWebsite($websiteId)
     {
-        $firstStoreId = $this->storeManager->getStore()->getId();
-        $listOfStores = $this->storeCollection->create()
-            ->addFieldToFilter('website_id', $websiteId)
-            ->addFieldToFilter('store_id', ['neq' => 0]);
+        /** @var \Magento\Store\Api\Data\WebsiteInterface $websiteId */
+        $website = $this->storeManager->getWebsite($websiteId);
 
-        if ($listOfStores) {
-            $firstStoreId = $listOfStores->getFirstItem()->getStoreId();
+        $defaultStore = @$website->getDefaultStore();
+        if ($defaultStore && $defaultStore->getId()) {
+            $firstStoreId = $defaultStore->getId();
+        } else {
+            $stores = $website->getStores();
+            $store = current($stores);
+            $firstStoreId = $store->getId();
         }
 
         return $firstStoreId;
@@ -2553,19 +2560,27 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param int $storeId
+     * @param bool $getAllheaders
      * @return array
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getSalesOrderCsvDefaultHeader($store = 0)
+    public function getSalesOrderCsvDefaultHeader($storeId = 0, $getAllheaders = false)
     {
-        /** @var \Magento\Store\Model\Store $store */
-        $store = $this->storeManager->getStore($store);
+        $header = ['order', 'timestamp', 'customer', 'email', 'item', 'price', 'quantity'];
 
-        $emailAsIdentifierStatus = (bool)$store->getConfig(self::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
-        if ($emailAsIdentifierStatus) {
-            return ['order', 'timestamp', 'email', 'item', 'price', 'quantity'];
-        } else {
-            return ['order', 'timestamp', 'customer', 'item', 'price', 'quantity'];
+        if (!$getAllheaders) {
+            /** @var \Magento\Store\Model\Store $store */
+            $store = $this->storeManager->getStore($storeId);
+            $emailAsIdentifierStatus = (bool)$store->getConfig(self::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
+            if ($emailAsIdentifierStatus) {
+                unset($header[2]);
+            } else {
+                unset($header[3]);
+            }
         }
+
+        return $header;
     }
 
     /**
@@ -2668,6 +2683,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param $messages
+     * @param $storeId
+     * @param $info
+     */
+    public function addErrorLog($messages, $storeId, $info)
+    {
+        return $this->emarsysLogs->addErrorLog($messages, $storeId, $info);
+    }
+
+    /**
      * @param string $fileDirectory
      * @return bool
      */
@@ -2687,15 +2712,5 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             closedir($handle);
         }
         return true;
-    }
-
-    /**
-     * @param $messages
-     * @param $storeId
-     * @param $info
-     */
-    public function addErrorLog($messages, $storeId, $info)
-    {
-        return $this->emarsysLogs->addErrorLog($messages, $storeId, $info);
     }
 }
