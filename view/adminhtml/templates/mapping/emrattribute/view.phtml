@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 ?>
 <?php
@@ -78,6 +78,7 @@ $editUrl = $block->getUrl('emarsys_emarsys/mapping_emrattribute/edit', ['store' 
 <br>
 <br>
 <form method="POST" action="<?php echo $saveUrl; ?>" id="emarAttribute" autocomplete="off"/>
+    <input type="hidden" name="form_key" value="<?php echo $block->getFormKey(); ?>"/>
     <div class="emr_tbl header_label">
         <strong>Name</strong><strong>Label</strong>
     </div>

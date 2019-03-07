@@ -101,7 +101,7 @@ class CatalogApiTestConnection extends TestConnection
             }
 
             $this->apiExport->assignApiCredentials($merchantId, $token);
-            $response = $this->apiExport->testCatalogExportApi();
+            $response = $this->apiExport->testCatalogExportApi($storeId);
 
             if ($response['result'] == 1 || (in_array($response['status'], ['200', '400']))) {
                 try {

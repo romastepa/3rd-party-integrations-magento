@@ -4,6 +4,7 @@
  * @package    Emarsys_Emarsys
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
+
 namespace Emarsys\Emarsys\Model;
 
 use Magento\Framework\Mail\MessageInterface;

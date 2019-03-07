@@ -85,26 +85,11 @@ class InitialLoadDb extends Field
         ];
 
         $html = "
-                <input type='radio' id='contacts_synchronization_initial_db_load_initial_db_load1' name='groups[initial_db_load][fields][initial_db_load][value]' value='true' $checkTrue>Set Opt-In Status for all users to true<br><br>
-                <input type='radio' id='contacts_synchronization_initial_db_load_initial_db_load2' name='groups[initial_db_load][fields][initial_db_load][value]' value='empty' $checkEmpty>Set Opt-In Status for all users to empty<br><br>
-                <input type='radio' id='contacts_synchronization_initial_db_load_initial_db_load3' name='groups[initial_db_load][fields][initial_db_load][value]' value='attribute' $checkAttribute>Set Opt-In Status true for all users depending on attribute<br><br>
-                <select id='contacts_synchronization_initial_db_load_initial_db_load_attribute' name='groups[initial_db_load][fields][attribute][value]' style='width:163px' value='$attribute'>
+                <input type='radio' id='contacts_synchronization_initial_db_load_initial_db_load1' name='groups[initial_db_load][fields][initial_db_load][value]' value='true' $checkTrue />Set Opt-In Status for all users to true<br><br>
+                <input type='radio' id='contacts_synchronization_initial_db_load_initial_db_load2' name='groups[initial_db_load][fields][initial_db_load][value]' value='empty' $checkEmpty />Set Opt-In Status for all users to empty<br><br>
+                <input type='radio' id='contacts_synchronization_initial_db_load_initial_db_load3' name='groups[initial_db_load][fields][initial_db_load][value]' value='attribute' $checkAttribute />Set Opt-In Status true for all users depending on attribute<br><br>
+                <input type='hidden' id='contacts_synchronization_initial_db_load_initial_db_load_attribute' name='groups[initial_db_load][fields][attribute][value]' value='subscribed_status||1' />
             ";
-
-        foreach ($customerAttributes as $field) {
-            if ($field['entity_type_id'] == 2) {
-                $fieldLabel = "Default Billing Address: " . $field['frontend_label'];
-            } else {
-                $fieldLabel = $field['frontend_label'];
-            }
-            $chkSelected = $field['attribute_code'] . "||" . $field['entity_type_id'];
-
-            $selected = "";
-            if ($chkSelected == $attribute) {
-                $selected = 'selected = selected';
-            }
-            $html .= '<option value="' . $field['attribute_code'] . "||" . $field['entity_type_id'] . '" ' . $selected . '>' . $fieldLabel . '</option>';
-        }
         $subscribed = '';
         $notActivated = '';
         $unscubscribed = '';
@@ -120,7 +105,6 @@ class InitialLoadDb extends Field
         }
 
         $html .= "
-                </select><br/><br/>
                 <select id='contacts_synchronization_initial_db_load_initial_db_load_attribute_value' name='groups[initial_db_load][fields][attribute_value][value]' style='width:189px'>
                     <option value='1' $subscribed>Subscribed</option>
                     <option value='2' $notActivated>Not Activated</option>

@@ -32,7 +32,6 @@ class SaveSchema extends \Magento\Backend\App\Action
     protected $productResourceModel;
 
     /**
-     *
      * @param Context $context
      * @param \Emarsys\Emarsys\Model\ResourceModel\Product $productResourceModel
      * @param \Emarsys\Emarsys\Model\Logs $emarsysLogs

@@ -11,18 +11,24 @@ use Magento\Backend\App\Action\Context;
 use Magento\Cron\Model\ScheduleFactory;
 
 /**
- * Class Message
+ * Class Index
  * @package Emarsys\Emarsys\Controller\Adminhtml\CronSchedule
  */
-class Message extends Action
+class Delete extends Action
 {
+
     /**
      * @var ScheduleFactory
      */
-    protected $scheduleFactory;
+    private $scheduleFactory;
 
     /**
-     * Message constructor.
+     * @var Data
+     */
+    private $jsonHelper;
+
+    /**
+     * Params constructor.
      * @param Context $context
      * @param ScheduleFactory $scheduleFactory
      */
@@ -35,21 +41,21 @@ class Message extends Action
     }
 
     /**
-     * @return void|$this
-     * @throws \RuntimeException
+     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface
+     * @throws \Exception
      */
     public function execute()
     {
         $id = $this->getRequest()->getParam('id');
-        if ($id) {
-            $cronDettails = $this->scheduleFactory->create()->load($id);
-            if ($cronDettails) {
-                printf("<pre>" . $cronDettails->getMessages() . "</pre>");
-            } else {
-                printf("No Data Available");
-            }
+
+        $cron = $this->scheduleFactory->create()->load($id);
+        if ($cron->getId() && stristr($cron->getJobCode(), 'emarsys')) {
+            $cron->delete();
+            $this->messageManager->addSuccessMessage(__('Cron Job (%1: %2), removed successfully', $cron->getId(), $cron->getJobCode()));
         } else {
-            printf("No Data Available");
+            $this->messageManager->addErrorMessage(__('Something goes wrong'));
         }
+
+        return $this->_redirect('*/*');
     }
 }

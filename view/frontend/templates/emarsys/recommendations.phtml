@@ -10,6 +10,10 @@
 <?php $merchantId = $block->getMerchantId(); ?>
 <?php $webExtendStatus = $this->getJsEnableStatusForAllPages(); ?>
 
+<?php if ($block->getStoreCode()): ?>
+    <script>ScarabQueue.push(['availabilityZone', '<?php echo $block->getStoreCode() ?>']);</script>
+<?php endif; ?>
+
 <!-- This code will embeded on all pages -->
 <?php if ($webExtendStatus && !empty($merchantId)): ?>
     <?php $pageHandleData = $block->getPageHandleStatus(); ?>

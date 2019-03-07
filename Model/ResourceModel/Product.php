@@ -4,6 +4,7 @@
  * @package    Emarsys_Emarsys
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
+
 namespace Emarsys\Emarsys\Model\ResourceModel;
 
 use Magento\Framework\Model\AbstractModel;
@@ -24,30 +25,27 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      * @var Data
      */
     protected $dataHelper;
+
     /**
      * @var Logger
      */
     protected $logger;
+
     /**
      * @var Manager
      */
     protected $cacheManager;
-    /**
-     * @var
-     */
-    protected $sync;
+
     /**
      * @var
      */
     protected $resourceModelSync;
+
     /**
      * @var
      */
     protected $productFactory;
-    /**
-     * @var
-     */
-    protected $scopeConfigInterface;
+
 
     /**
      *
@@ -61,7 +59,6 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      * @param Data $emarsysHelper
      * @param \Magento\Catalog\Model\ProductFactory $productFactory
      * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface
      * @param Logger $logger
      * @param null $connectionName
      */
@@ -76,22 +73,19 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         \Emarsys\Emarsys\Helper\Data $emarsysHelper,
         \Magento\Catalog\Model\ProductFactory $productFactory,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfigInterface,
         Logger $logger,
         $connectionName = null
-    ) {
-    
-
+    )
+    {
         $this->dataHelper = $dataHelper;
-        $this->timezone = $timezone;
+        $this->cacheManager = $cacheManager;
         $this->resourceModelSync = $resourceModelSync;
-        $this->date = $date;
+        $this->_storeManager = $storeManager;
+        $this->timezone = $timezone;
         $this->emarsysLogs = $emarsysLogs;
         $this->emarsysHelper = $emarsysHelper;
-        $this->cacheManager = $cacheManager;
-        $this->_storeManager = $storeManager;
         $this->productFactory = $productFactory;
-        $this->scopeConfigInterface = $scopeConfigInterface;
+        $this->date = $date;
         $this->logger = $logger;
         parent::__construct($context, $connectionName);
     }
@@ -113,7 +107,35 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     {
         $this->getConnection()->query("DELETE FROM " . $this->getTable("emarsys_product_mapping") . " WHERE store_id = $storeId AND emarsys_attr_code = 0");
     }
-    
+
+    public function deleteExistingEmarsysAttr($attributeCode, $storeId = null)
+    {
+        try {
+            $emarsysContactField = $this->getConnection()->fetchOne("SELECT emarsys_contact_field FROM " . $this->getTable('emarsys_product_mapping') . " WHERE emarsys_attr_code=$attributeCode AND store_id=$storeId");
+            if (!empty($emarsysContactField)) {
+                $this->getConnection()->query("DELETE FROM " . $this->getTable("emarsys_product_mapping") . " WHERE store_id = $storeId AND emarsys_contact_field = $emarsysContactField");
+            }
+        } catch (\Exception $e) {
+            return $e->Message();
+        }
+    }
+
+    public function deleteRecommendedMappingExistingAttr($recommendedDatas, $storeId = null)
+    {
+        foreach ($recommendedDatas as $key => $recommendedData) {
+            $attributeCode = $recommendedData['emarsys_attr_code'];
+            try {
+                $stm = "SELECT emarsys_contact_field FROM " . $this->getTable('emarsys_product_mapping') . " WHERE emarsys_attr_code=$attributeCode AND store_id=$storeId AND magento_attr_code != '" . $key . "' ";
+                $emarsysContactField = $this->getConnection()->fetchOne($stm);
+                if (!empty($emarsysContactField)) {
+                    $this->getConnection()->query("DELETE FROM " . $this->getTable("emarsys_product_mapping") . " WHERE store_id = $storeId AND emarsys_contact_field = $emarsysContactField");
+                }
+            } catch (\Exception $e) {
+                return $e->Message();
+            }
+        }
+    }
+
     /**
      * Define main table
      * @return void
@@ -172,12 +194,12 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $productFields[] = ['Author', 'Author', 'String'];
         $productFields[] = ['Brand', 'Brand', 'String'];
         $productFields[] = ['Year', 'Year', 'Integer'];
-        
+
         foreach ($productFields as $productField) {
             $code = $productField[0];
             $label = $productField[1];
             $field_type = $productField[2];
-            $existStmt = $this->getConnection()->query("SELECT code FROM " . $this->getTable('emarsys_emarsys_product_attributes') . " WHERE code = '" . $code. "' AND store_id = '" . $storeId . "' AND label = '" . $label . "' AND field_type = '" . $field_type . "'");
+            $existStmt = $this->getConnection()->query("SELECT code FROM " . $this->getTable('emarsys_emarsys_product_attributes') . " WHERE code = '" . $code . "' AND store_id = '" . $storeId . "' AND label = '" . $label . "' AND field_type = '" . $field_type . "'");
             if (empty($existStmt->fetch())) {
                 $this->getConnection()->query("INSERT INTO " . $this->getTable("emarsys_emarsys_product_attributes") . " ( code, label, field_type, store_id) VALUES
                      ( '$code', '$label', '$field_type', '$storeId')
@@ -202,6 +224,10 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         return $result;
     }
 
+    /**
+     * @param $storeId
+     * @return array
+     */
     public function getRequiredProductAttributesForExport($storeId)
     {
         $requiredMapping = [];
@@ -212,6 +238,7 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $requiredMapping['image'] = 'image';
         $requiredMapping['category_ids'] = 'category';
         $requiredMapping['price'] = 'price';
+
         $returnArray = [];
         foreach ($requiredMapping as $key => $value) {
             $attrData = [];
@@ -226,11 +253,15 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         return $returnArray;
     }
 
+    /**
+     * @param $attrCode
+     * @param $storeId
+     * @return mixed
+     */
     public function getEmarsysAttributeIdByCode($attrCode, $storeId)
     {
         $attrCode = $this->getConnection()->quote($attrCode);
-        $emarsysAttributeId = '';
-        $emarsysAttributeId = $this->getConnection()->fetchOne("SELECT id FROM " . $this->getTable('emarsys_emarsys_product_attributes') . " WHERE code = " . $attrCode. " AND store_id =" . $storeId); // Get this value from Emarsys Attributes Table based Code & Store ID
+        $emarsysAttributeId = $this->getConnection()->fetchOne("SELECT id FROM " . $this->getTable('emarsys_emarsys_product_attributes') . " WHERE code = " . $attrCode . " AND store_id =" . $storeId); // Get this value from Emarsys Attributes Table based Code & Store ID
         return $emarsysAttributeId;
     }
 
@@ -246,8 +277,8 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
                 ->select()
                 ->from($this->getTable('emarsys_product_mapping'))
                 ->where('store_id = ?', $storeId);
-
             $productAttributes = $this->getConnection()->fetchAll($select);
+
             $emarsysAttributeId = [];
             foreach ($productAttributes as $mapAttribute) {
                 $emarsysAttributeId[] = $mapAttribute['emarsys_attr_code'];
@@ -265,6 +296,7 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
                     $productAttributes[] = $_requiredMapping;
                 }
             }
+
             return array_values($productAttributes);
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog($e->getMessage(), $storeId, 'getMappedProductAttribute');
@@ -302,45 +334,6 @@ class Product extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         } catch (\Exception $e) {
             $storeId = $this->_storeManager->getStore()->getId();
             $this->emarsysLogs->addErrorLog($e->getMessage(), $storeId, 'getAttributeName');
-        }
-    }
-
-    /**
-     * @param $attributeCode
-     * @param null $storeId
-     * @return mixed
-     */
-    public function deleteExistingEmarsysAttr($attributeCode, $storeId = null)
-    {
-        try {
-            $emarsysContactField = $this->getConnection()->fetchOne("SELECT emarsys_contact_field FROM " . $this->getTable('emarsys_product_mapping'). " WHERE emarsys_attr_code=$attributeCode AND store_id=$storeId");
-            if(!empty($emarsysContactField)) {            
-                $this->getConnection()->query("DELETE FROM " . $this->getTable("emarsys_product_mapping") . " WHERE store_id = $storeId AND emarsys_contact_field = $emarsysContactField");
-            }
-        } catch (\Exception $e) {
-            return $e->Message();
-        }
-    }
-
-    /**
-     * @param $recommendedDatas
-     * @param null $storeId
-     * @return mixed
-     */
-    public function deleteRecommendedMappingExistingAttr($recommendedDatas, $storeId = null)
-    {
-        foreach ($recommendedDatas as $key => $recommendedData)
-        {
-            $attributeCode = $recommendedData['emarsys_attr_code'];
-            try {
-                $stm = "SELECT emarsys_contact_field FROM " . $this->getTable('emarsys_product_mapping') . " WHERE emarsys_attr_code=$attributeCode AND store_id=$storeId AND magento_attr_code != '". $key. "' ";
-                $emarsysContactField = $this->getConnection()->fetchOne($stm);
-                if (!empty($emarsysContactField)) {
-                    $this->getConnection()->query("DELETE FROM " . $this->getTable("emarsys_product_mapping") . " WHERE store_id = $storeId AND emarsys_contact_field = $emarsysContactField");
-                }
-            } catch (\Exception $e) {
-                return $e->Message();
-            }
         }
     }
 }

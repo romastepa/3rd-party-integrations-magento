@@ -1,25 +1,11 @@
 <?php
-$objectManager   = \Magento\Framework\App\ObjectManager::getInstance();
-$resourceModelOrder = $objectManager->create('\Emarsys\Emarsys\Model\ResourceModel\Order');
-$storeId               = $this->getStoreId();
-$orderMappingCount = $resourceModelOrder->getEmarsysAttrCount($storeId);
-$moduleName = 'emarsys_emarsys';
-$controllerNamePleaseSelect = 'mapping_customer';
-$controllerNameField = 'mapping_field';
-$controllerNameProduct = 'mapping_product';
-$controllerNameCustomer = 'mapping_customer';
-$controllerNameOrder = 'mapping_order';
-$controllerNameEvent = 'mapping_event';
-$saveBtn               = "'" . $block->getUrl("*/*/save", ["store" => $storeId]) . "'";
-$schemaBtn             = "'" . $block->getUrl("*/*/saveSchema", ["store" => $storeId]) . "," . $orderMappingCount. "'";
-$moduleName            = 'emarsys_emarsys';
-$adminUrlEmarsysField = $block->getUrl($moduleName. '/' . $controllerNameField . '/index', ["store" => $storeId]);
-$adminUrlEmarsysProduct = $block->getUrl($moduleName. '/' . $controllerNameProduct . '/index', ["store" => $storeId]);
-$adminUrlEmarsysCustomer = $block->getUrl($moduleName . '/' . $controllerNameCustomer . '/index', ["store" => $storeId]);
-$adminUrlEmarsysEvent = $block->getUrl($moduleName . '/' . $controllerNameEvent . '/index', ["store" => $storeId]);
-$adminUrlEmarsysOrder = $block->getUrl($moduleName . '/' . $controllerNameOrder . '/index', ["store" => $storeId]);
-$adminUrlEmarsysPleaseSelect = $block->getUrl($moduleName . '/' . $controllerNamePleaseSelect . '/index', ["store" => $storeId]);
+/**
+ * @category   Emarsys
+ * @package    Emarsys_Emarsys
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
+ */
 ?>
+<?php $mappingOptions = $block->getMappingOption('mapping_order'); ?>
 <div>
     <span class="selectMapping">
         <label class="admin__control-support-text emMapping">Select Mapping: </label>
@@ -27,16 +13,15 @@ $adminUrlEmarsysPleaseSelect = $block->getUrl($moduleName . '/' . $controllerNam
                  name="menu"
                  onChange="top.location.href=this.options[this.selectedIndex].value;"
                  value="GO">
-            <option value="<?php echo $adminUrlEmarsysPleaseSelect; ?>">Please Select</option>
-            <option value="<?php echo $adminUrlEmarsysField; ?>">Customer-Field</option>
-            <option value="<?php echo $adminUrlEmarsysProduct; ?>">Product</option>
-            <option  value="<?php echo $adminUrlEmarsysCustomer; ?>">Customer</option>
-            <option selected="selected" value="<?php echo $adminUrlEmarsysOrder; ?>">Order</option>
-            <option  value="<?php echo $adminUrlEmarsysEvent; ?>">Event</option>
+            <?php foreach ($mappingOptions as $option): ?>
+                <option <?php if ($option['selected'] == true) : ?> selected="selected" <?php endif; ?> value="<?php echo $option['value'] ?>">
+                      <?php echo __($option['label']) ?>
+                </option>
+            <?php endforeach; ?>
         </select>
     </span>
     <span class="scalable">
-        <input type="button" class="action-default scalable orderSaveBtn " value="Save"   />
-        <input type="button" class="action-default scalable add updateSchema" value="Update Schema"   />
+        <input type="button" class="action-default scalable orderSaveBtn " value="Save" />
+        <input type="button" class="action-default scalable add updateSchema" value="Update Schema" />
     </span>
 </div>

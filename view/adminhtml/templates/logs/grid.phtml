@@ -5,13 +5,19 @@
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
 ?>
-<?php $logDet = $block->getLogDetails(); ?>
-<?php $storeId = $block->getStoreId(); ?>
-<?php $dateObject = $block->getDateObject(); ?>
-<?php $scheduleAt = new DateTime($logDet['created_at']); ?>
-<?php $finishedAt = new DateTime($logDet['finished_at']); ?>
-<?php $diff = $finishedAt->diff($scheduleAt); ?>
-<?php $synDuration = $diff->days . ' days , ' . $diff->h . " : " . $diff->i . " : " . $diff->s; ?>
+<?php
+    $logDet = $block->getLogDetails();
+    $storeId = $block->getStoreId();
+    $dateObject = $block->getDateObject();
+    $scheduleAt = new DateTime($logDet['created_at']);
+    $finishedAt = 'now';
+    if ($logDet['finished_at'] != '0000-00-00 00:00:00') {
+        $finishedAt = $logDet['finished_at'];
+    }
+    $finishedAt = new DateTime($finishedAt);
+    $diff = $finishedAt->diff($scheduleAt);
+    $synDuration = $diff->days . ' days , ' . $diff->h . " : " . $diff->i . " : " . $diff->s;
+?>
 <input type="button"
        class="action-default scalable action-secondary"
        value="Back"
@@ -40,7 +46,7 @@
                             <b>Scheduled At :</b>
                         </td>
                         <td width='25%' <?php echo $style; ?>>
-                            <?php echo $dateObject->date($logDet['created_at'], null, true)->format('M d, Y h:i:s A'); ?>
+                            <?php echo $dateObject->date(strtotime($logDet['created_at']), null, true)->format('M d, Y h:i:s A'); ?>
                         </td>
                     </tr>
                     <tr>
@@ -54,7 +60,7 @@
                             <b>Executed At :</b>
                         </td>
                         <td width='25%' <?php echo $style; ?>>
-                            <?php echo $dateObject->date($logDet['executed_at'], null, true)->format('M d, Y h:i:s A'); ?>
+                            <?php echo $dateObject->date(strtotime($logDet['executed_at']), null, true)->format('M d, Y h:i:s A'); ?>
                         </td>
                     </tr>
                     <tr>
@@ -62,13 +68,13 @@
                             <b>Created At :</b>
                         </td>
                         <td width='25%' <?php echo $style; ?>>
-                            <?php echo $dateObject->date($logDet['created_at'], null, true)->format('M d, Y h:i:s A'); ?>
+                            <?php echo $dateObject->date(strtotime($logDet['created_at']), null, true)->format('M d, Y h:i:s A'); ?>
                         </td>
                         <td width='25%' <?php echo $style; ?>>
                             <b>Finished At :</b>
                         </td>
                         <td width='25%' <?php echo $style; ?>>
-                            <?php echo $dateObject->date($logDet['finished_at'], null, true)->format('M d, Y h:i:s A');?>
+                            <?php echo $dateObject->date(strtotime($logDet['finished_at']), null, true)->format('M d, Y h:i:s A');?>
                         </td>
                     </tr>
                     <tr>

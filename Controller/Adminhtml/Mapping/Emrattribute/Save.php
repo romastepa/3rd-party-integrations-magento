@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 
 namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Emrattribute;
@@ -16,7 +16,7 @@ use Emarsys\Emarsys\Model\ResourceModel\Emrattribute\CollectionFactory;
  * Class Save
  * @package Emarsys\Emarsys\Controller\Adminhtml\Mapping\Emrattribute
  */
-class Save extends \Magento\Framework\App\Action\Action
+class Save extends Action
 {
     /**
      * @var EmrattributeFactory
@@ -31,17 +31,18 @@ class Save extends \Magento\Framework\App\Action\Action
     /**
      * Save constructor.
      * @param Context $context
-     * @param EmrattributeFactory $EmrattributeFactory
-     * @param CollectionFactory $EmrattributeCollectionFactory
+     * @param EmrattributeFactory $emrattributeFactory
+     * @param CollectionFactory $emrattributeCollectionFactory
      */
     public function __construct(
         Context $context,
-        EmrattributeFactory $EmrattributeFactory,
-        CollectionFactory $EmrattributeCollectionFactory
-    ) {
+        EmrattributeFactory $emrattributeFactory,
+        CollectionFactory $emrattributeCollectionFactory
+    )
+    {
         parent::__construct($context);
-        $this->emrattributeFactory = $EmrattributeFactory;
-        $this->emrattributeCollectionFactory = $EmrattributeCollectionFactory;
+        $this->emrattributeFactory = $emrattributeFactory;
+        $this->emrattributeCollectionFactory = $emrattributeCollectionFactory;
     }
 
     /**
@@ -60,6 +61,7 @@ class Save extends \Magento\Framework\App\Action\Action
                     ->addFieldToFilter('store_id', ['eq' => $storeId])
                     ->getFirstItem()
                     ->getCode();
+
                 $duplicateLabel = $attributeCollection->addFieldToFilter('label', ['eq' => $field_label])
                     ->addFieldToFilter('store_id', ['eq' => $storeId])
                     ->getFirstItem()
@@ -79,11 +81,9 @@ class Save extends \Magento\Framework\App\Action\Action
                 $model->save();
             }
         }
-
         $resultRedirect = $this->resultRedirectFactory->create();
         $resultRedirect->setPath('emarsys_emarsys/mapping_emrattribute', ['store' => $storeId]);
-        
+
         return $resultRedirect;
     }
-
 }

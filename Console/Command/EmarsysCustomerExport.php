@@ -60,18 +60,18 @@ class EmarsysCustomerExport extends Command
                 'from',
                 null,
                 InputOption::VALUE_OPTIONAL,
-                '--from="Y-m-d" (2017-12-31)'
+                'from="Y-m-d" [2017-12-31]'
             ),
             new InputOption(
                 'to',
                 null,
                 InputOption::VALUE_OPTIONAL,
-                '--to="Y-m-d" (2017-12-31)'
+                'to="Y-m-d" [2017-12-31]'
             ),
         ];
 
         $this->setName('emarsys:export:customer')
-            ->setDescription('Customer bulk export (--from=\'Y-m-d\' (2016-01-31) --to=\'Y-m-d\' (2017-12-31))')
+            ->setDescription('Customer bulk export (from=\'Y-m-d\' to=\'Y-m-d\')')
             ->setDefinition($options);
         parent::configure();
     }
@@ -90,29 +90,31 @@ class EmarsysCustomerExport extends Command
         foreach ($this->storeManager->getStores() as $storeId => $store) {
             if ($store->getConfig(\Emarsys\Emarsys\Helper\Data::XPATH_EMARSYS_ENABLED) && $store->getConfig(\Emarsys\Emarsys\Helper\Data::XPATH_EMARSYS_ENABLED)) {
                 $data = [];
-                $data['fromDate'] = ($input->getOption('from') && !empty($input->getOption('from'))) ? $input->getOption('from') . ' 00:00:01' : '';
-                $data['toDate'] = ($input->getOption('to') && !empty($input->getOption('to'))) ? $input->getOption('to') . ' 23:59:59' : '';
+                $data['fromDate'] = $input->getOption('from');
+                $data['toDate'] = $input->getOption('to');
                 $data['website'] = $store->getWebsiteId();
                 $data['storeId'] = $storeId;
                 $customerCollection = $this->customerResourceModel->getCustomerCollection($data, $storeId);
-                if ($customerCollection->getSize() <= 100000) {
-                    try {
-                        \Magento\Framework\App\ObjectManager::getInstance()->get(\Emarsys\Emarsys\Model\Api\Contact::class)->syncFullContactUsingApi(
-                            \Emarsys\Emarsys\Helper\Cron::CRON_JOB_CUSTOMER_BULK_EXPORT_API,
-                            $data
-                        );
-                    } catch (\Exception $e) {
-                        $output->writeln($e->getMessage());
-                        $output->writeln($e->getTrace());
-                    }
-                } else {
-                    try {
-                        \Magento\Framework\App\ObjectManager::getInstance()->get(\Emarsys\Emarsys\Model\WebDav\WebDav::class)->syncFullContactUsingWebDav(
-                            \Emarsys\Emarsys\Helper\Cron::CRON_JOB_CUSTOMER_BULK_EXPORT_WEBDAV,
-                            $data
-                        );
-                    } catch (\Exception $e) {
-                        $output->writeln($e->getMessage());
+                if (!empty($customerCollection)) {
+                    if (count($customerCollection) <= 100000) {
+                        try {
+                            \Magento\Framework\App\ObjectManager::getInstance()->get(\Emarsys\Emarsys\Model\Api\Contact::class)->syncFullContactUsingApi(
+                                \Emarsys\Emarsys\Helper\Cron::CRON_JOB_CUSTOMER_BULK_EXPORT_API,
+                                $data
+                            );
+                        } catch (\Exception $e) {
+                            $output->writeln($e->getMessage());
+                            $output->writeln($e->getTrace());
+                        }
+                    } else {
+                        try {
+                            \Magento\Framework\App\ObjectManager::getInstance()->get(\Emarsys\Emarsys\Model\WebDav\WebDav::class)->syncFullContactUsingWebDav(
+                                \Emarsys\Emarsys\Helper\Cron::CRON_JOB_CUSTOMER_BULK_EXPORT_WEBDAV,
+                                $data
+                            );
+                        } catch (\Exception $e) {
+                            $output->writeln($e->getMessage());
+                        }
                     }
                 }
             }

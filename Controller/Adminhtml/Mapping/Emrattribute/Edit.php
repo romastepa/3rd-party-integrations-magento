@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 
 namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Emrattribute;
@@ -15,71 +15,37 @@ use Magento\Framework\View\Result\PageFactory;
  * Class Edit
  * @package Emarsys\Emarsys\Controller\Adminhtml\Mapping\Emrattribute
  */
-class Edit extends \Magento\Framework\App\Action\Action
+class Edit extends Action
 {
     /**
-     * @var PageFactory
+     * @var \Emarsys\Emarsys\Model\Emrattribute
      */
-    protected $resultPageFactory;
+    protected $emrattribute;
 
     /**
-     * @var \Magento\Backend\Model\Session
+     * @var \Magento\Framework\Controller\Result\JsonFactory
      */
-    protected $session;
+    protected $resultJsonFactory;
 
     /**
-     * @var \Emarsys\Emarsys\Model\CustomerFactory
-     */
-    protected $customerFactory;
-
-    /**
-     * @var \Emarsys\Emarsys\Model\ResourceModel\Customer
-     */
-    protected $resourceModelCustomer;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $_storeManager;
-    protected $_resultJsonFactory;
-
-    /**
-     *
+     * Edit constructor.
      * @param Context $context
-     * @param \Emarsys\Emarsys\Model\CustomerFactory $customerFactory
-     * @param \Emarsys\Emarsys\Model\ResourceModel\Customer $resourceModelCustomer
-     * @param PageFactory $resultPageFactory
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Emarsys\Emarsys\Model\Emrattribute $emrattribute
      */
     public function __construct(
         Context $context,
-        \Emarsys\Emarsys\Model\CustomerFactory $customerFactory,
-        \Emarsys\Emarsys\Model\ResourceModel\Customer $resourceModelCustomer,
-        \Emarsys\Emarsys\Helper\Data $emsrsysHelper,
-        \Emarsys\Emarsys\Helper\Logs $logHelper,
-        \Emarsys\Emarsys\Model\Emrattribute $Emrattribute,
-        \Emarsys\Emarsys\Model\Logs $emarsysLogs,
-        \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        PageFactory $resultPageFactory,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Emarsys\Emarsys\Model\Emrattribute $emrattribute,
         \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-    ) {
+    )
+    {
         parent::__construct($context);
-        $this->session = $context->getSession();
-        $this->emarsysLogs = $emarsysLogs;
-        $this->Emrattribute = $Emrattribute;
-        $this->emsrsysHelper = $emsrsysHelper;
-        $this->resultPageFactory = $resultPageFactory;
-        $this->resourceModelCustomer = $resourceModelCustomer;
-        $this->customerFactory = $customerFactory;
-        $this->logHelper = $logHelper;
-        $this->date = $date;
-        $this->_storeManager = $storeManager;
-        $this->_resultJsonFactory = $resultJsonFactory;
+        $this->emrattribute = $emrattribute;
+        $this->resultJsonFactory = $resultJsonFactory;
     }
 
     /**
      * @return $this|\Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function execute()
     {
@@ -89,7 +55,7 @@ class Edit extends \Magento\Framework\App\Action\Action
         $label = $requestParams['label'];
         $field_type = $requestParams['field_type'];
         if ($attributeId) {
-            $productAttribute = $this->Emrattribute->load($attributeId);
+            $productAttribute = $this->emrattribute->load($attributeId);
             $productId = $productAttribute->getId();
             if ($productId) {
                 if (strpos($code, 'c_') === false) {
@@ -103,7 +69,7 @@ class Edit extends \Magento\Framework\App\Action\Action
                 $field_type = ucfirst($field_type);
                 $productAttribute->setFieldType($field_type);
                 $productAttribute->save();
-                $resultJson = $this->_resultJsonFactory->create();
+                $resultJson = $this->resultJsonFactory->create();
                 $data['status'] = 'SUCCESS';
                 return $resultJson->setData($data);
             }

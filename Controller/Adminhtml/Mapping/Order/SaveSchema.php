@@ -15,6 +15,7 @@ use Magento\Framework\Stdlib\DateTime\DateTime;
 use Emarsys\Emarsys\Model\ResourceModel\Order;
 use Magento\Store\Model\StoreManagerInterface;
 use Emarsys\Emarsys\Helper\Data;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 
 /**
  * Class SaveSchema
@@ -54,7 +55,8 @@ class SaveSchema extends Action
         DateTime $date,
         Order $orderResourceModel,
         StoreManagerInterface $storeManager,
-        Data $emarsysHelper
+        Data $emarsysHelper,
+        ScopeConfigInterface $scopeConfig
     ) {
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
@@ -64,6 +66,7 @@ class SaveSchema extends Action
         $this->date = $date;
         $this->storeManager = $storeManager;
         $this->emarsysHelper = $emarsysHelper;
+        $this->scopeConfig = $scopeConfig;
     }
 
     /**
@@ -81,8 +84,14 @@ class SaveSchema extends Action
             } else {
                 $storeId = $this->emarsysHelper->getFirstStoreId();
             }
+            $store = $this->storeManager->getStore($storeId);
             $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
             $errorStatus = true;
+            $emailAsIdentifierStatus = $this->scopeConfig->getValue(
+                Data::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER,
+                \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
+                $websiteId
+            );
 
             //initial logging started
             $logsArray['job_code'] = 'Order Mapping';
@@ -106,6 +115,11 @@ class SaveSchema extends Action
                 $manData[$column] = $column;
             }
 
+            if ($emailAsIdentifierStatus == 1) {
+                $this->orderResourceModel->deleteOrderAttributeMapping('customer', $storeId);
+            } else {
+                $this->orderResourceModel->deleteOrderAttributeMapping('email', $storeId);
+            }
             $this->orderResourceModel->insertIntoMappingTableStaticData($manData, $storeId);
             $this->orderResourceModel->insertIntoMappingTable($data, $storeId);
 

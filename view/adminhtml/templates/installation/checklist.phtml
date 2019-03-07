@@ -2,196 +2,181 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 ?>
-<style type="text/css">
-    .column_condition {
-        color: gray;
-    }
+<?php if ($store = $block->getStore()): ?>
+    <?php
+    $data = $block->getRequirementsInfo($store->getId());
+    $excludeInFirstSection = ["Smart Insight", "Realtime Synchronization", "Emarsys Connection Setting"];
+    $emarsysCustomerFieldNames = $block->getEmarsysCustomerFieldNames()
+    ?>
+    <style type="text/css">
+        .column_condition {
+            color: gray;
+        }
 
-    .column_value_fail {
-        color: green;
-    }
+        .column_value_fail {
+            color: green;
+        }
 
-    .column_value_success {
-        color: green;
-    }
-</style>
-<div class="content-header-support">
-    <h3 class="icon-head head-adminhtml-support">
-        <span class='acu-icon'></span>
-        <span class='acu-title'>Emarsys Installation Checklist</span>
-    </h3>
-</div>
-<?php
-$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-$storeManagerInterfaceObj = $objectManager->create('\Magento\Store\Model\StoreManagerInterface');
-$requestObj = $requestInterface = $objectManager->get('Magento\Framework\App\RequestInterface');
-$storeId = $requestObj->getParam('store');
-$websiteId = $storeManagerInterfaceObj->getStore($storeId)->getWebsiteId();
-$data = $objectManager->create('Emarsys\Emarsys\Helper\Data')->getRequirementsInfo($storeId);
-$excludeInFirstSection = ["Smart Insight", "Realtime Synchronization", "Emarsys Connection Setting"];
-$emarsysCustomerFields = $objectManager->create('Emarsys\Emarsys\Helper\Customer')->getEmarsysCustomerSchema($storeId);
-$emarsysCustomerFieldNames = [];
-if ($emarsysCustomerFields['data']) {
-    $emarsysCustomerDataFields = $emarsysCustomerFields['data'];
-    foreach ($emarsysCustomerDataFields as $CustomerField) {
-        $emarsysCustomerFieldNames[] = $CustomerField['name'];
-    }
-}
-?>
-<div class="box-left">
-    <div id="support_system_requirements_container" class="entry-edit">
-        <div class="example-responsive-block">
-            <h4 class="" style="background-color: #41362f;color:#fff;line-height: 20px;padding:10px"
-            "><?php echo 'System Requirements'; ?></h4>
-        </div>
-        <div class="fieldset sys-req">
-            <div class="hor-scroll" style="margin-left: 10px;">
-                <table class="form-list" cellspacing="0" cellpadding="0">
-                    <tr>
-                        <td class="label" style="width:200px;">
-                            <strong><?php echo 'Properties'; ?></strong>
-                        </td>
-                        <td class="value" style="width:200px;">
-                            <strong><?php echo 'Recommended Value'; ?></strong>
-                        </td>
-                        <td class="value" style="width:200px;">
-                            <strong><?php echo 'Current Value'; ?></strong>
-                        </td>
-                    </tr>
-                    <?php foreach ($data as $key => $requirement) { ?>
-                        <?php if (in_array($requirement['title'], $excludeInFirstSection)) continue; ?>
+        .column_value_success {
+            color: green;
+        }
+    </style>
+    <div class="content-header-support">
+        <h3 class="icon-head head-adminhtml-support">
+            <span class='acu-icon'></span>
+            <span class='acu-title'>Emarsys Installation Checklist</span>
+        </h3>
+    </div>
+    <div class="box-left">
+        <div id="support_system_requirements_container" class="entry-edit">
+            <div class="example-responsive-block">
+                <h4 class="" style="background-color: #41362f;color:#fff;line-height: 20px;padding:10px"><?php echo __('System Requirements'); ?></h4>
+            </div>
+            <div class="fieldset sys-req">
+                <div class="hor-scroll" style="margin-left: 10px;">
+                    <table class="form-list" cellspacing="0" cellpadding="0">
                         <tr>
-                            <td class="label">
-                                <label><?php echo $requirement['title']; ?></label>
+                            <td class="label" style="width:200px;">
+                                <strong><?php echo __('Properties'); ?></strong>
                             </td>
-                            <td class="value column_condition">
-                                <?php echo $requirement['condition']['sign'] ?>
-                                <?php echo $requirement['condition']['value'] ?>
+                            <td class="value" style="width:200px;">
+                                <strong><?php echo __('Recommended Value'); ?></strong>
                             </td>
-                            <td class="value <?php echo $requirement['current']['status'] ? 'column_value_success' : 'column_value_fail'; ?>">
-                                <?php echo $requirement['current']['value']; ?>
+                            <td class="value" style="width:200px;">
+                                <strong><?php echo __('Current Value'); ?></strong>
                             </td>
                         </tr>
-                    <?php } ?>
-                </table>
+                        <?php foreach ($data as $key => $requirement) { ?>
+                            <?php if (in_array($requirement['title'], $excludeInFirstSection)) continue; ?>
+                            <tr>
+                                <td class="label">
+                                    <label><?php echo $requirement['title']; ?></label>
+                                </td>
+                                <td class="value column_condition">
+                                    <?php echo $requirement['condition']['sign'] ?>
+                                    <?php echo $requirement['condition']['value'] ?>
+                                </td>
+                                <td class="value <?php echo $requirement['current']['status'] ? 'column_value_success' : 'column_value_fail'; ?>">
+                                    <?php echo $requirement['current']['value']; ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<div class="box-left" style="margin-top: 18px;">
-    <div id="support_system_requirements_container" class="entry-edit">
-        <div class="example-responsive-block">
-            <h4 class="" style="background-color: #41362f;color:#fff;line-height: 20px;padding:10px"
-            "><?php echo 'Extension Settings'; ?></h4>
-        </div>
-        <div class="fieldset sys-req">
-            <div class="hor-scroll" style="margin-left: 10px;">
-                <table class="form-list" cellspacing="0" cellpadding="0">
-                    <tr>
-                        <td class="label" style="width:200px;">
-                            <strong><?php echo 'Properties'; ?></strong>
-                        </td>
-                        <td class="value" style="width:200px;">
-                            <strong><?php echo 'Value'; ?></strong>
-                        </td>
-                    </tr>
-                    <?php foreach ($data as $key => $requirement) { ?>
-                        <?php if (!in_array($requirement['title'], $excludeInFirstSection)) continue; ?>
+    <div class="box-left" style="margin-top: 18px;">
+        <div id="support_system_requirements_container" class="entry-edit">
+            <div class="example-responsive-block">
+                <h4 class="" style="background-color: #41362f;color:#fff;line-height: 20px;padding:10px"><?php echo 'Extension Settings'; ?></h4>
+            </div>
+            <div class="fieldset sys-req">
+                <div class="hor-scroll" style="margin-left: 10px;">
+                    <table class="form-list" cellspacing="0" cellpadding="0">
                         <tr>
-                            <td class="label">
-                                <label><?php echo $requirement['title']; ?></label>
+                            <td class="label" style="width:200px;">
+                                <strong><?php echo __('Properties'); ?></strong>
                             </td>
-                            <td class="value <?php echo $requirement['current']['status'] ? 'column_value_success' : 'column_value_fail'; ?>">
-                                <?php echo $requirement['current']['value']; ?>
+                            <td class="value" style="width:200px;">
+                                <strong><?php echo __('Value'); ?></strong>
                             </td>
                         </tr>
-                    <?php } ?>
-                </table>
+                        <?php foreach ($data as $key => $requirement): ?>
+                            <?php if (!in_array($requirement['title'], $excludeInFirstSection)) continue; ?>
+                            <tr>
+                                <td class="label">
+                                    <label><?php echo $requirement['title']; ?></label>
+                                </td>
+                                <td class="value <?php echo $requirement['current']['status'] ? 'column_value_success' : 'column_value_fail'; ?>">
+                                    <?php echo $requirement['current']['value']; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<div class="box-left" style="margin-top: 18px;">
-    <div id="support_system_requirements_container" class="entry-edit">
-        <div class="example-responsive-block">
-            <h4 class="" style="background-color: #41362f;color:#fff;line-height: 20px;padding:10px"
-            "><?php echo 'Mandatory Emarsys Customer Fields'; ?></h4>
-        </div>
-        <div class="fieldset sys-req">
-            <div class="hor-scroll" style="margin-left: 10px;">
-                <table class="form-list" cellspacing="0" cellpadding="0">
-                    <tr>
-                        <td class="label" style="width:200px;">
-                            <strong><?php echo 'Contact field'; ?></strong>
-                        </td>
-                        <td class="value" style="width:200px;">
-                            <strong><?php echo 'Created In Emarsys'; ?></strong>
-                        </td>
-                    </tr>
-                    <?php
-                    $mandatoryFileds = ['Magento Customer ID', 'Magento Subscriber ID', 'Magento Customer Unique ID'];
-                    $customermandatoryFileds = [];
-                    $filedsToCreate = [];
-                    if ($emarsysCustomerFieldNames) {
-                        foreach ($mandatoryFileds as $customerField) {
-                            if (in_array($customerField, $emarsysCustomerFieldNames)) {
-                                ?>
-                                <tr>
-                                    <td class="label">
-                                        <label><?php echo $customerField; ?></label>
-                                    </td>
-                                    <td class="value column_value_fail">Yes</td>
-                                </tr>
-
-                            <?php
-                            } else {
-                                $filedsToCreate[] = $customerField;
-                                ?>
-
-                                <tr>
-                                    <td class="label">
-                                        <label><?php echo $customerField; ?></label>
-                                    </td>
-                                    <td class="value" style="color: red;">No</td>
-                                </tr>
-                            <?php
+    <div class="box-left" style="margin-top: 18px;">
+        <div id="support_system_requirements_container" class="entry-edit">
+            <div class="example-responsive-block">
+                <h4 class="" style="background-color: #41362f;color:#fff;line-height: 20px;padding:10px"><?php echo __('Mandatory Emarsys Customer Fields'); ?></h4>
+            </div>
+            <div class="fieldset sys-req">
+                <div class="hor-scroll" style="margin-left: 10px;">
+                    <table class="form-list" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td class="label" style="width:200px;">
+                                <strong><?php echo __('Contact field'); ?></strong>
+                            </td>
+                            <td class="value" style="width:200px;">
+                                <strong><?php echo __('Created In Emarsys'); ?></strong>
+                            </td>
+                        </tr>
+                        <?php
+                        $mandatoryFileds = ['Magento Customer ID', 'Magento Subscriber ID', 'Magento Customer Unique ID'];
+                        $customermandatoryFileds = [];
+                        $filedsToCreate = [];
+                        if ($emarsysCustomerFieldNames) {
+                            foreach ($mandatoryFileds as $customerField) {
+                                if (in_array($customerField, $emarsysCustomerFieldNames)) {
+                                    ?>
+                                    <tr>
+                                        <td class="label">
+                                            <label><?php echo $customerField; ?></label>
+                                        </td>
+                                        <td class="value column_value_fail">Yes</td>
+                                    </tr>
+                                    <?php
+                                } else {
+                                    $filedsToCreate[] = $customerField;
+                                    ?>
+                                    <tr>
+                                        <td class="label">
+                                            <label><?php echo $customerField; ?></label>
+                                        </td>
+                                        <td class="value" style="color: red;">No</td>
+                                    </tr>
+                                    <?php
+                                }
                             }
                         }
-                    }
-                    if ($filedsToCreate):?>
-                        <?php
-                        $filedsToCreate = implode(',', $filedsToCreate);
-                        $CreateUrl = $this->getUrl(
-                            '*/mapping_customer/createfields',
-                            [
-                                'customerfields' => $filedsToCreate,
-                                'store' => $storeId,
-                                'website' => $websiteId
-                            ]
-                        );
-                        ?>
-                        <tr>
-                            <td class="label" colspan="2">&nbsp;</td>
-                        </tr>
-                        <tr>
-                            <td class="label" colspan="2">
-                                <button id="add" title="Create Missing fields" type="button"
-                                        class="action- scalable primary"
-                                        onclick="location.href = '<?php echo $CreateUrl; ?>'"
-                                        data-ui-id="add-button">
-                                    <span>Click Here</span>
-                                </button>
-                                to create missing Mandatory Field(s) in Emarsys.
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                </table>
+                        if ($filedsToCreate): ?>
+                            <?php
+                            $filedsToCreate = implode(',', $filedsToCreate);
+                            $CreateUrl = $this->getUrl(
+                                '*/mapping_customer/createfields',
+                                [
+                                    'customerfields' => $filedsToCreate,
+                                    'store' => $store->getId(),
+                                    'website' => $store->getWebsiteId()
+                                ]
+                            );
+                            ?>
+                            <tr>
+                                <td class="label" colspan="2">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td class="label" colspan="2">
+                                    <button id="add" title="Create Missing fields" type="button"
+                                            class="action- scalable primary"
+                                            onclick="location.href = '<?php echo $CreateUrl; ?>'"
+                                            data-ui-id="add-button">
+                                        <span>Click Here</span>
+                                    </button>
+                                    to create missing Mandatory Field(s) in Emarsys.
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<div style="clear:both"></div>
-<div style="clear:both"></div>
+    <div style="clear:both"></div>
+    <div style="clear:both"></div>
+<?php endif; ?>

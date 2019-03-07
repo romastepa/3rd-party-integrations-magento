@@ -78,15 +78,12 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         $filterCode = $this->getRequest()->getParam('filtercode');
 
         $storeId = $this->request->getParam('store');
+        $collection = $this->logScheduleFactory->create()
+            ->getCollection()
+            ->setOrder('created_at', 'desc');
         if ($storeId) {
-            $collection = $this->logScheduleFactory->create()
-                ->getCollection()
-                ->setOrder('created_at', 'desc')
-                ->addFieldToFilter('store_id', $storeId);
-        } else {
-            $collection = $this->logScheduleFactory->create()
-                ->getCollection()
-                ->setOrder('created_at', 'desc');
+            $collection->addFieldToFilter('store_id', $storeId);
+
         }
 
         if ($filterCode != '') {
@@ -223,8 +220,10 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
      */
     public function decorateTimeFrameCallBack($value)
     {
-        if ($value) {
-            return $this->decorateTime($value, false, null);
+        if ($value && $value != '0000-00-00 00:00:00') {
+            return $this->decorateTime(strtotime($value), false, null);
+        } else {
+            return '';
         }
     }
 

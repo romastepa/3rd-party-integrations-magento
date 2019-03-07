@@ -575,4 +575,17 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
 
         return $customerEmail;
     }
+
+    /**
+     * Get Store Code
+     *
+     * @return string
+     */
+    public function getStoreCode()
+    {
+        if ($this->storeManager->getStore()->isDefault()) {
+            return '';
+        }
+        return $this->storeManager->getStore()->getCode();
+    }
 }

@@ -1,10 +1,10 @@
 <?php
-
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
+
 namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Product;
 
 use Magento\Backend\App\Action;
@@ -67,7 +67,7 @@ class Save extends Action
     /**
      * @var StoreManagerInterface
      */
-    protected $_storeManager;
+    protected $storeManager;
 
     /**
      * Save constructor.
@@ -91,7 +91,8 @@ class Save extends Action
         DateTime $date,
         Product $resourceModelProduct,
         PageFactory $resultPageFactory
-    ) {
+    )
+    {
         parent::__construct($context);
         $this->session = $context->getSession();
         $this->resultPageFactory = $resultPageFactory;
@@ -101,7 +102,7 @@ class Save extends Action
         $this->emsrsysHelper = $emsrsysHelper;
         $this->logHelper = $logHelper;
         $this->date = $date;
-        $this->_storeManager = $storeManager;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -113,7 +114,7 @@ class Save extends Action
     {
         $resultRedirect = $this->resultRedirectFactory->create();
         try {
-            $savedValues= [];
+            $savedValues = [];
             $model = $this->productFactory->create();
             $session = $this->session->getData();
             $gridSessionStoreId = '';
@@ -127,7 +128,7 @@ class Save extends Action
             if ($gridSessionStoreId == 0) {
                 $gridSessionStoreId = $this->emsrsysHelper->getFirstStoreId();
             }
-            $websiteId = $this->_storeManager->getStore($gridSessionStoreId)->getWebsiteId();
+            $websiteId = $this->storeManager->getStore($gridSessionStoreId)->getWebsiteId();
             $logsArray['job_code'] = 'Product Mapping';
             $logsArray['status'] = 'started';
             $logsArray['messages'] = 'Running Update Schema';
@@ -147,8 +148,8 @@ class Save extends Action
                 $modelColl = $model->getCollection()
                     ->addFieldToFilter('magento_attr_code', $key)
                     ->addFieldToFilter('store_id', $gridSessionStoreId);
-                $modelCollData = $modelColl->getData();
 
+                $modelCollData = $modelColl->getData();
                 foreach ($modelCollData as $cols) {
                     $colsValue = $cols['emarsys_contact_field'];
                 }
@@ -182,7 +183,7 @@ class Save extends Action
             $logsArray['emarsys_info'] = 'Save Product Mapping';
             $logsArray['action'] = 'Save Product Mapping Successful';
             $logsArray['message_type'] = 'Success';
-            $logsArray['description'] = 'Product Mapping Saved as ' .print_r($savedValues,true);
+            $logsArray['description'] = 'Product Mapping Saved as ' . print_r($savedValues, true);
             $logsArray['executed_at'] = $this->date->date('Y-m-d H:i:s', time());
             $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
             $logsArray['log_action'] = 'True';
@@ -199,7 +200,6 @@ class Save extends Action
             $this->emarsysLogs->addErrorLog($e->getMessage(), $gridSessionStoreId, 'Save(Product)');
             $this->messageManager->addErrorMessage("Error occurred while mapping Product attribute");
         }
-
         return $resultRedirect->setRefererOrBaseUrl();
     }
 }

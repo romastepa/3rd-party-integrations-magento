@@ -86,13 +86,13 @@ class EmarsysOrderField extends \Magento\Backend\Block\Widget\Grid\Column\Render
         if (isset($session['store'])) {
             $storeId = $session['store'];
         }
-        $heading = $this->emarsysDataHelper->getSalesOrderCsvDefaultHeader($storeId);
+        $heading = $this->emarsysDataHelper->getSalesOrderCsvDefaultHeader($storeId, true);
         array_unshift($heading, 'website_id');
         $attributeCode = $row->getData('attribute_code');
         $entityTypeId = $row->getEntityTypeId();
         $url = $this->backendHelper->getUrl('*/*/saveRow');
         $columnAttr = 'emarsys_contact_field';
-        if (in_array($row->getData('emarsys_order_field'), $heading)) {
+        if (in_array($row->getData('emarsys_order_field'), $heading) || (in_array($row->getData('magento_column_name'), $heading))) {
             $html = "<label >" . $row->getData('emarsys_order_field') . "  </label>";
         } else {
             $html = "<input class = 'admin__control-text emarsysatts' type='text' name = '" . $row->getData('magento_column_name') . "' value = '" . $row->getData('emarsys_order_field') . "'  />";

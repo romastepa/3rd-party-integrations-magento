@@ -1,52 +1,41 @@
 <?php
-$objectManager   = \Magento\Framework\App\ObjectManager::getInstance();
-$resourceModelCustomer = $objectManager->create('\Emarsys\Emarsys\Model\ResourceModel\Customer');
-$storeId               = $this->getStoreId();
-$customerMappingCheck  = $resourceModelCustomer->checkCustomerMapping($storeId);
-$customerMappingCount  = $resourceModelCustomer->getEmarsysAttrCount($storeId);
-$moduleName = 'emarsys_emarsys';
-$controllerNamePleaseSelect = 'mapping_customer';
-$controllerNameField = 'mapping_field';
-$controllerNameProduct = 'mapping_product';
-$controllerNameCustomer = 'mapping_customer';
-$controllerNameOrder = 'mapping_order';
-$controllerNameEvent = 'mapping_event';
-$saveBtn               = "'" . $block->getUrl("*/*/save", ["store" => $storeId]) . "'";
-$schemaBtn             = "'" . $block->getUrl("*/*/saveSchema", ["store" => $storeId]) . "," . $customerMappingCount. "'";
-$recommdedBtn          = "'" . $block->getUrl("*/*/saveRecommended", ["store" => $storeId]) . "','" . $customerMappingCheck. "'";
-$moduleName            = 'emarsys_emarsys';
-$adminUrlEmarsysField = $block->getUrl($moduleName. '/' . $controllerNameField . '/index', ["store" => $storeId] );
-$adminUrlEmarsysProduct = $block->getUrl($moduleName. '/' . $controllerNameProduct . '/index', ["store" => $storeId]);
-$adminUrlEmarsysCustomer = $block->getUrl($moduleName . '/' . $controllerNameCustomer . '/index', ["store" => $storeId]);
-$adminUrlEmarsysEvent = $block->getUrl($moduleName . '/' . $controllerNameEvent . '/index', ["store" => $storeId]);
-$adminUrlEmarsysOrder = $block->getUrl($moduleName . '/' . $controllerNameOrder . '/index', ["store" => $storeId]);
-$adminUrlEmarsysPleaseSelect = $block->getUrl($moduleName . '/' . $controllerNamePleaseSelect . '/index', ["store" => $storeId]);
+/**
+ * @category   Emarsys
+ * @package    Emarsys_Emarsys
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
+ */
+?>
+<?php
+$mappingOptions = $block->getMappingOption('mapping_customer');
+$customerMappingCount = $block->getCustomerMappingCount();
+$schemaBtn = "'" . $block->getUrl("*/*/saveSchema", ["store" => $block->getStoreId()]) . "," . $customerMappingCount . "'";
 ?>
 <div>
     <span class="selectMapping">
-        <label class="admin__control-support-text emMapping">Select Mapping: </label>
-        <select  class="admin__control-select mapping-select formselect"
-                 name="menu" onChange="top.location.href=this.options[this.selectedIndex].value;"
-                 value="GO">
-            <option value= "<?php echo $adminUrlEmarsysPleaseSelect; ?>">Please Select</option>
-            <option value="<?php echo $adminUrlEmarsysField; ?>">Customer-Field</option>
-            <option value="<?php echo $adminUrlEmarsysProduct; ?>">Product</option>
-            <option selected="selected" value="<?php echo $adminUrlEmarsysCustomer; ?>">Customer</option>
-            <option value="<?php echo $adminUrlEmarsysOrder; ?>">Order</option>
-            <option value="<?php echo $adminUrlEmarsysEvent; ?>">Event</option>
+        <label class="admin__control-support-text emMapping"><?php echo __('Select Mapping: ') ?></label>
+        <select class="admin__control-select mapping-select formselect"
+                name="menu"
+                onChange="top.location.href=this.options[this.selectedIndex].value;"
+                value="GO">
+            <?php foreach ($mappingOptions as $option): ?>
+                <option <?php if ($option['selected'] == true) : ?> selected="selected" <?php endif; ?>
+                        value="<?php echo $option['value'] ?>">
+                      <?php echo __($option['label']) ?>
+                </option>
+            <?php endforeach; ?>
         </select>
     </span>
     <span class="scalable">
-        <input type="button" class="action-default scalable customerSaveBtn" value="Save"  />
+        <input type="button" class="action-default scalable customerSaveBtn" value="Save"/>
         <input type="button"
                class="action-default scalable"
                value="Update Schema"
-               onclick="updateSchema(<?php echo $schemaBtn; ?>)" />
-        <?php if ($customerMappingCount > 0) { ?>
+               onclick="updateSchema(<?php echo $schemaBtn; ?>)"/>
+        <?php if ($customerMappingCount > 0): ?>
             <input type="button"
                    class="action-default scalable"
                    value="Recommended Mapping"
-                   onclick="checkMapping(<?php echo $recommdedBtn; ?>)" />
-        <?php } ?>
+                   onclick="checkMapping(<?php echo $block->getCustomerRecommendedUrl(); ?>)"/>
+        <?php endif; ?>
     </span>
 </div>

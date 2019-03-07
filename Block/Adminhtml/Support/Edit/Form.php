@@ -64,7 +64,7 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
         /** @var \Magento\Framework\Data\Form $form */
         $form = $this->_formFactory->create();
 
-        $fieldset = $form->addFieldset("support_form", ["legend" => '<h4 class="" style="background-color: #41362f;color:#fff;line-height: 20px;padding:10px">Support Information</h4>']);
+        $fieldset = $form->addFieldset("support_form", ["legend" => "Support Information"]);
         $fieldset->addField("type", "select", [
             'label'     => 'Support Type',
             'name'      => 'type',
