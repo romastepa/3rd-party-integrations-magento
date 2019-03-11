@@ -2,25 +2,30 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
+
 namespace Emarsys\Emarsys\Cron;
 
-use Emarsys\Emarsys\Helper\Data as EmarsysDataHelper;
-use Emarsys\Emarsys\Model\ResourceModel\Customer as EmarsysCustomerResourceModel;
-use Emarsys\Emarsys\Model\Api as EmarsysModelApi;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\App\Request\Http;
-use Emarsys\Emarsys\Helper\Logs;
-use Magento\Config\Model\ResourceModel\Config;
-use Emarsys\Emarsys\Model\Logs as EmarsysModelLogs;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Registry;
-use Magento\Framework\App\Cache\TypeListInterface;
+use Emarsys\Emarsys\{
+    Helper\Data as EmarsysHelperData,
+    Helper\Logs,
+    Model\ResourceModel\Customer as EmarsysCustomerResourceModel,
+    Model\Logs as EmarsysModelLogs
+};
+use Magento\{
+    Framework\App\Cache\TypeListInterface,
+    Framework\App\Config\ScopeConfigInterface,
+    Framework\App\Request\Http,
+    Framework\Stdlib\DateTime\DateTime,
+    Framework\Registry,
+    Store\Model\StoreManagerInterface,
+    Config\Model\ResourceModel\Config
+};
 
 /**
  * Class SyncContactsSubscriptionData
+ *
  * @package Emarsys\Emarsys\Cron
  */
 class SyncContactsSubscriptionData
@@ -51,19 +56,14 @@ class SyncContactsSubscriptionData
     protected $emarsysLogs;
 
     /**
-     * @var EmarsysDataHelper
+     * @var EmarsysHelperData
      */
-    protected $emarsysDataHelper;
+    protected $emarsysHelperData;
 
     /**
      * @var EmarsysCustomerResourceModel
      */
     protected $customerResourceModel;
-
-    /**
-     * @var EmarsysModelApi
-     */
-    protected $modelApi;
 
     /**
      * @var Http
@@ -87,14 +87,14 @@ class SyncContactsSubscriptionData
 
     /**
      * SyncContactsSubscriptionData constructor.
+     *
      * @param StoreManagerInterface $storeManager
      * @param DateTime $date
      * @param Logs $logsHelper
      * @param ScopeConfigInterface $scopeConfig
      * @param EmarsysModelLogs $emarsysLogs
-     * @param EmarsysDataHelper $emarsysDataHelper
+     * @param EmarsysHelperData $emarsysHelperData
      * @param EmarsysCustomerResourceModel $customerResourceModel
-     * @param EmarsysModelApi $modelApi
      * @param Http $request
      * @param Registry $registry
      * @param Config $resourceConfig
@@ -106,9 +106,8 @@ class SyncContactsSubscriptionData
         Logs $logsHelper,
         ScopeConfigInterface $scopeConfig,
         EmarsysModelLogs $emarsysLogs,
-        EmarsysDataHelper $emarsysDataHelper,
+        EmarsysHelperData $emarsysHelperData,
         EmarsysCustomerResourceModel $customerResourceModel,
-        EmarsysModelApi $modelApi,
         Http $request,
         Registry $registry,
         Config $resourceConfig,
@@ -119,9 +118,8 @@ class SyncContactsSubscriptionData
         $this->logsHelper = $logsHelper;
         $this->scopeConfig = $scopeConfig;
         $this->emarsysLogs = $emarsysLogs;
-        $this->emarsysDataHelper = $emarsysDataHelper;
+        $this->emarsysHelperData = $emarsysHelperData;
         $this->customerResourceModel = $customerResourceModel;
-        $this->modelApi = $modelApi;
         $this->request = $request;
         $this->registry = $registry;
         $this->resourceConfig = $resourceConfig;
@@ -134,8 +132,13 @@ class SyncContactsSubscriptionData
     public function execute()
     {
         $queue = [];
+
+        /** @var  \Magento\Store\Model\Website $website */
         $websites = $this->storeManager->getWebsites();
         foreach ($websites as $website) {
+            if (!$this->emarsysHelperData->isContactsSynchronizationEnable($website->getId())) {
+                continue;
+            }
             $logsArray['job_code'] = 'Sync contact Export';
             $logsArray['status'] = 'started';
             $logsArray['messages'] = __('Running Sync Contacts Subscription Data');
@@ -144,20 +147,24 @@ class SyncContactsSubscriptionData
             $logsArray['executed_at'] = $this->date->date('Y-m-d H:i:s', time());
             $logsArray['run_mode'] = 'Automatic';
             $logsArray['auto_log'] = 'Complete';
-            $logsArray['website_id'] = $website->getWebsiteId();
-            $logsArray['store_id'] = $website->getDefaultStore()->getId();
+            $logsArray['website_id'] = $website->getId();
+            $logsArray['store_id'] = $website->getDefaultGroup()->getDefaultStoreId();
             $logId = $this->logsHelper->manualLogs($logsArray);
             try {
-                $enable = $this->scopeConfig->getValue('emarsys_settings/emarsys_setting/enable', 'websites', $website->getWebsiteId());
+                $enable = $website->getConfig('emarsys_settings/emarsys_setting/enable');
                 if ($enable) {
-                    $emarsysUserName = $this->scopeConfig->getValue('emarsys_settings/emarsys_setting/emarsys_api_username', 'websites', $website->getWebsiteId());
+                    $emarsysUserName = $website->getConfig('emarsys_settings/emarsys_setting/emarsys_api_username');
                     if (!array_key_exists($emarsysUserName, $queue)) {
                         $queue[$emarsysUserName] = [];
                     }
                     $queue[$emarsysUserName][] = $website->getWebsiteId();
                 }
             } catch (\Exception $e) {
-                $this->emarsysLogs->addErrorLog($e->getMessage(), $this->storeManager->getStore()->getId(), 'syncContactsSubscriptionData(helper/data)');
+                $this->emarsysLogs->addErrorLog(
+                    $e->getMessage(),
+                    0,
+                    'syncContactsSubscriptionData(helper/data)'
+                );
             }
         }
         if (!empty($queue)) {
@@ -169,6 +176,10 @@ class SyncContactsSubscriptionData
 
     /**
      * API Request to get updates
+     * Sets export's id to config (emarsys_suite2/storage/export_id)
+     *
+     * @param array $websiteId
+     * @param bool $isTimeBased
      */
     public function requestSubscriptionUpdates(array $websiteId, $isTimeBased = false)
     {
@@ -182,21 +193,22 @@ class SyncContactsSubscriptionData
             $logsArray['run_mode'] = 'Automatic';
             $logsArray['auto_log'] = 'Complete';
             $logsArray['website_id'] = current($websiteId);
-            $logsArray['store_id'] = $this->storeManager->getWebsite(current($websiteId))->getDefaultStore()->getId();
+            $logsArray['store_id'] = $this->storeManager->getWebsite(current($websiteId))->getDefaultGroup()->getDefaultStoreId();
             $logId = $this->logsHelper->manualLogs($logsArray);
             $logsArray['id'] = $logId;
             $logsArray['action'] = 'synced to emarsys';
             $logsArray['log_action'] = 'sync';
             $logsArray['emarsys_info'] = 'subscription information';
-            $client = $this->emarsysDataHelper->getClient();
 
             $dt = (new \Zend_Date());
+            $timeRange = [];
             if ($isTimeBased) {
                 $timeRange = [$dt->subHour(1)->toString('YYYY-MM-dd'), $dt->addHour(1)->toString('YYYY-MM-dd')];
             }
-            $storeId = $this->storeManager->getWebsite(current($websiteId))->getDefaultStore()->getId();
-            $key_id = $this->customerResourceModel->getEmarsysFieldId('Magento Subscriber ID', $storeId);
-            $optinFiledId = $this->customerResourceModel->getEmarsysFieldId('Opt-In', $storeId);
+            $storeId = $this->storeManager->getWebsite(current($websiteId))->getDefaultGroup()->getDefaultStoreId();
+            $key_id = $this->customerResourceModel->getKeyId(EmarsysHelperData::SUBSCRIBER_ID, $storeId);
+            $optinFiledId = $this->customerResourceModel->getKeyId(EmarsysHelperData::OPT_IN, $storeId);
+            $notificationUrl = $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId);
             $payload = [
                 'distribution_method' => 'local',
                 'origin' => 'all',
@@ -204,18 +216,18 @@ class SyncContactsSubscriptionData
                 'contact_fields' => [$key_id, $optinFiledId],
                 'add_field_names_header' => 1,
                 'time_range' => $timeRange,
-                'notification_url' => $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId)
+                'notification_url' => $notificationUrl,
             ];
 
-            $logsArray['description'] = $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId);
+            $logsArray['description'] = json_encode($payload) . " \n " . $notificationUrl;
             $logsArray['message_type'] = 'Success';
             $this->logsHelper->logs($logsArray);
 
-            $this->emarsysDataHelper->getEmarsysAPIDetails($storeId);
-            $this->emarsysDataHelper->getClient();
-            $response = $this->modelApi->post('contact/getchanges', $payload);
+            $this->emarsysHelperData->getEmarsysAPIDetails($storeId);
+            $client = $this->emarsysHelperData->getClient();
+            $response = $client->post('contact/getchanges', $payload);
 
-            $logsArray['description'] = print_r($response,true);
+            $logsArray['description'] = json_encode($response);
             $logsArray['message_type'] = 'Success';
             $this->logsHelper->logs($logsArray);
 
@@ -228,8 +240,9 @@ class SyncContactsSubscriptionData
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
-                $storeId,
-                'SyncContactsSubscriptionData::requestSubscriptionUpdates(helper/data)');
+                0,
+                'SyncContactsSubscriptionData::requestSubscriptionUpdates(helper/data)'
+            );
         }
     }
 
@@ -249,7 +262,7 @@ class SyncContactsSubscriptionData
             $this->registry->register('custom_entry_point', 'index.php');
 
             if ($isTimeBased) {
-                $url = $this->storeManager->getStore($storeId)->getBaseUrl() . 'emarsys/index/sync?_store=' . $storeId. '&secret=' . $this->scopeConfig->getValue('contacts_synchronization/emarsys_emarsys/notification_secret_key') . '&website_ids=' .implode(',', $websiteId) . '&timebased=1';
+                $url = $this->storeManager->getStore($storeId)->getBaseUrl() . 'emarsys/index/sync?_store=' . $storeId . '&secret=' . $this->scopeConfig->getValue('contacts_synchronization/emarsys_emarsys/notification_secret_key') . '&website_ids=' . implode(',', $websiteId) . '&timebased=1';
             }
             $this->registry->unregister('custom_entry_point');
 
@@ -262,7 +275,8 @@ class SyncContactsSubscriptionData
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
                 $storeId,
-                'SyncContactsSubscriptionData::getExportsNotificationUrl(helper/data)');
+                'SyncContactsSubscriptionData::getExportsNotificationUrl(helper/data)'
+            );
         }
     }
 
@@ -270,6 +284,7 @@ class SyncContactsSubscriptionData
      * @param $key
      * @param $value
      * @param $websiteId
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function setValue($key, $value, $websiteId)
     {
@@ -279,8 +294,9 @@ class SyncContactsSubscriptionData
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'SyncContactsSubscriptionData::setValue(helper/data)');
+                0,
+                'SyncContactsSubscriptionData::setValue(helper/data)'
+            );
         }
     }
 }

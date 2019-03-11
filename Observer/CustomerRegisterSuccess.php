@@ -51,12 +51,12 @@ class CustomerRegisterSuccess implements ObserverInterface
 
     /**
      * @param \Magento\Framework\Event\Observer $observer
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         try {
-            $event = $observer->getEvent();
-            $customer = $event->getCustomer();
+            $customer = $observer->getEvent()->getCustomer();
             $this->customerSession->setWebExtendCustomerEmail($customer->getEmail());
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(

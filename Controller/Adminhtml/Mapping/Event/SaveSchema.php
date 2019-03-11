@@ -103,7 +103,7 @@ class SaveSchema extends Action
             $logId = $this->logHelper->manualLogs($logsArray);
             $logsArray['id'] = $logId;
 
-            if ($this->emarsysHelper->isEmarsysEnabled($websiteId) == 'true') {
+            if ($this->emarsysHelper->isEmarsysEnabled($websiteId)) {
                 $errorStatus = false;
                 $this->emarsysHelper->importEvents($logId);
                 $this->messageManager->addSuccessMessage('Event schema added/updated successfully');

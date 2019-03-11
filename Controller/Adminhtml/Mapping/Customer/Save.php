@@ -20,6 +20,7 @@ use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class Save
+ *
  * @package Emarsys\Emarsys\Controller\Adminhtml\Mapping\Customer
  */
 class Save extends Action
@@ -51,6 +52,7 @@ class Save extends Action
 
     /**
      * Save constructor.
+     *
      * @param Context $context
      * @param CustomerFactory $customerFactory
      * @param Customer $resourceModelCustomer
@@ -112,41 +114,31 @@ class Save extends Action
             $stringArrayData = (array)$stringJSONData;
 
             foreach ($stringArrayData as $key => $value) {
-                $customId = $this->resourceModelCustomer->getCustAttIdByCode($key, $storeId);
-                $magentoAttributeId = $this->resourceModelCustomer->getCustomerAttributeId($key);
+                $custMageId = $this->resourceModelCustomer->getCustAttIdByCode($key, $storeId);
+                $magentoAttributeId = $this->resourceModelCustomer->getCustomerAttributeId($key, $storeId);
+                if (empty($magentoAttributeId)) {
+                    continue;
+                }
+                if (empty(trim($value))) {
+                    $this->resourceModelCustomer->deleteMapping($custMageId, $magentoAttributeId, $storeId);
+                    continue;
+                }
                 $attData = $this->customerFactory->create()->getCollection()
                     ->addFieldToFilter('store_id', ['eq' => $storeId])
-                    ->addFieldToFilter('magento_custom_attribute_id', ['eq' => $customId['id']]);
+                    ->addFieldToFilter('magento_custom_attribute_id', ['eq' => $custMageId]);
 
                 if (is_array($attData->getData()) && !empty($attData->getData())) {
                     $attDataAll = $attData->getData();
                     $attModel = $this->customerFactory->create()->load($attDataAll[0]['id']);
-                     if ($value == ' ') {
-                         $savedFields[] = $value;
-                         $attModel->setData('emarsys_contact_field',NULL);
-                     } else {
-                         $savedFields[] = $value;
-                         $attModel->setData('emarsys_contact_field', $value);
-                     }
-                    $attModel->setData('magento_custom_attribute_id', $customId['id']);
-                    $attModel->setData('magento_attribute_id', $magentoAttributeId);
-                    $attModel->setData('store_id', $storeId);
-                    $attModel->save();
                 } else {
                     $attModel = $this->customerFactory->create();
-                     if ($value == ' ') {
-                         $savedFields[] = $value;
-                        $attModel->setData('emarsys_contact_field',NULL);
-
-                     } else {
-                         $savedFields[] = $value;
-                         $attModel->setData('emarsys_contact_field', $value);
-                     }
-                    $attModel->setData('magento_custom_attribute_id', $customId['id']);
-                    $attModel->setData('magento_attribute_id', $magentoAttributeId);
-                    $attModel->setData('store_id', $storeId);
-                    $attModel->save();
                 }
+                $savedFields[] = $value;
+                $attModel->setData('emarsys_contact_field', $value);
+                $attModel->setData('magento_custom_attribute_id', $custMageId);
+                $attModel->setData('magento_attribute_id', $magentoAttributeId);
+                $attModel->setData('store_id', $storeId);
+                $attModel->save();
             }
             if ($savedFields) {
                 $logsArray['description'] = 'Saved Fields Id(s) ' . print_r(implode(",", $savedFields), true);

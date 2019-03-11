@@ -327,14 +327,7 @@ class Product extends AbstractModel
                     );
 
                     $lastPageNumber = $collection->getLastPageNumber();
-                    $headerOld = $emarsysFieldNames[$storeId];
-                    $header = [];
-                    foreach ($headerOld as $el) {
-                        $header[] = $el;
-                        if ($el == 'available') {
-                            $header[] = 'available_rec';
-                        }
-                    }
+                    $header = $emarsysFieldNames[$storeId];
                     $this->_categoryNames = [];
                     $this->_parentProducts = [];
 
@@ -784,32 +777,10 @@ class Product extends AbstractModel
                 }
                 switch ($attributeCode) {
                     case 'quantity_and_stock_status':
-                        /*
-                        $status = $store->getConfig(EmarsysDataHelper::XPATH_PREDICT_AVAILABILITY_STATUS)
-                            ? ($productObject->getStatus() == Status::STATUS_ENABLED)
-                            : true
-                        ;
-                        $inStock = $store->getConfig(EmarsysHelper::XPATH_PREDICT_AVAILABILITY_IN_STOCK)
-                            ? $productObject->isAvailable()
-                            : true
-                        ;
-                        $visibility = $store->getConfig(EmarsysDataHelper::XPATH_PREDICT_AVAILABILITY_VISIBILITY)
-                            ? ($productObject->getVisibility() != Visibility::VISIBILITY_NOT_VISIBLE)
-                            : true
-                        ;
-                        */
-
-                        $status = ($productObject->getStatus() == Status::STATUS_ENABLED) ? true : false;
+                        $status = ($productObject->getStatus() == Status::STATUS_ENABLED);
                         $inStock = $productObject->isAvailable();
-                        $visibility = ($productObject->getVisibility() != Visibility::VISIBILITY_NOT_VISIBLE) ? true : false;
+                        $visibility = ($productObject->getVisibility() != Visibility::VISIBILITY_NOT_VISIBLE);
 
-                        if ($status && $inStock) {
-                            $attributeData[] = 'TRUE';
-                        } else {
-                            $attributeData[] = 'FALSE';
-                        }
-
-                        //'available_rec':
                         if ($status && $inStock && $visibility) {
                             $attributeData[] = 'TRUE';
                         } else {

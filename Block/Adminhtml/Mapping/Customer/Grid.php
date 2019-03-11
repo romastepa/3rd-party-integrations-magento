@@ -167,7 +167,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         }
         $this->session->setData('store', $storeId);
         $mappingExists = $this->resourceModelCustomer->customerMappingExists($storeId);
-        if ($mappingExists == FALSE) {
+        if (!$mappingExists) {
             $customerAttData = $this->attribute->getCollection()
                 ->addFieldToSelect('frontend_label')
                 ->addFieldToSelect('attribute_code')

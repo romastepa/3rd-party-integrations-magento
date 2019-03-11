@@ -8,7 +8,6 @@ namespace Emarsys\Emarsys\Cron;
 
 use Emarsys\Emarsys\Model\Order as EmarsysOrderModel;
 use Emarsys\Emarsys\Helper\Cron as EmarsysCronHelper;
-use Magento\Framework\Json\Helper\Data as JsonHelper;
 use Emarsys\Emarsys\Model\Logs;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -22,11 +21,6 @@ class SmartInsightBulkExport
      * @var EmarsysCronHelper
      */
     protected $cronHelper;
-
-    /**
-     * @var JsonHelper
-     */
-    protected $jsonHelper;
 
     /**
      * @var EmarsysOrderModel
@@ -47,20 +41,17 @@ class SmartInsightBulkExport
      * SmartInsightBulkExport constructor.
      *
      * @param EmarsysCronHelper $cronHelper
-     * @param JsonHelper $jsonHelper
      * @param EmarsysOrderModel $order
      * @param Logs $emarsysLogs
      * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         EmarsysCronHelper $cronHelper,
-        JsonHelper $jsonHelper,
         EmarsysOrderModel $order,
         Logs $emarsysLogs,
         StoreManagerInterface $storeManager
     ) {
         $this->cronHelper = $cronHelper;
-        $this->jsonHelper = $jsonHelper;
         $this->emarsysOrderModel =  $order;
         $this->emarsysLogs = $emarsysLogs;
         $this->storeManager = $storeManager;
@@ -75,7 +66,7 @@ class SmartInsightBulkExport
             );
 
             if ($currentCronInfo) {
-                $data = $this->jsonHelper->jsonDecode($currentCronInfo->getParams());
+                $data = \Zend_Json::decode($currentCronInfo->getParams());
                 $storeId = $data['storeId'];
                 $fromDate = $data['fromDate'];
                 $toDate = $data['toDate'];

@@ -48,6 +48,11 @@ class SaveRecommended extends Action
     protected $_storeManager;
 
     /**
+     * @var Data
+     */
+    protected $emarsysHelper;
+
+    /**
      * SaveRecommended constructor.
      * @param Context $context
      * @param Event $eventResourceModel
@@ -114,7 +119,7 @@ class SaveRecommended extends Action
             $logId = $this->logHelper->manualLogs($logsArray);
             $logsArray['id'] = $logId;
 
-            if ($this->emarsysHelper->isEmarsysEnabled($websiteId) == 'false') {
+            if (!$this->emarsysHelper->isEmarsysEnabled($websiteId)) {
                 $logsArray['messages'] = 'Emarsys is Disabled for this Store';
                 $logsArray['emarsys_info'] = 'Recommended Mapping';
                 $logsArray['description'] = 'Recommended Mapping was not Successful';

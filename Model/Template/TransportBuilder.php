@@ -137,7 +137,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
 
         $emarsysHeaderPlaceholders = $dataHelper->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
         if (!$emarsysHeaderPlaceholders) {
-            $emarsysInsertFirstHeaderPlaceholders = $dataHelper->insertFirstimeHeaderMappingPlaceholders(
+            $emarsysInsertFirstHeaderPlaceholders = $dataHelper->insertFirstTimeHeaderMappingPlaceholders(
                 $emarsysEventMappingID,
                 $storeId
             );
@@ -146,7 +146,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
 
         $emarsysFooterPlaceholders = $dataHelper->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
         if (!$emarsysFooterPlaceholders) {
-            $emarsysInsertFirstFooterPlaceholders = $dataHelper->insertFirstimeFooterMappingPlaceholders(
+            $emarsysInsertFirstFooterPlaceholders = $dataHelper->insertFirstTimeFooterMappingPlaceholders(
                 $emarsysEventMappingID,
                 $storeId
             );
