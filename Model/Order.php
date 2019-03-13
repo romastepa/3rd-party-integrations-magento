@@ -379,7 +379,7 @@ class Order extends AbstractModel
                     }
                     //remove file after sync
                     if (file_exists($filePath)) {
-                        unlink($filePath);
+                        @unlink($filePath);
                     }
                 }
             } else {
@@ -444,6 +444,7 @@ class Order extends AbstractModel
             //Check and create directory for csv generation
             $this->emarsysDataHelper->checkAndCreateFolder($fileDirectory);
             $filePath =  $fileDirectory . "/" . $outputFile;
+            $maxRecordExport = 1000;
 
             //prepare order collection
             $orderCollection = $this->getOrderCollection(
@@ -453,6 +454,22 @@ class Order extends AbstractModel
                 $exportTillDate
             );
 
+
+            if (!empty($orderCollection)) {
+                $orderCollection->setPageSize($maxRecordExport);
+                $pages = $orderCollection->getLastPageNumber(); $orderCollection->setPageSize($maxRecordExport);
+                $pages = $orderCollection->getLastPageNumber();
+
+                for ($i = 1; $i <= $pages; $i++) {
+                    $orderCollection->setCurPage($i);
+                    $this->generateOrderCsv($storeId, $filePath, $orderCollection, false, true);
+                    $logsArray['emarsys_info'] = __('Order\'s iteration %1 of %2', $i, $pages);
+                    $logsArray['description'] = __('Order\'s iteration %1 of %2', $i, $pages);
+                    $logsArray['message_type'] = 'Success';
+                    $this->logsHelper->logs($logsArray);
+                }
+            }
+
             //prepare credit-memo collection
             $creditMemoCollection = $this->getCreditMemoCollection(
                 $mode,
@@ -460,36 +477,20 @@ class Order extends AbstractModel
                 $exportFromDate,
                 $exportTillDate
             );
+            if (!empty($creditMemoCollection)) {
+                $creditMemoCollection->setPageSize($maxRecordExport);
+                $pages = $creditMemoCollection->getLastPageNumber();
 
-            $maxRecordExport = 1000;
-
-            //Generate Sales CSV
-
-            $orderCollection->setPageSize($maxRecordExport);
-            $pages = $orderCollection->getLastPageNumber();
-
-            for ($i = 1; $i <= $pages; $i++) {
-                $orderCollection->setCurPage($i);
-                $this->generateOrderCsv($storeId, $filePath, $orderCollection, false, true);
-                $logsArray['emarsys_info'] = __('Order\'s iteration %1 of %2', $i, $pages);
-                $logsArray['description'] = __('Order\'s iteration %1 of %2', $i, $pages);
-                $logsArray['message_type'] = 'Success';
-                $this->logsHelper->logs($logsArray);
+                for ($i = 1; $i <= $pages; $i++) {
+                    $creditMemoCollection->setCurPage($i);
+                    $this->generateOrderCsv($storeId, $filePath, false, $creditMemoCollection, true);
+                    $creditMemoCollection->clear();
+                    $logsArray['emarsys_info'] = __('CreditMemo\'s iteration %1 of %2', $i, $pages);
+                    $logsArray['description'] = __('CreditMemo\'s iteration %1 of %2', $i, $pages);
+                    $logsArray['message_type'] = 'Success';
+                    $this->logsHelper->logs($logsArray);
+                }
             }
-
-            $creditMemoCollection->setPageSize($maxRecordExport);
-            $pages = $creditMemoCollection->getLastPageNumber();
-
-            for ($i = 1; $i <= $pages; $i++) {
-                $creditMemoCollection->setCurPage($i);
-                $this->generateOrderCsv($storeId, $filePath, false, $creditMemoCollection, true);
-                $creditMemoCollection->clear();
-                $logsArray['emarsys_info'] = __('CreditMemo\'s iteration %1 of %2', $i, $pages);
-                $logsArray['description'] = __('CreditMemo\'s iteration %1 of %2', $i, $pages);
-                $logsArray['message_type'] = 'Success';
-                $this->logsHelper->logs($logsArray);
-            }
-
             //CSV upload to FTP process starts
 
             $remoteDirPath = $bulkDir;
@@ -528,7 +529,9 @@ class Order extends AbstractModel
                 }
             }
             //remove file after sync
-            unlink($filePath);
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
         } else {
             //failed to connect with FTP server with given credentials
             $logsArray['emarsys_info'] = __('Failed to connect with FTP server.');
@@ -603,7 +606,9 @@ class Order extends AbstractModel
                 }
             }
             //remove file after sync
-            unlink($filePath);
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
 
             //clear the current page collection
             $entityCollection->clear();
@@ -1150,4 +1155,3 @@ class Order extends AbstractModel
         return;
     }
 }
-
