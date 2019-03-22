@@ -1,0 +1,28 @@
+{
+  "name": "emarsys/emarsys",
+  "description": "Emarsys Magento 2 module",
+  "version": "1.0.12",
+  "type": "magento2-module",
+  "authors": [
+    {
+      "name": "Roman Stepanov",
+      "email": "roman.stepanov@emarsys.com",
+      "homepage": "https://www.emarsys.com"
+    }
+  ],
+  "license": [
+    "OSL-3.0",
+    "AFL-3.0"
+  ],
+  "require": {
+    "sabre/dav": "~3.2.0"
+  },
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Emarsys\\Emarsys\\": ""
+    }
+  }
+}

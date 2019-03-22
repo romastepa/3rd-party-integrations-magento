@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @category   Emarsys
+ * @package    Emarsys_Emarsys
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="sales_order_save_after">
+        <observer name="order_save_after_frontend" instance="Emarsys\Emarsys\Observer\OrderSave"/>
+    </event>
+    <event name="checkout_onepage_controller_success_action">
+        <observer name="order_save_after_frontend" instance="Emarsys\Emarsys\Observer\OrderSaveFrontend"/>
+    </event>
+    <event name="multishipping_checkout_controller_success_action">
+        <observer name="emarsys_multishipping_order_save_after" instance="Emarsys\Emarsys\Observer\OrderSaveFrontend"/>
+    </event>
+</config>
