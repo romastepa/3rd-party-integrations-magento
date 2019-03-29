@@ -10,7 +10,7 @@
     <group id="default">
         <!-- SI Related Jobs -->
         <job name="emarsys_smartinsight_sync_queue" instance="Emarsys\Emarsys\Cron\OrderSyncQueue" method="execute">
-            <config_path>crontab/default/jobs/emarsys_smartinsight_sync_queue/schedule/cron_expr</config_path>
+            <schedule>30 * * * *</schedule>
         </job>
     </group>
 </config>
