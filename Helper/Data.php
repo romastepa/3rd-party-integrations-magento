@@ -888,7 +888,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     $this->logHelper->logs($logsArray);
                 }
             } else {
-                $logsArray['description'] = $response['body']['replyText'];
+                $logsArray['description'] = \Zend_Json::encode($response);
                 $logsArray['action'] = 'Update Schema';
                 $logsArray['message_type'] = 'Error';
                 $logsArray['log_action'] = 'True';
@@ -2309,18 +2309,20 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
                             $emarsysSubscriber = $this->subscriber->load($subscriberId);
 
-                            $emarsysSubscriber->setSubscriberStatus($statusToBeChanged)
-                                ->setEmarsysNoExport(true)
-                                ->save();
+                            if ($emarsysSubscriber->getId()) {
+                                $emarsysSubscriber->setSubscriberStatus($statusToBeChanged)
+                                    ->setEmarsysNoExport(true)
+                                    ->save();
 
-                            $logsArray['id'] = $logId;
-                            $logsArray['emarsys_info'] = 'Backgroud Time Based Optin Sync Success';
-                            $logsArray['description'] = $emarsysSubscriber->getSubscriberId() . " => Optin Updated to " . $statusToBeChanged;
-                            $logsArray['action'] = 'Backgroud Time Based Optin Sync';
-                            $logsArray['message_type'] = 'Success';
-                            $logsArray['log_action'] = 'True';
-                            $logsArray['website_id'] = $store->getWebsiteId();
-                            $this->logHelper->logs($logsArray);
+                                $logsArray['id'] = $logId;
+                                $logsArray['emarsys_info'] = 'Backgroud Time Based Optin Sync Success';
+                                $logsArray['description'] = $emarsysSubscriber->getSubscriberId() . " => Optin Updated to " . $statusToBeChanged;
+                                $logsArray['action'] = 'Backgroud Time Based Optin Sync';
+                                $logsArray['message_type'] = 'Success';
+                                $logsArray['log_action'] = 'True';
+                                $logsArray['website_id'] = $store->getWebsiteId();
+                                $this->logHelper->logs($logsArray);
+                            }
                         }
                     }
                 }
