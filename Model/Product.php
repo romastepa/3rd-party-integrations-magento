@@ -332,7 +332,7 @@ class Product extends AbstractModel
                     foreach ($headerOld as $el) {
                         $header[] = $el;
                         if ($el == 'available') {
-                            $header[] = 'c_available_rec';
+                            $header[] = 'available_rec';
                         }
                     }
                     $this->_categoryNames = [];
