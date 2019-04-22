@@ -10,10 +10,10 @@ use Magento\Framework\App\TemplateTypesInterface;
 use Magento\Framework\Mail\MessageInterface;
 use Magento\Framework\Mail\TransportInterfaceFactory;
 use Magento\Framework\ObjectManagerInterface;
-use Symfony\Component\Config\Definition\Exception\Exception;
 use Magento\Framework\Mail\Template\FactoryInterface;
 use Magento\Framework\Mail\Template\SenderResolverInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Catalog\Helper\Image;
 
 /**
  * Class TransportBuilder
@@ -32,8 +32,14 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     protected $storeManager;
 
     /**
+     * @var Image
+     */
+    protected $imageHelper;
+
+    /**
      * TransportBuilder constructor.
      * @param StoreManagerInterface $storeManager
+     * @param Image $imageHelper
      * @param FactoryInterface $templateFactory
      * @param MessageInterface $message
      * @param SenderResolverInterface $senderResolver
@@ -42,6 +48,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
      */
     public function __construct(
         StoreManagerInterface $storeManager,
+        Image $imageHelper,
         FactoryInterface $templateFactory,
         MessageInterface $message,
         SenderResolverInterface $senderResolver,
@@ -49,6 +56,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         TransportInterfaceFactory $mailTransportFactory
     ) {
         $this->storeManager = $storeManager;
+        $this->imageHelper = $imageHelper;
         parent::__construct(
             $templateFactory,
             $message,
@@ -61,7 +69,9 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     /**
      * Get mail transport
      *
-     * @return $this
+     * @return $this|\Magento\Framework\Mail\Template\TransportBuilder
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Zend_Mail_Exception
      */
     public function prepareMessage()
     {
@@ -207,6 +217,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     /**
      * @param $item
      * @return array
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getOrderData($item)
     {
@@ -244,8 +255,15 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             $base_url = $objectManager->get('Magento\Store\Model\StoreManagerInterface')
                 ->getStore($item->getData('store_id'))
                 ->getBaseUrl();
+
             $base_url = trim($base_url, '/');
-            $order['_external_image_url'] = $base_url . '/media/catalog/product' . $_product->getData('thumbnail');
+            /** @var \Magento\Catalog\Helper\Image $helper */
+            $url = $this->imageHelper
+                ->init($_product, 'product_base_image')
+                ->setImageFile($_product->getImage())
+                ->getUrl();
+            $order['_external_image_url'] = $url;
+
             $order['_url'] = $base_url . "/" . $_product->getUrlPath();
             $order['_url_name'] = $order['product_name'];
             $order['product_description'] = $_product->getData('description');

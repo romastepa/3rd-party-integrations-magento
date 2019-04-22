@@ -55,6 +55,26 @@ class SaveSchema extends Action
     protected  $attribute;
 
     /**
+     * @var \Emarsys\Emarsys\Helper\Customer
+     */
+    protected $emarsysCustomerHelper;
+
+    /**
+     * @var EmarsysHelperLogs
+     */
+    protected $logHelper;
+
+    /**
+     * @var Logs
+     */
+    protected $emarsysLogs;
+
+    /**
+     * @var DateTime
+     */
+    protected $date;
+
+    /**
      * SaveSchema constructor.
      * @param Context $context
      * @param Customer $emarsysCustomerHelper
@@ -134,7 +154,7 @@ class SaveSchema extends Action
             $this->logHelper->manualLogs($logsArray);
             $schemaData = $this->emarsysCustomerHelper->getEmarsysCustomerSchema($storeId);
 
-            if ($schemaData['data'] != '') {
+            if (isset($schemaData['data']) && !empty($schemaData['data'])) {
                 $this->customerResourceModel->updateCustomerSchema($schemaData, $storeId);
                 $this->messageManager->addSuccessMessage('Customer schema added/updated successfully');
             } else {
