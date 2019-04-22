@@ -62,7 +62,9 @@ class Sync extends \Magento\Framework\App\Action\Action
             $notificationSecretKey = $this->scopeConfig->getValue('contacts_synchronization/emarsys_emarsys/notification_secret_key');
             if ($this->request->getParam('secret') == $notificationSecretKey) {
                 $websiteIds = explode(',', $this->getRequest()->getParam('website_ids'));
-                $this->emarsysHelper->importSubscriptionUpdates($websiteIds, true);
+                foreach ($websiteIds as $websiteId) {
+                    $this->emarsysHelper->importSubscriptionUpdates($websiteId, true);
+                }
             } else {
                 $this->emarsysLogs->addErrorLog('Unauthorized Access', 0, 'sync action index');
             }

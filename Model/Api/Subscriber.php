@@ -313,6 +313,7 @@ class Subscriber
 
         $subscriberData = $this->prepareSubscribersInfo(
             $storeId,
+            $websiteId,
             $exportMode,
             $emailKey,
             $subscriberIdKey,
@@ -399,6 +400,7 @@ class Subscriber
 
     /**
      * @param $storeId
+     * @param $websiteId
      * @param $exportMode
      * @param $emailKey
      * @param $subscriberIdKey
@@ -408,6 +410,7 @@ class Subscriber
      */
     public function prepareSubscribersInfo(
         $storeId,
+        $websiteId,
         $exportMode,
         $emailKey,
         $subscriberIdKey,
@@ -430,7 +433,7 @@ class Subscriber
                 ['subscriber_email', 'subscriber_confirm_code', 'subscriber_status', 'customer_id']
             );
 
-            $this->updateLastModifiedContacts($subscriberCollection, $storeId);
+            $this->updateLastModifiedContacts($subscriberCollection, $websiteId);
         } else {
             $subscriberCollection = $this->subscriberFactory->create()->getCollection()
                 ->addFieldToFilter('store_id', $storeId);
@@ -479,9 +482,9 @@ class Subscriber
 
     /**
      * @param $collection
-     * @param $storeId
+     * @param $websiteId
      */
-    public function updateLastModifiedContacts($collection, $storeId)
+    public function updateLastModifiedContacts($collection, $websiteId = null)
     {
         try {
             $currentPageNumber = 1;
@@ -496,13 +499,20 @@ class Subscriber
                 if (count($collection)) {
                     $subscriberIds = $collection->getColumnValues('entity_id');
                     if (count($subscriberIds)) {
-                        $this->emarsysHelper->backgroudTimeBasedOptinSync($subscriberIds, $storeId);
+                        $this->emarsysHelper
+                            ->setWebsiteId($websiteId)
+                            ->backgroudTimeBasedOptinSync($subscriberIds)
+                        ;
                     }
                 }
                 $currentPageNumber = $currentPageNumber + 1;
             }
         } catch (\Exception $e) {
-            $this->emarsysHelper->addErrorLog($e->getMessage(), $storeId, 'updateLastModifiedContacts($collection,$storeId)');
+            $this->emarsysHelper->addErrorLog(
+                $e->getMessage(),
+                0,
+                'updateLastModifiedContacts($collection, $websiteId)'
+            );
         }
     }
 }
