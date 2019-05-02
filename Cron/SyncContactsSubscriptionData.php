@@ -220,7 +220,7 @@ class SyncContactsSubscriptionData
             $this->api->setWebsiteId(current($websiteId));
             $response = $this->api->sendRequest('POST', 'contact/getchanges', $payload);
 
-            $logsArray['description'] = print_r($response, true);
+            $logsArray['description'] = \Zend_Json::encode($response);
             $logsArray['message_type'] = 'Success';
             $this->logsHelper->logs($logsArray);
 

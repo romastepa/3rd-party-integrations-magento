@@ -99,6 +99,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         );
 
         if (!$magentoEventID) {
+            $dataHelper->addErrorLog($this->templateIdentifier, $storeId, 'TransportBuilder::prepareMessage $magentoEventID');
             $this->message->setMessageType($types[$template->getType()])
                 ->setBody($body)
                 ->setSubject($template->getSubject())
@@ -115,6 +116,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         }
         $emarsysEventMappingID = $dataHelper->getEmarsysEventMappingId($magentoEventID, $storeId);
         if (!$emarsysEventMappingID) {
+            $dataHelper->addErrorLog($this->templateIdentifier, $storeId, 'TransportBuilder::prepareMessage $emarsysEventMappingID');
             $this->message->setMessageType($types[$template->getType()])
                 ->setBody($body)
                 ->setSubject($template->getSubject())
@@ -141,25 +143,19 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
 
         $emarsysPlaceholders = $dataHelper->getPlaceHolders($emarsysEventMappingID);
         if (!$emarsysPlaceholders) {
-            $emarsysPlaceholders = $dataHelper->insertFirstimeMappingPlaceholders($emarsysEventMappingID, $storeId);
+            $dataHelper->insertFirstimeMappingPlaceholders($emarsysEventMappingID, $storeId);
             $emarsysPlaceholders = $dataHelper->getPlaceHolders($emarsysEventMappingID);
         }
 
         $emarsysHeaderPlaceholders = $dataHelper->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
         if (!$emarsysHeaderPlaceholders) {
-            $emarsysInsertFirstHeaderPlaceholders = $dataHelper->insertFirstTimeHeaderMappingPlaceholders(
-                $emarsysEventMappingID,
-                $storeId
-            );
+            $dataHelper->insertFirstTimeHeaderMappingPlaceholders($emarsysEventMappingID, $storeId);
             $emarsysHeaderPlaceholders = $dataHelper->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
         }
 
         $emarsysFooterPlaceholders = $dataHelper->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
         if (!$emarsysFooterPlaceholders) {
-            $emarsysInsertFirstFooterPlaceholders = $dataHelper->insertFirstTimeFooterMappingPlaceholders(
-                $emarsysEventMappingID,
-                $storeId
-            );
+            $dataHelper->insertFirstTimeFooterMappingPlaceholders($emarsysEventMappingID, $storeId);
             $emarsysFooterPlaceholders = $dataHelper->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
         }
 
