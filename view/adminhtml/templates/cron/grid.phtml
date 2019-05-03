@@ -1,0 +1,48 @@
+<?php
+/**
+ * @category   Emarsys
+ * @package    Emarsys_Schedular
+ * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ */
+?>
+
+<?php echo $this->getGridHtml(); ?>
+
+<div id="myModal" class="json-modal">
+    <div class="json-modal-content">
+        <div class="json-modal-header">
+            <span class="close">
+                <img class="close-image" src="<?php echo $this->getViewFileUrl('Emarsys_Emarsys::images/close-button.png'); ?>" alt="close">
+            </span>
+        </div>
+        <div class="json-modal-container" id="json-data-container">
+        </div>
+    </div>
+</div>
+<div class="loading-mask" data-role="loader" style="display: none;">
+    <div class="popup popup-loading">
+        <div class="popup-inner">
+            Please wait...
+        </div>
+    </div>
+</div>
+<script>
+    require.config({
+        deps: [
+            'jquery',
+            'mage/translate',
+            'jquery/jquery-storageapi'
+        ],
+        callback: function ($) {
+            'use strict';
+            $('.json-request-button').click(function () {
+                var btn = document.getElementById(this.id);
+                var modal = $(this).next().next().attr('id');
+                $('#' + modal).show();
+            });
+            $('.json-modal .close').on('click', function () {
+                $('.json-modal').hide();
+            });
+        }
+    });
+</script>

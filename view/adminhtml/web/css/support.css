@@ -1,0 +1,63 @@
+.column_condition {
+    color: gray;
+}
+.column_value_fail, .column_value_success{
+    color: green;
+}
+.emarsys-ver-detail-container{
+    background: #f8f8f8;
+    border: 1px solid #d6d6d6;
+    padding: 8px;
+}
+.emarsys-ver-detail .form-list{
+    width: 750px;
+    margin: 0 auto;
+    text-align: center;
+}
+.emarsys-ver-detail .form-list .border-right td:first-child{
+    border-right:1px solid #ddd
+}
+.emarsys-ver-detail .form-list .value{
+    padding: 15px 0;
+}
+.emarsys-ver-detail .form-list .color .value{
+    font-weight: bold;
+    font-size: 16px;color: #f98721;
+}
+.emarsys-ver-detail .form-list .br{
+    text-align: center;
+    padding: 15px 25px;
+    border-top: 1px solid #d6d6d6;
+    border-bottom: 1px solid #d6d6d6;
+    text-align: center;
+}
+.emarsys-emarsys-support-index .example-responsive-block, .emarsys-emarsys-support-index .entry-edit.form-inline {
+    margin: 25px 0 0;
+}
+.emarsys-emarsys-support-index .entry-edit.form-inline h4 {
+    font-size: 1.4rem;
+}
+.emarsys-emarsys-support-index .example-responsive-block h4
+{
+    background-color: #41362f;
+    color:#fff;
+    line-height: 20px;
+    padding:10px;
+}
+.emarsys-ver-detail-container table.form-list td {
+    width:200px;
+}
+.emarsys-ver-detail-container .read-more-link {
+    cursor:pointer;
+    font-size: 15px;
+    padding-left: 2px;
+}
+.emarsys-ver-detail-container .column_condition_container {
+    font-size: 16px;
+    color: #f98721;
+    font-weight:bold;
+}
+.emarsys-ver-detail-container .read-more-container {
+    text-align: center;
+    padding:15px 0;
+}

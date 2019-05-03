@@ -1,0 +1,96 @@
+<?php
+/**
+ * @category   Emarsys
+ * @package    Emarsys_Emarsys
+ * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ */
+/** @var \Emarsys\Emarsys\Block\Adminhtml\Logs\View $block */
+?>
+<?php
+    $logDet = $block->getLogDetails();
+    $storeId = $block->getStoreId();
+    $dateObject = $block->getDateObject();
+    $scheduleAt = new DateTime($logDet['created_at']);
+    $finishedAt = 'now';
+    if ($logDet['finished_at'] != '0000-00-00 00:00:00') {
+        $finishedAt = $logDet['finished_at'];
+    }
+    $finishedAt = new DateTime($finishedAt);
+    $diff = $finishedAt->diff($scheduleAt);
+    $synDuration = $diff->days . ' days , ' . $diff->h . " : " . $diff->i . " : " . $diff->s;
+?>
+<input type="button"
+       class="action-default scalable action-secondary"
+       value="Back"
+       onclick="window.location.href='<?php echo $block->getUrl('*/*/index'); ?>'" />
+<br>
+<br>
+<?php $style = 'style="float:left;padding:5px;width:25%;text-align:left;padding-left:15px"';?>
+<div class="entry-edit">
+    <div class="entry-edit">
+        <div class="example-responsive-block">
+            <h4 class="" style="background-color: #41362f;color:#fff;line-height: 20px;padding:10px"><?php echo __('Log Data'); ?></h4>
+        </div>
+        <div id="log_details_fieldset" class="log-details">
+            <table style="border: 1px solid #d6d6d6; width:100%;" cellspacing="2" class="log-info table">
+                <col width="100%" />
+                <col />
+                <tbody>
+                    <tr>
+                        <td width='25%' <?php echo $style; ?>>
+                            <b>Entity :</b>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <?php echo $logDet['job_code']; ?>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <b>Scheduled At :</b>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <?php echo $dateObject->date(strtotime($logDet['created_at']), null, true)->format('M d, Y h:i:s A'); ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width='25%' <?php echo $style; ?>>
+                            <b>Status :</b>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <?php echo $logDet['status']; ?>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <b>Executed At :</b>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <?php echo $dateObject->date(strtotime($logDet['executed_at']), null, true)->format('M d, Y h:i:s A'); ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width='25%' <?php echo $style; ?>>
+                            <b>Created At :</b>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <?php echo $dateObject->date(strtotime($logDet['created_at']), null, true)->format('M d, Y h:i:s A'); ?>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <b>Finished At :</b>
+                        </td>
+                        <td width='25%' <?php echo $style; ?>>
+                            <?php echo $dateObject->date(strtotime($logDet['finished_at']), null, true)->format('M d, Y h:i:s A');?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width='25%' <?php echo $style; ?>>
+                            <b>Duration :</b>
+                        </td>
+                        <td <?php echo $style; ?>>
+                            <?php echo $synDuration; ?>
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<?php echo $block->getGridHtml(); ?>

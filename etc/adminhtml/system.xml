@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @category   Emartech_Emarsys
+ * @package    Emartech_Emarsys
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="emarsys_settings" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
+            <class>separator-top</class>
+            <label>FTP Settings</label>
+            <tab>emarsys</tab>
+            <resource>Emartech_Emarsys::emarsys</resource>
+            <group id="ftp_settings" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                <label>FTP Settings</label>
+                <field id="hostname" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Hostname</label>
+                </field>
+                <field id="port" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Port</label>
+                </field>
+                <field id="username" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Username</label>
+                </field>
+                <field id="ftp_password" translate="label" type="password" sortOrder="20" showInDefault="1"
+                       showInWebsite="1" showInStore="0">
+                    <label>Password</label>
+                </field>
+                <field id="ftp_bulk_export_dir" translate="label" type="text" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Bulk Export Directory</label>
+                </field>
+                <field id="useftp_overssl" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Use FTP over SSL(FTPS)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="usepassive_mode" translate="label comment" type="select" sortOrder="35" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Use passive mode</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="logs" translate="button_label" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Logs</label>
+                    <frontend_model>Emarsys\Emarsys\Block\Adminhtml\ConfigButton</frontend_model>
+                </field>
+                <field id="clearlogs" translate="button_label" sortOrder="45" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Clear Logs</label>
+                    <frontend_model>Emarsys\Emarsys\Block\Adminhtml\LogCleanerButton</frontend_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

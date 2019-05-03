@@ -14,6 +14,7 @@ use Magento\Eav\Model\Entity\Attribute;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Emarsys\Emarsys\Helper\Data as EmarsysDataHelper;
 
+use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -43,7 +44,7 @@ class Order extends AbstractDb
     protected $emarsysDataHelper;
 
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
+     * @var StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -61,22 +62,22 @@ class Order extends AbstractDb
      * Order constructor.
      *
      * @param Context $context
+     * @param null $connectionName
      * @param Type $entityType
      * @param Attribute $attribute
      * @param StoreRepositoryInterface $storeRepository
      * @param EmarsysDataHelper $emarsysDataHelper
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param null $connectionName
+     * @param StoreManagerInterface $storeManager
      * @param LoggerInterface $logger
      */
     public function __construct(
         Context $context,
+        $connectionName = null,
         Type $entityType,
         Attribute $attribute,
         StoreRepositoryInterface $storeRepository,
         EmarsysDataHelper $emarsysDataHelper,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        $connectionName = null,
+        StoreManagerInterface $storeManager,
         LoggerInterface $logger
     ) {
         $this->entityType = $entityType;

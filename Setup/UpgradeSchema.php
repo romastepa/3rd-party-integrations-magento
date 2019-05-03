@@ -6,6 +6,7 @@
  */
 namespace Emarsys\Emarsys\Setup;
 
+use Magento\Framework\DB\Ddl\Table;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
@@ -52,6 +53,217 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 $setup->getConnection()->createTable($table);
             }
         }
+
+        if (version_compare($context->getVersion(), "1.0.14", "<")) {
+            $tableName = $setup->getTable('emarsys_log_details');
+            $connection = $setup->getConnection();
+            if ($connection->isTableExists($tableName) == false) {
+                //Create table 'emarsys_log_details'
+                $table = $setup->getConnection()
+                    ->newTable($setup->getTable('emarsys_log_details'))
+                    ->addColumn(
+                        'id',
+                        Table::TYPE_INTEGER,
+                        null,
+                        ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                        'Id'
+                    )
+                    ->addColumn(
+                        'log_exec_id',
+                        Table::TYPE_INTEGER,
+                        10,
+                        ['unsigned' => true, 'nullable' => false],
+                        'schedule_id'
+                    )
+                    ->addColumn(
+                        'created_at',
+                        Table::TYPE_DATETIME,
+                        null,
+                        ['nullable' => false],
+                        'created_at'
+                    )
+                    ->addColumn(
+                        'emarsys_info',
+                        Table::TYPE_TEXT,
+                        255,
+                        ['nullable' => false],
+                        'messages'
+                    )
+                    ->addColumn(
+                        'description',
+                        Table::TYPE_TEXT,
+                        2000,
+                        ['nullable' => false],
+                        'description'
+                    )
+                    ->addColumn(
+                        'action',
+                        Table::TYPE_TEXT,
+                        255,
+                        ['nullable' => false],
+                        'action'
+                    )
+                    ->addColumn(
+                        'log_action',
+                        Table::TYPE_TEXT,
+                        255,
+                        ['nullable' => false],
+                        'log_action'
+                    )
+                    ->addColumn(
+                        'before_change',
+                        Table::TYPE_TEXT,
+                        2000,
+                        ['nullable' => false],
+                        'before_change'
+                    )
+                    ->addColumn(
+                        'after_change',
+                        Table::TYPE_TEXT,
+                        2000,
+                        ['nullable' => false],
+                        'after_change'
+                    )
+                    ->addColumn(
+                        'message_type',
+                        Table::TYPE_TEXT,
+                        255,
+                        ['nullable' => false],
+                        'message_type'
+                    )
+                    ->addColumn(
+                        'store_id',
+                        Table::TYPE_INTEGER,
+                        11,
+                        ['nullable' => false],
+                        'store_id'
+                    )
+                    ->addColumn(
+                        'website_id',
+                        Table::TYPE_INTEGER,
+                        11,
+                        ['nullable' => false],
+                        'website_id'
+                    );
+                $setup->getConnection()->createTable($table);
+            }
+
+            $tableName = $setup->getTable('emarsys_log_cron_schedule');
+            if ($connection->isTableExists($tableName) == false) {
+                // Create table 'emarsys_log_cron_schedule'
+                $table = $setup->getConnection()
+                    ->newTable($setup->getTable('emarsys_log_cron_schedule'))
+                    ->addColumn(
+                        'id',
+                        Table::TYPE_INTEGER,
+                        null,
+                        ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                        'Id'
+                    )
+                    ->addColumn(
+                        'job_code',
+                        Table::TYPE_TEXT,
+                        255,
+                        ['nullable' => false],
+                        'job_code'
+                    )
+                    ->addColumn(
+                        'status',
+                        Table::TYPE_TEXT,
+                        7,
+                        ['nullable' => false],
+                        'status'
+                    )
+                    ->addColumn(
+                        'messages',
+                        Table::TYPE_TEXT,
+                        2000,
+                        ['nullable' => false],
+                        'messages'
+                    )
+                    ->addColumn(
+                        'created_at',
+                        Table::TYPE_DATETIME,
+                        null,
+                        ['nullable' => false],
+                        'created_at'
+                    )
+                    ->addColumn(
+                        'executed_at',
+                        Table::TYPE_DATETIME,
+                        null,
+                        ['nullable' => false],
+                        'executed_at'
+                    )
+                    ->addColumn(
+                        'finished_at',
+                        Table::TYPE_DATETIME,
+                        null,
+                        ['nullable' => false],
+                        'finished_at'
+                    )
+                    ->addColumn(
+                        'run_mode',
+                        Table::TYPE_TEXT,
+                        255,
+                        ['nullable' => false],
+                        'run_mode'
+                    )
+                    ->addColumn(
+                        'auto_log',
+                        Table::TYPE_TEXT,
+                        2000,
+                        ['nullable' => false],
+                        'auto_log'
+                    )
+                    ->addColumn(
+                        'store_id',
+                        Table::TYPE_INTEGER,
+                        11,
+                        ['nullable' => false],
+                        'store_id'
+                    );
+                $setup->getConnection()->createTable($table);
+            }
+
+            $connection->truncateTable($setup->getTable('emarsys_log_details'));
+            $connection->truncateTable($setup->getTable('emarsys_log_cron_schedule'));
+
+            $connection->changeColumn(
+                $setup->getTable('emarsys_log_details'),
+                'log_exec_id',
+                'log_exec_id',
+                [
+                    'type' => \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                    'unsigned' => true,
+                    'nullable' => false,
+                    'length'   => 10,
+                    'comment' => 'emarsys_log_cron_schedule id',
+                ]
+            );
+
+            $connection->addIndex(
+                $setup->getTable('emarsys_log_details'),
+                $setup->getIdxName($setup->getTable('emarsys_log_details'), 'log_exec_id'),
+                ['log_exec_id']
+            );
+
+            $connection->addForeignKey(
+                $setup->getFkName(
+                    $setup->getTable('emarsys_log_details'),
+                    'log_exec_id',
+                    $setup->getTable('emarsys_log_cron_schedule'),
+                    'id'
+                ),
+                $setup->getTable('emarsys_log_details'),
+                'log_exec_id',
+                $setup->getTable('emarsys_log_cron_schedule'),
+                'id'
+            );
+
+            $this->removeDataFromCoreConfigData($setup);
+        }
+
         $setup->endSetup();
     }
 
@@ -65,6 +277,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             'crontab/default/jobs/shcema_check/schedule/cron_expr',
             'crontab/default/jobs/emarsys_smartinsight_sync/schedule/cron_expr',
             'crontab/default/jobs/emarsys_productexport_sync/schedule/cron_expr',
+            'crontab/default/jobs/emarsys_smartinsight_sync_queue/schedule/cron_expr',
         ];
 
         foreach ($paths as $path) {

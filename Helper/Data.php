@@ -110,24 +110,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param $websiteId
-     * @return mixed
-     */
-    public function getContactUniqueField($websiteId)
-    {
-        return 'email';
-    }
-
-    /**
-     * @param $websiteId
-     * @return string
-     */
-    public function getRealTimeSync($websiteId)
-    {
-        return 'Enable';
-    }
-
-    /**
      * @return int
      */
     public function getFirstStoreId()
@@ -330,17 +312,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA)
             . 'emarsys/' . $folderName . '/' . basename($csvFilePath);
-    }
-
-    /**
-     * @param $messages
-     * @param $storeId
-     * @param $info
-     * @return
-     */
-    public function addErrorLog($messages, $storeId, $info)
-    {
-        //return $this->emarsysLogs->addErrorLog($messages, $storeId, $info);
     }
 
     /**

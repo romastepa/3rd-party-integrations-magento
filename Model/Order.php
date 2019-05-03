@@ -9,6 +9,7 @@ namespace Emarsys\Emarsys\Model;
 
 use Emarsys\Emarsys\{
     Helper\Data as EmarsysHelper,
+    Helper\Logs as EmarsysHelperLogs,
     Model\ResourceModel\Order as OrderResourceModel,
     Model\ResourceModel\OrderExport\CollectionFactory as EmarsysOrderExportFactory,
     Model\ResourceModel\CreditmemoExport\CollectionFactory as EmarsysCreditmemoExportFactory
@@ -54,6 +55,11 @@ class Order extends AbstractModel
      * @var MessageManagerInterface
      */
     protected $messageManager;
+
+    /**
+     * @var Logs
+     */
+    protected $logsHelper;
 
     /**
      * @var DateTime
@@ -157,6 +163,7 @@ class Order extends AbstractModel
      * @param Registry $registry
      * @param StoreManagerInterface $storeManager
      * @param MessageManagerInterface $messageManager
+     * @param EmarsysHelperLogs $logsHelper
      * @param DateTime $date
      * @param EmarsysHelper $emarsysHelper
      * @param OrderResourceModel $orderResourceModel
@@ -182,6 +189,7 @@ class Order extends AbstractModel
         Registry $registry,
         StoreManagerInterface $storeManager,
         MessageManagerInterface $messageManager,
+        EmarsysHelperLogs $logsHelper,
         DateTime $date,
         EmarsysHelper $emarsysHelper,
         OrderResourceModel $orderResourceModel,
@@ -200,11 +208,11 @@ class Order extends AbstractModel
         LoggerInterface $logger,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
-
         array $data = []
     ) {
         $this->storeManager = $storeManager;
         $this->messageManager = $messageManager;
+        $this->logsHelper = $logsHelper;
         $this->date = $date;
         $this->emarsysHelper = $emarsysHelper;
         $this->orderResourceModel = $orderResourceModel;
@@ -243,13 +251,32 @@ class Order extends AbstractModel
      */
     public function syncOrders($storeId, $mode, $exportFromDate = null, $exportTillDate = null)
     {
+        $store = $this->storeManager->getStore($storeId);
+        $websiteId = $store->getWebsiteId();
+
+        //Loging functionality start
+        $logsArray['job_code'] = 'order';
+        $logsArray['status'] = 'started';
+        $logsArray['messages'] = __('Bulk order export started');
+        $logsArray['created_at'] = $this->date->date('Y-m-d H:i:s', time());
+        $logsArray['run_mode'] = $mode;
+        $logsArray['auto_log'] = 'Complete';
+        $logsArray['store_id'] = $storeId;
+        $logsArray['website_id'] = $websiteId;
+        $logId = $this->logsHelper->manualLogs($logsArray, 1);
+        $logsArray['id'] = $logId;
+        $logsArray['log_action'] = 'sync';
+        $logsArray['action'] = 'Smart Insight';
+        $logsArray['executed_at'] = $this->date->date('Y-m-d H:i:s', time());
+        $errorCount = false;
         //export data using ftp
         try {
             $store = $this->storeManager->getStore($storeId);
-            if ($this->configReader->isEnabledForWebsite(ConfigInterface::CONFIG_ENABLED, $store->getWebsiteId())) {
+            //if ($this->configReader->isEnabledForWebsite(ConfigInterface::CONFIG_ENABLED, $store->getWebsiteId())) {
                 $logsArray['action'] = 'synced to FTP';
                 $this->exportOrdersDataUsingFtp($storeId, $mode, $exportFromDate, $exportTillDate, $logsArray);
-            }
+                $this->logsHelper->manualLogsUpdate($logsArray);
+            //}
         } catch (\Exception $e) {
             $this->logger->critical($e);
             return false;
@@ -311,12 +338,14 @@ class Order extends AbstractModel
                         $logsArray['emarsys_info'] = __('Order\'s iteration %1 of %2', $i, $pages);
                         $logsArray['description'] = __('Order\'s iteration %1 of %2', $i, $pages);
                         $logsArray['message_type'] = 'Success';
+                        $this->logsHelper->logs($logsArray);
                     }
                 }
             } catch (\Exception $e) {
                 $logsArray['emarsys_info'] = __('Export Orders Data Using FTP');
                 $logsArray['description'] = __($e->getMessage());
                 $logsArray['message_type'] = 'Error';
+                $this->logsHelper->logs($logsArray);
                 $this->logger->critical($e);
             }
 
@@ -345,12 +374,14 @@ class Order extends AbstractModel
                         $logsArray['emarsys_info'] = __('CreditMemo\'s iteration %1 of %2', $i, $pages);
                         $logsArray['description'] = __('CreditMemo\'s iteration %1 of %2', $i, $pages);
                         $logsArray['message_type'] = 'Success';
+                        $this->logsHelper->logs($logsArray);
                     }
                 }
             } catch (\Exception $e) {
                 $logsArray['emarsys_info'] = __('Export CreditMemos Data Using FTP');
                 $logsArray['description'] = __($e->getMessage());
                 $logsArray['message_type'] = 'Error';
+                $this->logsHelper->logs($logsArray);
                 $this->logger->critical($e);
             }
 
@@ -375,6 +406,7 @@ class Order extends AbstractModel
                         $logsArray['emarsys_info'] = __('File uploaded to FTP server successfully');
                         $logsArray['description'] = $url . ' > ' . $remoteFileName;
                         $logsArray['message_type'] = 'Success';
+                        $this->logsHelper->logs($logsArray);
                         if ($mode == EmarsysHelper::ENTITY_EXPORT_MODE_MANUAL) {
                             $this->messageManager->addSuccessMessage(
                                 __("File uploaded to FTP server successfully !!!")
@@ -387,6 +419,7 @@ class Order extends AbstractModel
                         $logsArray['emarsys_info'] = __('Failed to upload file on FTP server');
                         $logsArray['description'] = __('Failed to upload %1 on FTP server. %2', $url, $msg);
                         $logsArray['message_type'] = 'Error';
+                        $this->logsHelper->logs($logsArray);
                         if ($mode == EmarsysHelper::ENTITY_EXPORT_MODE_MANUAL) {
                             $this->messageManager->addErrorMessage(
                                 __("Failed to upload file on FTP server !!! %1", $msg)
@@ -403,11 +436,13 @@ class Order extends AbstractModel
                     $logsArray['emarsys_info'] = __('No Sales Data found for the store . ' . $store->getCode());
                     $logsArray['description'] = __('No Sales Data found for the store . ' . $store->getCode());
                     $logsArray['message_type'] = 'Error';
+                    $this->logsHelper->logs($logsArray);
                 }
             } catch (\Exception $e) {
                 $logsArray['emarsys_info'] = __('Failed to Upload CSV to FTP.');
                 $logsArray['description'] = __($e->getMessage());
                 $logsArray['message_type'] = 'Error';
+                $this->logsHelper->logs($logsArray);
                 $this->logger->critical($e);
             }
         } else {
@@ -415,6 +450,7 @@ class Order extends AbstractModel
             $logsArray['emarsys_info'] = __('Failed to connect with FTP server.');
             $logsArray['description'] = __('Failed to connect with FTP server.');
             $logsArray['message_type'] = 'Error';
+            $this->logsHelper->logs($logsArray);
             if ($mode == EmarsysHelper::ENTITY_EXPORT_MODE_MANUAL) {
                 $this->messageManager->addErrorMessage(
                     __('"Failed to connect with FTP server. Please check your settings and try again !!!"')
@@ -432,6 +468,7 @@ class Order extends AbstractModel
             $logsArray['messages'] = __('Order export completed');
         }
         $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
+        $this->logsHelper->manualLogsUpdate($logsArray);
 
         return;
     }

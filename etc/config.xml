@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @category   Emarsys
+ * @package    Emarsys_Emarsys
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <emarsys_settings>
+            <ftp_settings>
+                <hostname>exchange.si.emarsys.net</hostname>
+                <username>steren</username>
+                <port>21</port>
+                <ftp_bulk_export_dir>/</ftp_bulk_export_dir>
+                <useftp_overssl>1</useftp_overssl>
+                <usepassive_mode>1</usepassive_mode>
+            </ftp_settings>
+        </emarsys_settings>
+    </default>
+</config>
