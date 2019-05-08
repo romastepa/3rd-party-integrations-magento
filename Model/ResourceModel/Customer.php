@@ -584,12 +584,13 @@ class Customer extends AbstractDb
      */
     public function getSubscribeIdFromEmail($data)
     {
+        $storeId = $this->storeManager->getStore()->getId();
         $data['email'] = $this->getConnection()->quote($data['email']);
-        $query = "SELECT subscriber_id FROM " . $this->getTable('newsletter_subscriber') . " WHERE subscriber_email = " . $data['email'] . " AND store_id = " . $data['storeId'];
+        $query = "SELECT subscriber_id FROM " . $this->getTable('newsletter_subscriber') . " WHERE subscriber_email = " . $data['email'] . " AND store_id = " . $storeId;
         try {
             $result = $this->getConnection()->fetchOne($query);
         } catch (\Exception $e) {
-            $storeId = $this->storeManager->getStore()->getId();
+
             $this->emarsysLogs->addErrorLog($e->getMessage(), $storeId, 'getSubscribeIdFromEmail(ResourceModel)');
         }
         return $result;

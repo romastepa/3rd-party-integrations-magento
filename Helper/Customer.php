@@ -8,7 +8,6 @@ namespace Emarsys\Emarsys\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Emarsys\Emarsys\Model\Logs as EmarsysModelLogs;
 
 /**
  * Class Customer
@@ -22,31 +21,22 @@ class Customer extends AbstractHelper
     protected $context;
 
     /**
-     * @var Logger
-     */
-    protected $logger;
-
-    /**
      * @var Data
      */
-    protected $dataHelper;
+    protected $emarsysHelper;
 
     /**
      * Customer constructor.
      * @param Context $context
-     * @param EmarsysModelLogs $emarsysLogs
-     * @param Data $dataHelper
+     * @param Data $emarsysHelper
      */
     public function __construct(
         Context $context,
-        EmarsysModelLogs $emarsysLogs,
-        Data $dataHelper
+        Data $emarsysHelper
     ) {
         ini_set('default_socket_timeout', 1000);
         $this->context = $context;
-        $this->dataHelper = $dataHelper;
-        $this->emarsysLogs = $emarsysLogs;
-        $this->logger = $context->getLogger();
+        $this->emarsysHelper = $emarsysHelper;
     }
 
     /**
@@ -56,12 +46,11 @@ class Customer extends AbstractHelper
     public function getEmarsysCustomerSchema($storeId)
     {
         try {
-            $this->dataHelper->getEmarsysAPIDetails($storeId);
-            $response = $this->dataHelper->send('GET', 'field/translate/en');
-            $jsonDecode = \Zend_Json::decode($response);
-            return $jsonDecode;
+            $this->emarsysHelper->getEmarsysAPIDetails($storeId);
+            $response = $this->emarsysHelper->send('GET', 'field/translate/en');
+            return \Zend_Json::decode($response);
         } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(htmlentities($e->getMessage()), $storeId, 'getEmarsysCustomerSchema');
+            $this->emarsysHelper->addErrorLog(htmlentities($e->getMessage()), $storeId, 'getEmarsysCustomerSchema');
             return false;
         }
     }

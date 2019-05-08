@@ -6,11 +6,7 @@
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <!--<event name="admin_system_config_changed_section_contacts_synchronization">
-        <observer name="cronCustomerSyncObserver" instance="Emarsys\Emarsys\Observer\SectionSave"/>
-    </event>-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="adminhtml_customer_save_after">
         <observer name="admin_edit_customer" instance="Emarsys\Emarsys\Observer\RealTimeCustomer"/>
     </event>
@@ -21,7 +17,6 @@
         <observer name="sales_order_creditmemo_save_after" instance="Emarsys\Emarsys\Observer\CreditmemoSave"/>
     </event>
     <event name="newsletter_subscriber_save_commit_after">
-        <observer name="admin_newsletter_subscription" instance="Emarsys\Emarsys\Observer\RealTimeAdminSubscriber"
-                  shared="false"/>
+        <observer name="admin_newsletter_subscription" instance="Emarsys\Emarsys\Observer\RealTimeAdminSubscriber" shared="false"/>
     </event>
 </config>

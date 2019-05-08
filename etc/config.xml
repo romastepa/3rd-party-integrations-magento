@@ -25,7 +25,7 @@
         </emarsys_settings>
         <contacts_synchronization>
             <emarsys_emarsys>
-                <realtime_sync>0</realtime_sync>
+                <realtime_sync>1</realtime_sync>
                 <background_frequency>Daily</background_frequency>
                 <unique_field>email</unique_field>
                 <notification_secret_key>1234567890</notification_secret_key>

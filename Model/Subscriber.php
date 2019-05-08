@@ -36,6 +36,7 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         }
     }
 
+
     /**
      * @param $email
      * @return int|void
@@ -43,10 +44,14 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
      */
     public function subscribeByEmarsys($email)
     {
+
         $websiteId = $this->_storeManager->getStore()->getWebsiteId();
         $this->loadByEmail($email);
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $emarsysHelper = $objectManager->get('\Emarsys\Emarsys\Helper\Data');
+        $request       = $objectManager->get('\Magento\Framework\App\RequestInterface');
+        $http          = $objectManager->get('\Magento\Framework\HTTP\PhpEnvironment\RemoteAddress');
+        $this->setData(['ip' => $http->getRemoteAddress(), 'page' => $request->getParam('page')]);
 
         if (!$this->getId()) {
             $this->setSubscriberConfirmCode($this->randomSequence());
@@ -154,5 +159,87 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
+    }
+
+    /**
+     * Load subscriber info by customerId
+     *
+     * @param int $customerId
+     * @return $this
+     */
+    public function loadByCustomerId($customerId)
+    {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $http    = $objectManager->get('\Magento\Framework\HTTP\PhpEnvironment\RemoteAddress');
+        $request = $objectManager->get('\Magento\Framework\App\RequestInterface');
+        $page    = (!empty($request->getParam('page')) != false) ? 'customer_my_account' : 'customer_registration';
+        try {
+            $customerData = $this->customerRepository->getById($customerId);
+            $customerData->setStoreId($this->_storeManager->getStore()->getId());
+            $data = $this->getResource()->loadByCustomerData($customerData);
+            $this->setData(['ip' => $http->getRemoteAddress(), 'page' => $page]);
+            $this->addData($data);
+            if (!empty($data) && $customerData->getId() && !$this->getCustomerId()) {
+                $this->setCustomerId($customerData->getId());
+                $this->setSubscriberConfirmCode($this->randomSequence());
+                $this->save();
+            }
+        } catch (NoSuchEntityException $e) {
+        }
+        return $this;
+    }
+
+
+    /**
+     * Sends out confirmation success email
+     *
+     * @return $this
+     */
+    public function sendConfirmationSuccessEmail()
+    {
+        if ($this->getImportMode()) {
+            return $this;
+        }
+
+        if (!$this->_scopeConfig->getValue(
+                self::XML_PATH_SUCCESS_EMAIL_TEMPLATE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            ) || !$this->_scopeConfig->getValue(
+                self::XML_PATH_SUCCESS_EMAIL_IDENTITY,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            )
+        ) {
+            return $this;
+        }
+
+        $this->inlineTranslation->suspend();
+
+        $this->_transportBuilder->setTemplateIdentifier(
+            $this->_scopeConfig->getValue(
+                self::XML_PATH_SUCCESS_EMAIL_TEMPLATE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            )
+        )->setTemplateOptions(
+            [
+                'area' => \Magento\Framework\App\Area::AREA_FRONTEND,
+                'store' => $this->_storeManager->getStore()->getId(),
+            ]
+        )->setTemplateVars(
+            ['subscriber' => $this]
+        )->setFrom(
+            $this->_scopeConfig->getValue(
+                self::XML_PATH_SUCCESS_EMAIL_IDENTITY,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            )
+        )->addTo(
+            $this->getEmail(),
+            $this->getName()
+        );
+        $transport = $this->_transportBuilder->getTransport();
+        $transport->sendMessage();
+
+        $this->inlineTranslation->resume();
+
+        return $this;
     }
 }
