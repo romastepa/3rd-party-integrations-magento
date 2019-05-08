@@ -79,16 +79,32 @@ class WebDav extends DataObject
     /**
      * @param $exportMode
      * @param $data
+     * @throws \Exception
      */
     public function syncFullContactUsingWebDav($exportMode, $data)
     {
         $websiteId = $data['website'];
+
+        if (!$this->emarsysHelper->isContactsSynchronizationEnable($websiteId)) {
+            return;
+        }
 
         if (isset($data['store'])) {
             $storeId = $data['store'];
         } else {
             $storeId = $this->emarsysHelper->getFirstStoreIdOfWebsite($websiteId);
         }
+
+        $fromDate = (isset($data['fromDate']) && !empty($data['fromDate'])) ? $data['fromDate'] : '';
+        $toDate = (isset($data['toDate']) && !empty($data['toDate'])) ? $data['toDate'] : $this->date->date('Y-m-d') . ' 23:59:59';
+
+        $data = [
+            'website' => $websiteId,
+            'storeId' => $storeId,
+            'fromDate' => $fromDate,
+            'toDate' => $toDate
+        ];
+
         $scope = ScopeInterface::SCOPE_WEBSITES;
         $errorStatus = true;
         $jobDetails = $this->cronHelper->getJobDetail($exportMode);
@@ -134,10 +150,10 @@ class WebDav extends DataObject
 
         if ($errorStatus) {
             $logsArray['status'] = 'error';
-            $logsArray['messages'] = 'Error while'. $jobDetails['job_title'] . ' !!!';
+            $logsArray['messages'] = 'Something went wrong, please check logs';
         } else {
             $logsArray['status'] = 'success';
-            $logsArray['messages'] = 'Successfully synced contacts !!!';
+            $logsArray['messages'] = 'Contacts successfully synced';
         }
         $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
         $this->logsHelper->manualLogsUpdate($logsArray);
@@ -150,6 +166,7 @@ class WebDav extends DataObject
      * @param $data
      * @param $logId
      * @return bool
+     * @throws \Exception
      */
     public function exportDataToWebDav($exportMode, $data, $logId)
     {

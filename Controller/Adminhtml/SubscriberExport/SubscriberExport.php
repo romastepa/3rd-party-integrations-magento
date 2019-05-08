@@ -43,7 +43,7 @@ class SubscriberExport extends Action
     /**
      * @var DataHelper
      */
-    protected $dataHelper;
+    protected $emarsysHelper;
 
     /**
      * @var EmarsysCronHelper
@@ -66,7 +66,7 @@ class SubscriberExport extends Action
      * @param StoreManagerInterface $storeManager
      * @param Customer $customerResourceModel
      * @param Http $request
-     * @param DataHelper $dataHelper
+     * @param DataHelper $emarsysHelper
      * @param EmarsysCronHelper $cronHelper
      * @param EmarsysCronDetails $cronDetails
      * @param EmarsysLogsModel $emarsysLogs
@@ -76,7 +76,7 @@ class SubscriberExport extends Action
         StoreManagerInterface $storeManager,
         Customer $customerResourceModel,
         Http $request,
-        DataHelper $dataHelper,
+        DataHelper $emarsysHelper,
         EmarsysCronHelper $cronHelper,
         EmarsysCronDetails $cronDetails,
         EmarsysLogsModel $emarsysLogs
@@ -84,7 +84,7 @@ class SubscriberExport extends Action
         $this->storeManager = $storeManager;
         $this->customerResourceModel = $customerResourceModel;
         $this->request = $request;
-        $this->dataHelper = $dataHelper;
+        $this->emarsysHelper = $emarsysHelper;
         $this->cronHelper = $cronHelper;
         $this->emarsysCronDetails = $cronDetails;
         $this->emarsysLogs = $emarsysLogs;
@@ -106,7 +106,7 @@ class SubscriberExport extends Action
             $returnUrl = $this->getUrl("emarsys_emarsys/subscriberexport/index", ["store" => $storeId]);
 
             //check emarsys enable for website
-            if ($this->dataHelper->getEmarsysConnectionSetting($websiteId)) {
+            if ($this->emarsysHelper->getEmarsysConnectionSetting($websiteId)) {
                 $optInStatus = $this->customerResourceModel->getDataFromCoreConfig(
                     'contacts_synchronization/initial_db_load/initial_db_load',
                     $scope,

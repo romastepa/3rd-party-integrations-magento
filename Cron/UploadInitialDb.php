@@ -9,7 +9,6 @@ namespace Emarsys\Emarsys\Cron;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Config\Model\ResourceModel\Config;
 use Emarsys\Emarsys\Helper\Cron as EmarsysCronHelper;
-use Magento\Framework\Json\Helper\Data as JsonHelper;
 use Emarsys\Emarsys\Model\WebDav\WebDav;
 use Emarsys\Emarsys\Model\Logs;
 
@@ -35,11 +34,6 @@ class UploadInitialDb
     protected $cronHelper;
 
     /**
-     * @var JsonHelper
-     */
-    protected $jsonHelper;
-
-    /**
      * @var WebDav
      */
     protected $webDavModel;
@@ -54,7 +48,6 @@ class UploadInitialDb
      * @param StoreManagerInterface $storeManager
      * @param Config $config
      * @param EmarsysCronHelper $cronHelper
-     * @param JsonHelper $jsonHelper
      * @param WebDav $webDavModel
      * @param Logs $emarsysLogs
      */
@@ -62,14 +55,12 @@ class UploadInitialDb
         StoreManagerInterface $storeManager,
         Config $config,
         EmarsysCronHelper $cronHelper,
-        JsonHelper $jsonHelper,
         WebDav $webDavModel,
         Logs $emarsysLogs
     ) {
         $this->storeManager = $storeManager;
         $this->config = $config;
         $this->cronHelper = $cronHelper;
-        $this->jsonHelper = $jsonHelper;
         $this->webDavModel = $webDavModel;
         $this->emarsysLogs = $emarsysLogs;
     }
@@ -81,7 +72,7 @@ class UploadInitialDb
 
             if (!$currentCronInfo) return;
 
-            $data = $this->jsonHelper->jsonDecode($currentCronInfo->getParams());
+            $data = \Zend_Json::decode($currentCronInfo->getParams());
 
             //if the default configuration is set then the website id won't come
             if (!isset($data['website']) || $data['website'] == 0) {

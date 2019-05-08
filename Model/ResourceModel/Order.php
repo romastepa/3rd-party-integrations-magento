@@ -219,6 +219,30 @@ class Order extends AbstractDb
     }
 
     /**
+     * @param $storeId
+     * @return array|false
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function getSalesMappedAttrs($storeId)
+    {
+        $headers = [];
+        $select = $this->getConnection()
+            ->select()
+            ->from($this->getMainTable())
+            ->where('store_id = ?', $storeId)
+            ->where('emarsys_order_field != ?', '');
+
+        $result = $this->getConnection()->fetchAll($select);
+        if (!empty($result)) {
+            foreach ($result as $key => $value) {
+                array_push($headers, $value['emarsys_order_field']);
+            }
+        }
+
+        return $headers;
+    }
+
+    /**
      * @return array
      */
     public function getEmarsysOrderFields($storeId)

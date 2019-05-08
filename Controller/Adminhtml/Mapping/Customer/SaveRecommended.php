@@ -7,7 +7,6 @@
 
 namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Customer;
 
-use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 use Emarsys\Emarsys\Model\CustomerFactory;
@@ -92,6 +91,7 @@ class SaveRecommended extends \Magento\Backend\App\Action
 
     /**
      * @return $this|\Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute()
     {
@@ -141,10 +141,10 @@ class SaveRecommended extends \Magento\Backend\App\Action
                 foreach ($recommendedData['magento'] as $key => $code) {
                     if (isset($recommendedData['emarsys'][$key]) && !empty($recommendedData['emarsys'][$key])) {
                         $model = $this->customerFactory->create();
-                        $custMageId = $this->resourceModelCustomer->getCustAttIdByCode($emarsysCodes[$key],$storeId);
+                        $custMageId = $this->resourceModelCustomer->getCustAttIdByCode($emarsysCodes[$key], $storeId);
                         $model->setEmarsysContactField($recommendedData['emarsys'][$key]);
                         $model->setMagentoAttributeId($code);
-                        $model->setMagentoCustomAttributeId($custMageId['id']);
+                        $model->setMagentoCustomAttributeId($custMageId);
                         $model->setStoreId($storeId);
                         $model->save();
                     }

@@ -7,10 +7,8 @@
 namespace Emarsys\Emarsys\Cron;
 
 use Emarsys\Emarsys\Helper\Cron as EmarsysCronHelper;
-use Magento\Framework\Json\Helper\Data;
 use Emarsys\Emarsys\Model\WebDav\WebDav;
 use Emarsys\Emarsys\Model\Logs;
-use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class SubscriberBulkExportWebDav
@@ -24,11 +22,6 @@ class SubscriberBulkExportWebDav
     protected $cronHelper;
 
     /**
-     * @var Data
-     */
-    protected $jsonHelper;
-
-    /**
      * @var WebDav
      */
     protected $webDavModel;
@@ -39,28 +32,18 @@ class SubscriberBulkExportWebDav
     protected $emarsysLogs;
 
     /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager ;
-
-    /**
      * CustomerBulkExportWebDav constructor.
      * @param EmarsysCronHelper $cronHelper
-     * @param Data $jsonHelper
      * @param WebDav $webDavModel
      */
     public function __construct(
         EmarsysCronHelper $cronHelper,
-        Data $jsonHelper,
         WebDav $webDavModel,
-        Logs $emarsysLogs,
-        StoreManagerInterface $storeManager
+        Logs $emarsysLogs
     ) {
         $this->cronHelper = $cronHelper;
-        $this->jsonHelper = $jsonHelper;
         $this->webDavModel = $webDavModel;
         $this->emarsysLogs = $emarsysLogs;
-        $this->storeManager = $storeManager;
     }
 
     public function execute()
@@ -70,9 +53,11 @@ class SubscriberBulkExportWebDav
                 EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_WEBDAV
             );
 
-            if (!$currentCronInfo) return;
+            if (!$currentCronInfo) {
+                return;
+            }
 
-            $data = $this->jsonHelper->jsonDecode($currentCronInfo->getParams());
+            $data = \Zend_Json::decode($currentCronInfo->getParams());
 
             $this->webDavModel->syncFullContactUsingWebDav(
                 EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_WEBDAV,
@@ -81,7 +66,7 @@ class SubscriberBulkExportWebDav
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
+                0,
                 'SubscriberBulkExportWebDav::execute()'
             );
         }

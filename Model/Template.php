@@ -84,11 +84,11 @@ class Template extends \Magento\Email\Model\Template
         }
 
         $variables = $this->_getVars();
-        if (isset($variables['subscriber'])) {
+        if (isset($variables['subscriber']) && is_object($variables['subscriber'])) {
             $storeId = $variables['subscriber']->getStoreId();
-        } elseif (isset($variables['customer'])) {
+        } elseif (isset($variables['customer']) && is_object($variables['customer'])) {
             $storeId = $variables['customer']->getStoreId();
-        } elseif (isset($variables['order'])) {
+        } elseif (isset($variables['order']) && is_object($variables['order'])) {
             $storeId = $variables['order']->getStoreId();
         }
 

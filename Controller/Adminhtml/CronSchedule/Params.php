@@ -9,7 +9,6 @@ namespace Emarsys\Emarsys\Controller\Adminhtml\CronSchedule;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Emarsys\Emarsys\Model\EmarsysCronDetailsFactory;
-use Magento\Framework\Json\Helper\Data;
 
 /**
  * Class Params
@@ -23,23 +22,15 @@ class Params extends Action
     private $cronDetailsFactory;
 
     /**
-     * @var Data
-     */
-    private $jsonHelper;
-
-    /**
      * Params constructor.
      * @param Context $context
      * @param EmarsysCronDetailsFactory $cronDetailsFactory
-     * @param Data $jsonHelper
      */
     public function __construct(
         Context $context,
-        EmarsysCronDetailsFactory $cronDetailsFactory,
-        Data $jsonHelper
+        EmarsysCronDetailsFactory $cronDetailsFactory
     ) {
         $this->cronDetailsFactory = $cronDetailsFactory;
-        $this->jsonHelper = $jsonHelper;
         parent::__construct($context);
     }
 
@@ -53,8 +44,7 @@ class Params extends Action
         if ($id) {
             $cronDettails = $this->cronDetailsFactory->create()->load($id);
             if ($cronDettails) {
-                $params = $this->jsonHelper->jsonDecode($cronDettails->getParams());
-                printf("<pre>" . json_encode($params, JSON_PRETTY_PRINT) . "</pre>");
+                printf("<pre>" . json_encode($cronDettails->getParams(), JSON_PRETTY_PRINT) . "</pre>");
             } else {
                 printf("No Data Available");
             }
