@@ -86,7 +86,7 @@ class Logs extends \Magento\Framework\Model\AbstractModel
             if ($logId) {
                 $logsArray['id'] = $logId;
                 $logsArray['emarsys_info'] = $info;
-                $logsArray['description'] = $messages;
+                $logsArray['description'] = str_replace(',"', ', "', $messages);
                 $logsArray['action'] = '';
                 $logsArray['message_type'] = 'error';
                 $logsArray['log_action'] = 'fail';

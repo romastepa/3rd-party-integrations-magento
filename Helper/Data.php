@@ -917,15 +917,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param $websiteId
-     * @return mixed
-     */
-    public function getContactUniqueField($websiteId)
-    {
-        return 'email';
-    }
-
-    /**
      * Get Log file path from configuration
      *
      * @return string
@@ -2052,7 +2043,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @param $templateId
      * @param $storeScope
+     * @param null $storeId
      * @return array
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getMagentoEventIdAndPath($templateId, $storeScope, $storeId = null)
     {
@@ -2214,7 +2207,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                             ->save();
                     }
                 }
-            } else {
+            } elseif (isset($response['status']) && $response['status'] != 200) {
                 $this->addErrorLog(
                     \Zend_Json::encode($response),
                     $subscriber->getStoreId(),

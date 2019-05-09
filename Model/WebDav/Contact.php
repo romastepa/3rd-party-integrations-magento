@@ -117,7 +117,6 @@ class Contact extends \Magento\Framework\DataObject
     {
         $scope = ScopeInterface::SCOPE_WEBSITES;
         $websiteId = $data['website'];
-        $keyField = $this->emarsysHelper->getContactUniqueField($websiteId);
 
         if (isset($data['store'])) {
             $storeId = $data['store'];
