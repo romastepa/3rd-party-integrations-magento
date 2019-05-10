@@ -275,7 +275,9 @@ class SendEmail extends AbstractModel
                         //no mapping found for emarsys event
                         $errorStatus = true;
                         $logsArray['emarsys_info'] = 'Transactional Mails';
-                        $logsArray['description'] = 'No Mapping Found for the Emarsys Event ID : ' . $emarsysApiEventID . '. Email sent from Magento for the store .' . $storeId;
+                        $logsArray['description'] = 'No Mapping Found for the Emarsys Event ID : ' . $emarsysApiEventID
+                            . '. Email sent from Magento for the store .' . $storeId
+                            . '(' . \Zend_Json::encode($_emarsysPlaceholdersData) . ')';
                         $logsArray['action'] = 'Mail Sent';
                         $logsArray['message_type'] = 'Error';
                         $logsArray['log_action'] = 'True';

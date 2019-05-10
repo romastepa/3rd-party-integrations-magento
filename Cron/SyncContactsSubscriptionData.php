@@ -8,10 +8,11 @@
 namespace Emarsys\Emarsys\Cron;
 
 use Emarsys\Emarsys\{
-    Helper\Data as EmarsysHelperData,
+    Helper\Data as EmarsysHelper,
     Helper\Logs,
     Model\ResourceModel\Customer as EmarsysCustomerResourceModel,
-    Model\Logs as EmarsysModelLogs
+    Model\Logs as EmarsysModelLogs,
+    Model\Api\Api as EmarsysApiApi
 };
 use Magento\{
     Framework\App\Cache\TypeListInterface,
@@ -56,14 +57,19 @@ class SyncContactsSubscriptionData
     protected $emarsysLogs;
 
     /**
-     * @var EmarsysHelperData
+     * @var EmarsysHelper
      */
-    protected $emarsysHelperData;
+    protected $emarsysHelper;
 
     /**
      * @var EmarsysCustomerResourceModel
      */
     protected $customerResourceModel;
+
+    /**
+     * @var EmarsysApiApi
+     */
+    protected $api;
 
     /**
      * @var Http
@@ -93,8 +99,9 @@ class SyncContactsSubscriptionData
      * @param Logs $logsHelper
      * @param ScopeConfigInterface $scopeConfig
      * @param EmarsysModelLogs $emarsysLogs
-     * @param EmarsysHelperData $emarsysHelperData
+     * @param EmarsysHelper $emarsysHelper
      * @param EmarsysCustomerResourceModel $customerResourceModel
+     * @param EmarsysApiApi $api
      * @param Http $request
      * @param Registry $registry
      * @param Config $resourceConfig
@@ -106,8 +113,9 @@ class SyncContactsSubscriptionData
         Logs $logsHelper,
         ScopeConfigInterface $scopeConfig,
         EmarsysModelLogs $emarsysLogs,
-        EmarsysHelperData $emarsysHelperData,
+        EmarsysHelper $emarsysHelper,
         EmarsysCustomerResourceModel $customerResourceModel,
+        EmarsysApiApi $api,
         Http $request,
         Registry $registry,
         Config $resourceConfig,
@@ -118,8 +126,9 @@ class SyncContactsSubscriptionData
         $this->logsHelper = $logsHelper;
         $this->scopeConfig = $scopeConfig;
         $this->emarsysLogs = $emarsysLogs;
-        $this->emarsysHelperData = $emarsysHelperData;
+        $this->emarsysHelper = $emarsysHelper;
         $this->customerResourceModel = $customerResourceModel;
+        $this->api = $api;
         $this->request = $request;
         $this->registry = $registry;
         $this->resourceConfig = $resourceConfig;
@@ -136,7 +145,7 @@ class SyncContactsSubscriptionData
         /** @var  \Magento\Store\Model\Website $website */
         $websites = $this->storeManager->getWebsites();
         foreach ($websites as $website) {
-            if (!$this->emarsysHelperData->isContactsSynchronizationEnable($website->getId())) {
+            if (!$this->emarsysHelper->isContactsSynchronizationEnable($website->getId())) {
                 continue;
             }
             $logsArray['job_code'] = 'Sync contact Export';
@@ -150,22 +159,9 @@ class SyncContactsSubscriptionData
             $logsArray['website_id'] = $website->getId();
             $logsArray['store_id'] = $website->getDefaultGroup()->getDefaultStoreId();
             $logId = $this->logsHelper->manualLogs($logsArray);
-            try {
-                $enable = $website->getConfig('emarsys_settings/emarsys_setting/enable');
-                if ($enable) {
-                    $emarsysUserName = $website->getConfig('emarsys_settings/emarsys_setting/emarsys_api_username');
-                    if (!array_key_exists($emarsysUserName, $queue)) {
-                        $queue[$emarsysUserName] = [];
-                    }
-                    $queue[$emarsysUserName][] = $website->getWebsiteId();
-                }
-            } catch (\Exception $e) {
-                $this->emarsysLogs->addErrorLog(
-                    $e->getMessage(),
-                    0,
-                    'syncContactsSubscriptionData(helper/data)'
-                );
-            }
+
+            $emarsysUserName = $website->getConfig(EmarsysHelper::XPATH_EMARSYS_API_USER);
+            $queue[$emarsysUserName][] = $website->getWebsiteId();
         }
         if (!empty($queue)) {
             foreach ($queue as $websiteId) {
@@ -201,14 +197,12 @@ class SyncContactsSubscriptionData
             $logsArray['emarsys_info'] = 'subscription information';
 
             $dt = (new \Zend_Date());
-            $timeRange = [];
             if ($isTimeBased) {
                 $timeRange = [$dt->subHour(1)->toString('YYYY-MM-dd'), $dt->addHour(1)->toString('YYYY-MM-dd')];
             }
             $storeId = $this->storeManager->getWebsite(current($websiteId))->getDefaultGroup()->getDefaultStoreId();
-            $key_id = $this->customerResourceModel->getKeyId(EmarsysHelperData::SUBSCRIBER_ID, $storeId);
-            $optinFiledId = $this->customerResourceModel->getKeyId(EmarsysHelperData::OPT_IN, $storeId);
-            $notificationUrl = $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId);
+            $key_id = $this->customerResourceModel->getKeyId(EmarsysHelper::SUBSCRIBER_ID, $storeId);
+            $optinFiledId = $this->customerResourceModel->getKeyId(EmarsysHelper::OPT_IN, $storeId);
             $payload = [
                 'distribution_method' => 'local',
                 'origin' => 'all',
@@ -216,24 +210,23 @@ class SyncContactsSubscriptionData
                 'contact_fields' => [$key_id, $optinFiledId],
                 'add_field_names_header' => 1,
                 'time_range' => $timeRange,
-                'notification_url' => $notificationUrl,
+                'notification_url' => $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId),
             ];
 
-            $logsArray['description'] = json_encode($payload) . " \n " . $notificationUrl;
+            $logsArray['description'] = $this->getExportsNotificationUrl($websiteId, $isTimeBased, $storeId);
             $logsArray['message_type'] = 'Success';
             $this->logsHelper->logs($logsArray);
 
-            $this->emarsysHelperData->getEmarsysAPIDetails($storeId);
-            $client = $this->emarsysHelperData->getClient();
-            $response = $client->post('contact/getchanges', $payload);
+            $this->api->setWebsiteId(current($websiteId));
+            $response = $this->api->sendRequest('POST', 'contact/getchanges', $payload);
 
-            $logsArray['description'] = json_encode($response);
+            $logsArray['description'] = \Zend_Json::encode($response);
             $logsArray['message_type'] = 'Success';
             $this->logsHelper->logs($logsArray);
 
-            if (isset($response['data']['id'])) {
-                $this->setValue('export_id', $response['data']['id'], current($websiteId));
-                $logsArray['description'] = $response['data']['id'];
+            if (isset($response['body']['data']['id'])) {
+                $this->setValue('export_id', $response['body']['data']['id'], current($websiteId));
+                $logsArray['description'] = $response['body']['data']['id'];
                 $logsArray['message_type'] = 'Success';
                 $this->logsHelper->logs($logsArray);
             }

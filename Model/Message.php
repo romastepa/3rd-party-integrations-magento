@@ -33,4 +33,12 @@ class Message extends \Magento\Framework\Mail\Message
     {
         return $this->emarsysData;
     }
+
+    public function getZendMessage()
+    {
+        $reflectionClass = new \ReflectionClass("\Magento\Framework\Mail\Message");
+        $reflection = $reflectionClass->getProperty("zendMessage");
+        $reflection->setAccessible(true);
+        return $reflection->getValue($this);
+    }
 }

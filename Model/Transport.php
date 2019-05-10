@@ -4,21 +4,22 @@
  * @package    Emarsys_Emarsys
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
+
 namespace Emarsys\Emarsys\Model;
 
+use Magento\Framework\Exception\MailException;
+use Magento\Framework\Phrase;
 use Magento\Framework\Mail\MessageInterface;
-use Magento\Framework\Mail\TransportInterface;
+use Zend\Mail\Message as ZendMessage;
+use Zend\Mail\Transport\Sendmail as ZendTransport;
+use Emarsys\Emarsys\Model\SendEmail;
 
-/**
- * Class Transport
- * @package Emarsys\Emarsys\Model
- */
-class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterface
+class Transport implements \Magento\Framework\Mail\TransportInterface
 {
     /**
-     * @var MessageInterface|\Zend_Mail
+     * @var zendTransport
      */
-    protected $_message;
+    protected $zendTransport;
 
     /**
      * @var SendEmail
@@ -26,34 +27,40 @@ class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterf
     protected $sendEmail;
 
     /**
-     * Transport constructor.
+     * @var MessageInterface
+     */
+    protected $message;
+
+    /**
      * @param MessageInterface $message
      * @param SendEmail $sendEmail
-     * @param null $parameters
+     * @param null|string|array|\Traversable $parameters
      */
     public function __construct(
         MessageInterface $message,
         SendEmail $sendEmail,
         $parameters = null
     ) {
-        if (!$message instanceof \Zend_Mail) {
-            throw new \InvalidArgumentException('The message should be an instance of \Zend_Mail');
-        }
-
-        parent::__construct($parameters);
-        $this->_message = $message;
+        $this->zendTransport = new ZendTransport($parameters);
         $this->sendEmail = $sendEmail;
+        $this->message = $message;
     }
 
     /**
-     * @throws \Zend_Mail_Transport_Exception
+     * @throws MailException
      */
     public function sendMessage()
     {
-        $mailSendingStatus = $this->sendEmail->sendMail($this->_message);
+        $errorStatus = $this->sendEmail->sendMail($this->getMessage());
 
-        if ($mailSendingStatus) {
-            parent::send($this->_message);
+        if ($errorStatus) {
+            try {
+                $this->zendTransport->send(
+                    ZendMessage::fromString($this->message->getRawMessage())
+                );
+            } catch (\Exception $e) {
+                throw new MailException(new Phrase($e->getMessage()), $e);
+            }
         }
     }
 
@@ -62,6 +69,6 @@ class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterf
      */
     public function getMessage()
     {
-        return $this->_message;
+        return $this->message;
     }
 }

@@ -8,10 +8,12 @@
 namespace Emarsys\Emarsys\Model\ResourceModel;
 
 use Magento\{
+    Framework\App\ObjectManager,
     Framework\Model\ResourceModel\Db\AbstractDb,
     Framework\Model\ResourceModel\Db\Context,
     Eav\Model\Entity\Type,
     Eav\Model\Entity\Attribute,
+    Framework\Stdlib\DateTime\DateTime,
     Framework\Stdlib\DateTime\TimezoneInterface,
     Customer\Model\CustomerFactory,
     Store\Model\StoreManagerInterface,
@@ -66,6 +68,12 @@ class Customer extends AbstractDb
     protected $notVisibleFields = [0, 27, 28, 29, 30, 33, 34, 36, 47, 48];
 
     /**
+     * Date
+     * @var DateTime
+     */
+    protected $dateTime;
+
+    /**
      * Customer constructor.
      * @param Context $context
      * @param Type $entityType
@@ -75,6 +83,7 @@ class Customer extends AbstractDb
      * @param EmarsysModelLog $emarsysLogs
      * @param StoreManagerInterface $storeManager
      * @param ScopeConfigInterface $scopeConfigInterface
+     * @param DateTime|null $dateTime
      * @param null $connectionName
      */
     public function __construct(
@@ -86,6 +95,7 @@ class Customer extends AbstractDb
         EmarsysModelLog $emarsysLogs,
         StoreManagerInterface $storeManager,
         ScopeConfigInterface $scopeConfigInterface,
+        DateTime $dateTime = null,
         $connectionName = null
     ) {
         $this->entityType = $entityType;
@@ -95,6 +105,7 @@ class Customer extends AbstractDb
         $this->emarsysLogs = $emarsysLogs;
         $this->customerModel = $customerModel;
         $this->storeManager = $storeManager;
+        $this->dateTime = $dateTime ?: ObjectManager::getInstance()->get(DateTime::class);
         parent::__construct($context, $connectionName);
     }
 
@@ -491,6 +502,24 @@ class Customer extends AbstractDb
             ->where('store_id = ?', @$data['store_id']);
 
         return $this->getConnection()->fetchOne($select);
+    }
+
+    /**
+     * @param int $status
+     * @param array $subscriberIds
+     *
+     * @return void
+     */
+    public function updateStatusOfSubscribers($status, $subscriberIds)
+    {
+        $this->getConnection()->update(
+            $this->getTable('newsletter_subscriber'),
+            [
+                'subscriber_status' => $status,
+                'change_status_at' => $this->dateTime->gmtDate()
+            ],
+            $this->getConnection()->quoteInto('subscriber_id in (?)', $subscriberIds)
+        );
     }
 
     /**

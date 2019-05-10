@@ -5,14 +5,14 @@
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
 
-namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Event;
+namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Customer;
 
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 
 /**
  * Class SaveRow
- * @package Emarsys\Emarsys\Controller\Adminhtml\Mapping\Event
+ * @package Emarsys\Emarsys\Controller\Adminhtml\Mapping\Customer
  */
 class SaveRow extends Action
 {
@@ -41,10 +41,18 @@ class SaveRow extends Action
     {
         $requestParams = $this->getRequest()->getParams();
         $attributeCode = $requestParams['attribute'];
+        $entityTypeId = $requestParams['entityTypeId'];
         $attributeValue = $requestParams['attributeValue'];
-        $coulmnAttr = $requestParams['columnAttr'];
+        $coulmnAttr = $requestParams['coulmnAttr'];
         $session = $this->session->getData();
-        $gridSession = $session['gridData'];
+        if (isset($session['gridData'])) {
+            $gridSession = $session['gridData'];
+        }
+        if ($entityTypeId == 2) {
+            $gridSession['BILLADD_' . $attributeCode][$coulmnAttr] = $attributeValue;
+        } else {
+            $gridSession[$attributeCode][$coulmnAttr] = $attributeValue;
+        }
         $gridSession[$attributeCode][$coulmnAttr] = $attributeValue;
         $this->session->setData('gridData', $gridSession);
     }

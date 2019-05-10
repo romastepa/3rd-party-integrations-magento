@@ -252,7 +252,14 @@ class Api extends \Magento\Framework\DataObject
             'Content-type: application/json;charset="utf-8"',
             'Extension-Version: 1.0.12-customers-subscribers-fix',
         ]);
+
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Zend_Http_Client');
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
         $response = curl_exec($ch);
+        $header = curl_getinfo($ch);
 
         $http_code = 200;
         if (!curl_errno($ch)) {
@@ -260,9 +267,20 @@ class Api extends \Magento\Framework\DataObject
         }
         curl_close($ch);
 
+        try {
+            $decodedResponse = \Zend_Json::decode($response);
+        } catch (\Exception $e) {
+            $decodedResponse = false;
+        }
+
+        if ($decodedResponse) {
+            $response = $decodedResponse;
+        }
+
         return [
             'status' => $http_code,
-            'body' => json_decode($response, true),
+            'header' => $header,
+            'body' => $response,
         ];
     }
 

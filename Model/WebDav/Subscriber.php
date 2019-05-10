@@ -93,8 +93,6 @@ class Subscriber extends DataObject
             $storeId = $this->emarsysHelper->getFirstStoreIdOfWebsite($websiteId);
         }
 
-        $keyField = $this->emarsysHelper->getContactUniqueField($websiteId);
-
         $store = $this->storeManager->getStore($storeId);
         $storeCode = $store->getCode();
         $data['storeId'] = $storeId;
