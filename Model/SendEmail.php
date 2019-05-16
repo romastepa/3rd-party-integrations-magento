@@ -17,9 +17,9 @@ use Magento\{
     Store\Model\StoreManagerInterface
 };
 use Emarsys\Emarsys\{
-    Helper\Data as EmarsysHelperData,
+    Helper\Data as EmarsysHelper,
     Helper\Logs as EmarsysLogsHelper,
-    Model\ResourceModel\Customer as customerResourceModel,
+    Model\ResourceModel\Customer as CustomerResourceModel,
     Model\Api\Api as EmarsysModelApiApi
 };
 
@@ -30,7 +30,7 @@ use Emarsys\Emarsys\{
 class SendEmail extends AbstractModel
 {
     /**
-     * @var EmarsysHelperData
+     * @var EmarsysHelper
      */
     protected $emarsysHelper;
 
@@ -40,7 +40,7 @@ class SendEmail extends AbstractModel
     protected $date;
 
     /**
-     * @var customerResourceModel
+     * @var CustomerResourceModel
      */
     protected $customerResourceModel;
 
@@ -73,8 +73,8 @@ class SendEmail extends AbstractModel
      * SendEmail constructor.
      * @param Context $context
      * @param Registry $registry
-     * @param EmarsysHelperData $emarsysHelper
-     * @param customerResourceModel $customerResourceModel
+     * @param EmarsysHelper $emarsysHelper
+     * @param CustomerResourceModel $customerResourceModel
      * @param DateTime $date
      * @param MessageInterface $message
      * @param EmarsysLogsHelper $logs
@@ -88,8 +88,8 @@ class SendEmail extends AbstractModel
     public function __construct(
         Context $context,
         Registry $registry,
-        EmarsysHelperData $emarsysHelper,
-        customerResourceModel $customerResourceModel,
+        EmarsysHelper $emarsysHelper,
+        CustomerResourceModel $customerResourceModel,
         DateTime $date,
         MessageInterface $message,
         EmarsysLogsHelper $logs,
@@ -112,7 +112,7 @@ class SendEmail extends AbstractModel
     }
 
     /**
-     * @param \Zend_Mail $message
+     * @param \Magento\Framework\Mail\MessageInterface $message
      * @return bool
      * @throws \Exception
      */
@@ -163,10 +163,18 @@ class SendEmail extends AbstractModel
                     if ($emarsysApiEventID != '') {
                         //mapping found for event
                         $this->api->setWebsiteId($websiteId);
-                        $externalId = $message->getRecipients()[0];
+                        if (method_exists($message, 'zendMessage')) {
+                            /** @var \Zend\Mail\Message $zendMessage */
+                            $zendMessage = $message->getZendMessage();
+                            /** @var \Zend\Mail\AddressList $addressList */
+                            $addressList = $zendMessage->getTo();
+                            $externalId = $addressList->current()->getEmail();
+                        } else {
+                            $externalId = $message->getRecipients()[0];
+                        }
                         $buildRequest = [];
 
-                        $buildRequest['key_id'] = $this->customerResourceModel->getKeyId(EmarsysHelperData::CUSTOMER_EMAIL, $storeId);
+                        $buildRequest['key_id'] = $this->customerResourceModel->getKeyId(EmarsysHelper::CUSTOMER_EMAIL, $storeId);
                         $buildRequest[$buildRequest['key_id']] = $externalId;
 
                         $customerId = $this->customerResourceModel->checkCustomerExistsInMagento(
@@ -175,7 +183,7 @@ class SendEmail extends AbstractModel
                         );
 
                         if (!empty($customerId)) {
-                            $customerIdKey = $this->customerResourceModel->getKeyId(EmarsysHelperData::CUSTOMER_ID, $storeId);
+                            $customerIdKey = $this->customerResourceModel->getKeyId(EmarsysHelper::CUSTOMER_ID, $storeId);
                             $buildRequest[$customerIdKey] = $customerId;
                         }
 
@@ -186,11 +194,11 @@ class SendEmail extends AbstractModel
                         $subscribeId = $this->customerResourceModel->getSubscribeIdFromEmail($data);
 
                         if (!empty($subscribeId)) {
-                            $subscriberIdKey = $this->customerResourceModel->getKeyId(EmarsysHelperData::SUBSCRIBER_ID, $storeId);
+                            $subscriberIdKey = $this->customerResourceModel->getKeyId(EmarsysHelper::SUBSCRIBER_ID, $storeId);
                             $buildRequest[$subscriberIdKey] = $subscribeId;
                         }
 
-                        $emailKey = $this->customerResourceModel->getKeyId(EmarsysHelperData::CUSTOMER_EMAIL, $storeId);
+                        $emailKey = $this->customerResourceModel->getKeyId(EmarsysHelper::CUSTOMER_EMAIL, $storeId);
                         $buildRequest['key_id'] = $emailKey;
                         $buildRequest[$emailKey] = $externalId;
 
@@ -275,9 +283,7 @@ class SendEmail extends AbstractModel
                         //no mapping found for emarsys event
                         $errorStatus = true;
                         $logsArray['emarsys_info'] = 'Transactional Mails';
-                        $logsArray['description'] = 'No Mapping Found for the Emarsys Event ID : ' . $emarsysApiEventID
-                            . '. Email sent from Magento for the store .' . $storeId
-                            . '(' . \Zend_Json::encode($_emarsysPlaceholdersData) . ')';
+                        $logsArray['description'] = 'No Mapping Found for the Emarsys Event ID : ' . $emarsysApiEventID . '. Email sent from Magento for the store .' . $storeId;
                         $logsArray['action'] = 'Mail Sent';
                         $logsArray['message_type'] = 'Error';
                         $logsArray['log_action'] = 'True';

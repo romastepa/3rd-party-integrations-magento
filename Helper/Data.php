@@ -1313,7 +1313,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $storeId
      * @return string
      */
-    public function insertFirstimeMappingPlaceholders($mappingId, $storeId)
+    public function insertFirstTimeMappingPlaceholders($mappingId, $storeId)
     {
         $magentoPlaceholderarray = [];
         $emarsysEventMappingColl = $this->emarsysEventMapping->create()->getCollection()
@@ -1677,7 +1677,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 ->addFieldToFilter('magento_event_id', $magentoEventsCollection->getData()[0]['id']);
             $emarsysEventMappingColl->addFieldToFilter('store_id', $store_id);
 
-            return $this->insertFirstimeMappingPlaceholders(
+            return $this->insertFirstTimeMappingPlaceholders(
                 $emarsysEventMappingColl->getFirstItem()->getMagentoEventId(),
                 $store_id
             );
@@ -1708,7 +1708,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             $emarsysEventMappingColl->addFieldToFilter('store_id', $store_id);
 
-            return $this->insertFirstimeMappingPlaceholders(
+            return $this->insertFirstTimeMappingPlaceholders(
                 $emarsysEventMappingColl->getFirstItem()->getMagentoEventId(),
                 $store_id
             );
