@@ -163,7 +163,7 @@ class SendEmail extends AbstractModel
                     if ($emarsysApiEventID != '') {
                         //mapping found for event
                         $this->api->setWebsiteId($websiteId);
-                        if (method_exists($message, 'zendMessage')) {
+                        if (method_exists($message, 'getZendMessage')) {
                             /** @var \Zend\Mail\Message $zendMessage */
                             $zendMessage = $message->getZendMessage();
                             /** @var \Zend\Mail\AddressList $addressList */
