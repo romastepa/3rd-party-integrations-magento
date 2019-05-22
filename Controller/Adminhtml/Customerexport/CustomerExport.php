@@ -131,24 +131,6 @@ class CustomerExport extends Action
 
                 //calculate time difference
                 if (isset($data['fromDate']) && $data['fromDate'] != '') {
-                    $toTimezone = $this->timezone->getDefaultTimezone();
-                    $fromDate = $this->timezone->date($data['fromDate'])
-                        ->setTimezone(new \DateTimeZone($toTimezone))
-                        ->format('Y-m-d H:i:s');
-                    $magentoTime = $this->date->date('Y-m-d H:i:s');
-
-                    $currentTime = new \DateTime($magentoTime);
-                    $currentTime->format('Y-m-d H:i:s');
-
-                    $datetime2 = new \DateTime($fromDate);
-                    $interval = $currentTime->diff($datetime2);
-
-                    //timeframe more than 2 years not supported
-                    if ($interval->y > 2 || ($interval->y == 2 && $interval->m >= 1) || ($interval->y == 2 && $interval->d >= 1)) {
-                        $this->messageManager->addErrorMessage(__("The timeframe cannot be more than 2 years"));
-                        return $resultRedirect->setPath($returnUrl);
-                    }
-
                     if (isset($data['toDate']) && $data['toDate'] != '') {
                         $data['fromDate'] = $this->date->date('Y-m-d H:i:s', strtotime($data['fromDate']));
                         $data['toDate'] = $this->date->date('Y-m-d H:i:s', strtotime($data['toDate']));
