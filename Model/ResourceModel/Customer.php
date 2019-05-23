@@ -237,25 +237,18 @@ class Customer extends AbstractDb
     }
 
     /**
-     * @param $customAttCode
+     * @param $magentoCustomAttributeId
      * @param $emFieldId
-     * @param int $storeId
      * @return mixed
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function checkAttributeUsed($customAttCode, $emFieldId, $storeId)
+    public function checkAttributeUsed($magentoCustomAttributeId, $storeId)
     {
         $select = $this->getConnection()
             ->select()
-            ->from(['ecfm' => $this->getMainTable()], ['assigned' => 'count(*)'])
-            ->join(
-                ['emca' => $this->getTable('emarsys_magento_customer_attributes')],
-                $this->getConnection()->quoteInto('ecfm.magento_custom_attribute_id = emca.id AND emca.store_id = ?', (int)$storeId),
-                []
-            )
-            ->where('ecfm.store_id = ?', $storeId)
-            ->where('ecfm.emarsys_contact_field = ?', $emFieldId)
-            ->where('emca.attribute_code_custom = ?', $customAttCode);
+            ->from(['ecfm' => $this->getMainTable()], ['emarsys_contact_field'])
+            ->where('ecfm.store_id = ?', (int)$storeId)
+            ->where('ecfm.magento_custom_attribute_id = ?', $magentoCustomAttributeId);
 
         return $this->getConnection()->fetchRow($select);
     }

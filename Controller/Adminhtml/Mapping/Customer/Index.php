@@ -24,6 +24,11 @@ class Index extends Action
     protected $resultPageFactory;
 
     /**
+     * @var Data
+     */
+    protected $emarsysHelper;
+
+    /**
      * Index constructor.
      * @param Context $context
      * @param PageFactory $resultPageFactory
