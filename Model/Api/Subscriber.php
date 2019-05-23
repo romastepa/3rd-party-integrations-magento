@@ -356,7 +356,7 @@ class Subscriber
                     $currentPageNumber
                 );
             }
-            $success = $this->processBatch($subscriberData, $emailKey, $logsArray);
+            $success = $this->processBatch($subscriberData, $logsArray);
 
             $logsArray['emarsys_info'] = __('Processing data for store %1', $storeId);
             $logsArray['description'] = __('%1 of %2', $currentPageNumber, $lastPageNumber);

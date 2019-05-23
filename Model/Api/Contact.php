@@ -550,7 +550,7 @@ class Contact
                         );
                     }
 
-                    $success = $this->processBatch($allCustomersPayload, $emailKey, $logsArray);
+                    $success = $this->processBatch($allCustomersPayload, $logsArray);
 
                     $logsArray['emarsys_info'] = __('Processing data for store %1', $storeId);
                     $logsArray['description'] = __('%1 of %2', $currentPageNumber, $lastPageNumber);
@@ -568,17 +568,17 @@ class Contact
             $this->messageManager->addErrorMessage("Attributes are not mapped for this store view !!!");
         }
 
-        if (!$success) {
-            $logsArray['status'] = 'error';
-            $logsArray['messages'] = 'Customer export have an error. Please check';
-        } else {
+        if ($success) {
             $logsArray['status'] = 'success';
             $logsArray['messages'] = 'Customer export completed';
+        } else {
+            $logsArray['status'] = 'error';
+            $logsArray['messages'] = 'Customer export have an error. Please check';
         }
         $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
         $this->logsHelper->manualLogsUpdate($logsArray);
 
-        return !$success;
+        return $success;
     }
 
     public function processBatch($allCustomersPayload, $logsArray)
@@ -750,7 +750,7 @@ class Contact
         $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
         $this->logsHelper->manualLogsUpdate($logsArray);
 
-        return;
+        return $errorStatus;
     }
 
     public function exportDataToApi($exportMode, $data, $logId)
