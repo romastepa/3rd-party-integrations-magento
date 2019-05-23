@@ -148,7 +148,7 @@ class Contact extends \Magento\Framework\DataObject
 
         //get customer collection for the store
         $customerCollection = $this->customerResourceModel->getCustomerCollection($data, $storeId);
-        if ($customerCollection) {
+        if ($customerCollection->getSize()) {
             //webDav credentials from admin configurations
             $webDavCredentials = $this->emarsysHelper->collectWebDavCredentials($scope, $websiteId);
             if ($webDavCredentials && !empty($webDavCredentials)) {
@@ -197,9 +197,9 @@ class Contact extends \Magento\Framework\DataObject
 
                         foreach ($customerCollection as $customerData) {
                             $customerValues = [];
-                            $customerLoad = $this->customer->create()->load($customerData['entity_id']);
-                            $primaryBilling = $customerLoad->getPrimaryBillingAddress();
-                            $primaryShipping = $customerLoad->getPrimaryshippingAddress();
+                            //$customerLoad = $this->customer->create()->load($customerData['entity_id']);
+                            $primaryBilling = $customerData->getPrimaryBillingAddress();
+                            $primaryShipping = $customerData->getPrimaryShippingAddress();
                             $mappedCountries = $this->emarsysCountryHelper->getMapping($storeId);
 
                             foreach ($headers as $key => $value) {
@@ -209,14 +209,14 @@ class Contact extends \Magento\Framework\DataObject
                                 //code for the custom defined attributes in the array starts
                                 if ($value == EmarsysHelper::CUSTOMER_ID) {
                                     $index = array_search($key, $headerIndex);
-                                    $customerValues[$index] = $customerLoad->getId();
+                                    $customerValues[$index] = $customerData->getId();
                                 } elseif ($value == EmarsysHelper::CUSTOMER_EMAIL) {
                                     $index = array_search($key, $headerIndex);
-                                    $customerValues[$index] = $customerLoad->getEmail();
+                                    $customerValues[$index] = $customerData->getEmail();
                                 } elseif ($attributeCode['entity_type_id'] == 1) {
                                     //code for the custom defined attributes ends here
                                     $index = array_search($key, $headerIndex);
-                                    $customerValues[$index] = $customerLoad->getData($attributeCode['attribute_code']);
+                                    $customerValues[$index] = $customerData->getData($attributeCode['attribute_code']);
                                 } elseif ($attributeCode['entity_type_id'] == 2) {
                                     $isShippingAttr = (strpos($attributeCode['attribute_code_custom'], 'default_shipping_') !== false) ? true : false;
                                     $isBillingAttr = (strpos($attributeCode['attribute_code_custom'], 'default_billing_') !== false) ? true : false;

@@ -137,13 +137,13 @@ class CustomerExport extends Action
                     }
                 }
 
-                //get customer collection
+                /** @var Customer $customerCollection */
                 $customerCollection = $this->customerResourceModel->getCustomerCollection($data, $storeId);
-                if (!empty($customerCollection)) {
+                if ($customerCollection->getSize()) {
                     $cronJobScheduled = false;
                     $cronJobName = '';
 
-                    if (count($customerCollection) <= self::MAX_CUSTOMER_RECORDS) {
+                    if ($customerCollection->getSize() <= self::MAX_CUSTOMER_RECORDS) {
                         //export customers through API
                         $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API, $storeId);
                         if (!$isCronjobScheduled) {
