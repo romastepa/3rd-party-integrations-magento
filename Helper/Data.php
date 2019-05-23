@@ -761,6 +761,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @param $storeId
+     * @throws \Exception
      */
     public function insertFirstime($storeId)
     {
@@ -770,7 +771,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $magentoEvent->getId();
             $eventMappingModel = $this->emarsysEventMapping->create();
             $eventMappingModel->setMagentoEventId($magentoEvent->getId());
-            $eventMappingModel->setEmarsysEventId('');
+            $eventMappingModel->setEmarsysEventId(0);
             $eventMappingModel->setStoreId($storeId);
             $eventMappingModel->save();
         }
@@ -799,30 +800,24 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param int|null $storeId
      * @param null $logId
+     * @throws \Exception
      */
-    public function importEvents($logId = null)
+    public function importEvents($storeId = null, $logId = null)
     {
         $logsArray['id'] = $logId;
         $logsArray['emarsys_info'] = 'Update Schema';
 
         try {
-            $storeId = "";
-
-            if ($this->session->getStoreId()) {
+            if (!$storeId && $this->session->getStoreId()) {
                 $storeId = $this->session->getStoreId();
             }
             //get emarsys events and store it into array
-            $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
-            $apiEvents = $this->getEvents($storeId, $logId);
+            $eventArray = $this->getEvents($storeId, $logId);
 
-            if (count($apiEvents) == 0) {
+            if (!count($eventArray)) {
                 return;
-            }
-
-            $eventArray = [];
-            foreach ($apiEvents as $key => $value) {
-                $eventArray[$key] = $value;
             }
 
             //Delete unwanted events exist in database
@@ -830,6 +825,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             foreach ($emarsysEvents as $emarsysEvent) {
                 if (!array_key_exists($emarsysEvent->getEventId(), $eventArray)) {
                     $this->eventsResourceModel->deleteEvent($emarsysEvent->getEventId(), $storeId);
+                    $this->eventsResourceModel->deleteEventMapping($emarsysEvent->getId(), $storeId);
                 }
             }
             //Update & create new events found in Emarsys
@@ -857,7 +853,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $logsArray['store_id'] = $storeId;
             $logsArray['message_type'] = 'Error';
             $logsArray['log_action'] = 'True';
-            $logsArray['website_id'] = $websiteId;
+            $logsArray['website_id'] = 0;
             $this->logHelper->logs($logsArray);
 
             return;
@@ -867,26 +863,26 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @param $storeId
      * @param null $logId
-     * @return array|void
+     * @return array
+     * @throws \Exception
      */
-    public function getEvents($storeId, $logId=null)
+    public function getEvents($storeId, $logId = null)
     {
         $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
         $logsArray['id'] = $logId;
         $logsArray['store_id'] = $storeId;
         $logsArray['emarsys_info'] = 'Update Schema';
-
+        $result = [];
         try {
-            $result = [];
             $this->api->setWebsiteId($websiteId);
             $response = $this->api->sendRequest('GET', 'event');
 
-            if ($response['status']==200) {
-                if (!empty($response['body']['data'])) {
+            if ($response['status'] == 200) {
+                if (isset($response['body']['data'])) {
                     foreach ($response['body']['data'] as $item) {
                         $result[$item['id']] = $item['name'];
                     }
-                    $logsArray['description'] = print_r($result,true);
+                    $logsArray['description'] = \Zend_Json::encode($result);
                     $logsArray['action'] = 'Update Schema';
                     $logsArray['message_type'] = 'Success';
                     $logsArray['log_action'] = 'True';
@@ -900,11 +896,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $logsArray['log_action'] = 'True';
                 $logsArray['website_id'] = $websiteId;
                 $this->logHelper->logs($logsArray);
-
-                return;
             }
-
-            return $result;
         } catch (\Exception $e) {
             $logsArray['description'] = $e->getMessage();
             $logsArray['action'] = 'Mail Sent';
@@ -914,6 +906,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             $this->logHelper->logs($logsArray);
         }
+
+        return $result;
     }
 
     /**

@@ -327,7 +327,14 @@ class Product extends AbstractModel
                     );
 
                     $lastPageNumber = $collection->getLastPageNumber();
-                    $header = $emarsysFieldNames[$storeId];
+                    $headerOld = $emarsysFieldNames[$storeId];
+                    $header = [];
+                    foreach ($headerOld as $el) {
+                        $header[] = $el;
+                        if ($el == 'available') {
+                            $header[] = 'available_rec';
+                        }
+                    }
                     $this->_categoryNames = [];
                     $this->_parentProducts = [];
 
@@ -781,11 +788,19 @@ class Product extends AbstractModel
                         $inStock = $productObject->isAvailable();
                         $visibility = ($productObject->getVisibility() != Visibility::VISIBILITY_NOT_VISIBLE);
 
+                        if ($status && $inStock) {
+                            $attributeData[] = 'TRUE';
+                        } else {
+                            $attributeData[] = 'FALSE';
+                        }
+
+                        //'available_rec':
                         if ($status && $inStock && $visibility) {
                             $attributeData[] = 'TRUE';
                         } else {
                             $attributeData[] = 'FALSE';
                         }
+
                         break;
                     case 'category_ids':
                         $attributeData[] = implode('|', $categoryNames);
@@ -849,7 +864,7 @@ class Product extends AbstractModel
             } catch (\Exception $e) {
                 $attributeData[] = '';
                 $logsArray['emarsys_info'] = __('consolidatedCatalogExport _getProductData Exception');
-                $logsArray['description'] = __('$1: $2', $attributeCode, $e->getMessage());
+                $logsArray['description'] = __('%1: %2', $attributeCode, $e->getMessage());
                 $logsArray['message_type'] = 'Error';
                 $this->logsHelper->logs($logsArray);
             }

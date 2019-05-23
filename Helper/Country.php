@@ -9,6 +9,9 @@ namespace Emarsys\Emarsys\Helper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Directory\Model\ResourceModel\Country\CollectionFactory as CountryCollectionFactory;
+use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
+use Emarsys\Emarsys\Model\Api\Api as EmarsysModelApiApi;
+use Magento\Store\Model\StoreManagerInterface as StoreManager;
 
 /**
  * Class Country
@@ -17,6 +20,21 @@ use Magento\Directory\Model\ResourceModel\Country\CollectionFactory as CountryCo
 class Country extends AbstractHelper
 {
     protected $_mapping = [];
+
+    /**
+     * @var Data
+     */
+    protected $emarsysHelper;
+
+    /**
+     * @var EmarsysModelApiApi
+     */
+    protected $api;
+
+    /**
+     * @var StoreManager
+     */
+    protected $storeManager;
 
     protected $_overrides = [
         'Hong Kong'         => 'HK',
@@ -38,18 +56,25 @@ class Country extends AbstractHelper
 
     /**
      * Country constructor.
+     *
      * @param Context $context
-     * @param Data $helper
      * @param CountryCollectionFactory $countryFactory
+     * @param Data $emarsysHelper
+     * @param EmarsysModelApiApi $api
+     * @param StoreManager $storeManager
      */
     public function __construct(
         Context $context,
-        Data $helper,
-        CountryCollectionFactory $countryFactory
+        CountryCollectionFactory $countryFactory,
+        EmarsysHelper $emarsysHelper,
+        EmarsysModelApiApi $api,
+        StoreManager $storeManager
     ) {
         $this->context = $context;
-        $this->helper = $helper;
         $this->_countryFactory = $countryFactory;
+        $this->emarsysHelper = $emarsysHelper;
+        $this->api = $api;
+        $this->storeManager = $storeManager;
 
         parent::__construct($context);
     }
@@ -70,19 +95,19 @@ class Country extends AbstractHelper
             $countries[$country->getName()] = $country->getId();
         }
 
-        $this->helper->getEmarsysAPIDetails($storeId);
-        $data = $this->helper->send('GET', 'field/14/choice/translate/en');
-        $data = \Zend_Json::decode($data);
+        $store = $this->storeManager->getStore($storeId);
+        $this->api->setWebsiteId($store->getWebsiteId());
+        $response = $this->api->sendRequest('GET', 'field/14/choice/translate/en');
 
-        if (isset($data['data'])) {
-            foreach ($data['data'] as $item) {
+        if (isset($response['body']['data'])) {
+            foreach ($response['body']['data'] as $item) {
                 $name = $item['choice'];
                 $id = $item['id'];
                 if (isset($countries[$name])) {
                     $_magentoCountryId = $countries[$name];
                     $mappedCountries[$_magentoCountryId] = $id;
-                } elseif (isset($this->_overrides[$item['choice']])) {
-                    $_magentoCountryId = $this->_overrides[$item['choice']];
+                } elseif (isset($this->_overrides[$name])) {
+                    $_magentoCountryId = $this->_overrides[$name];
                     $mappedCountries[$_magentoCountryId] = $id;
                 }
             }
@@ -94,6 +119,7 @@ class Country extends AbstractHelper
     /**
      * @param $store
      * @return array
+     * @throws \Zend_Json_Exception
      */
     public function getMapping($store)
     {

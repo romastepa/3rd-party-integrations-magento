@@ -16,12 +16,12 @@ class Cron extends \Magento\Framework\App\Config\Value
     /**
      * Cron string path
      */
-    const CRON_STRING_PATH = 'crontab/default/jobs/emarsys_croncustomersync/schedule/cron_expr';
+    const CRON_STRING_PATH = 'emarsys_croncustomersync/schedule/cron_expr';
 
     /**r
      * Cron model path
      */
-    const CRON_MODEL_PATH = 'crontab/default/jobs/emarsys_croncustomersync/run/model';
+    const CRON_MODEL_PATH = 'emarsys_croncustomersync/run/model';
 
     /**
      * @var \Magento\Framework\App\Config\ValueFactory

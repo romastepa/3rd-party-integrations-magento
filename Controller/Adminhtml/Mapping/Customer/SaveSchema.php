@@ -2,21 +2,25 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 
 namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Customer;
 
-use Magento\Backend\App\Action;
-use Magento\Backend\App\Action\Context;
-use Magento\Framework\View\Result\PageFactory;
-use Emarsys\Emarsys\Helper\Customer;
-use Emarsys\Emarsys\Model\ResourceModel\Customer as EmarsysResourceModelCustomer;
-use Emarsys\Emarsys\Model\Logs;
-use Emarsys\Emarsys\Helper\Logs as EmarsysHelperLogs;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Eav\Model\Entity\Attribute;
+use Magento\{
+    Backend\App\Action,
+    Backend\App\Action\Context,
+    Framework\View\Result\PageFactory,
+    Framework\Stdlib\DateTime\DateTime,
+    Store\Model\StoreManagerInterface,
+    Eav\Model\Entity\Attribute
+};
+use Emarsys\Emarsys\{
+    Helper\Customer,
+    Model\ResourceModel\Customer as EmarsysResourceModelCustomer,
+    Model\Logs,
+    Helper\Logs as EmarsysHelperLogs
+};
 
 /**
  * Class SaveSchema
@@ -62,7 +66,7 @@ class SaveSchema extends Action
     /**
      * @var EmarsysHelperLogs
      */
-    protected $logHelper;
+    protected $logsHelper;
 
     /**
      * @var Logs
@@ -81,7 +85,7 @@ class SaveSchema extends Action
      * @param EmarsysResourceModelCustomer $customerResourceModel
      * @param PageFactory $resultPageFactory
      * @param Logs $emarsysLogs
-     * @param EmarsysHelperLogs $logHelper
+     * @param EmarsysHelperLogs $logsHelper
      * @param DateTime $date
      * @param StoreManagerInterface $storeManager
      * @param Attribute $attribute
@@ -92,7 +96,7 @@ class SaveSchema extends Action
         EmarsysResourceModelCustomer $customerResourceModel,
         PageFactory $resultPageFactory,
         Logs $emarsysLogs,
-        EmarsysHelperLogs $logHelper,
+        EmarsysHelperLogs $logsHelper,
         DateTime $date,
         StoreManagerInterface $storeManager,
         Attribute $attribute
@@ -104,13 +108,14 @@ class SaveSchema extends Action
         $this->customerResourceModel = $customerResourceModel;
         $this->date = $date;
         $this->emarsysLogs = $emarsysLogs;
-        $this->logHelper = $logHelper;
+        $this->logsHelper = $logsHelper;
         $this->_storeManager = $storeManager;
         $this->attribute = $attribute;
     }
 
     /**
      * @return $this|\Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute()
     {
@@ -130,7 +135,7 @@ class SaveSchema extends Action
             $logsArray['auto_log'] = 'Complete';
             $logsArray['website_id'] = $websiteId;
             $logsArray['store_id'] = $storeId;
-            $logId = $this->logHelper->manualLogs($logsArray);
+            $logId = $this->logsHelper->manualLogs($logsArray);
 
             $customerAttData = $this->attribute->getCollection()
                 ->addFieldToSelect('frontend_label')
@@ -150,18 +155,31 @@ class SaveSchema extends Action
             $logsArray['log_action'] = 'True';
             $logsArray['status'] = 'success';
             $logsArray['messages'] = 'Update Schema Completed Successfully';
-            $this->logHelper->logs($logsArray);
-            $this->logHelper->manualLogs($logsArray);
+            $this->logsHelper->manualLogs($logsArray);
+            $this->logsHelper->logs($logsArray);
             $schemaData = $this->emarsysCustomerHelper->getEmarsysCustomerSchema($storeId);
 
             if (isset($schemaData['data']) && !empty($schemaData['data'])) {
                 $this->customerResourceModel->updateCustomerSchema($schemaData, $storeId);
                 $this->messageManager->addSuccessMessage('Customer schema added/updated successfully');
-            } else {
+            } elseif (isset($schemaData['replyText'])) {
                 $this->messageManager->addErrorMessage($schemaData['replyText']);
+            } elseif (isset($schemaData['errorMessage'])) {
+                $this->messageManager->addErrorMessage($schemaData['errorMessage']);
+                $this->emarsysLogs->addErrorLog(
+                    'Customer schema added/updated',
+                    $schemaData['errorMessage'],
+                    $storeId,
+                    'SaveSchema(Customer)'
+                );
             }
         } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog($e->getMessage(), $storeId, 'SaveSchema(Customer)');
+            $this->emarsysLogs->addErrorLog(
+                'Customer schema added/updated',
+                $e->getMessage(),
+                $storeId,
+                'SaveSchema(Customer)'
+            );
         }
 
         return $resultRedirect->setRefererOrBaseUrl();
