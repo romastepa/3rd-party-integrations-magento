@@ -27,6 +27,8 @@ use Emarsys\Emarsys\Model\Logs as EmarsysModelLog;
  */
 class Customer extends AbstractDb
 {
+    const BATCH_SIZE = 1000;
+
     /**
      * @var \Magento\Eav\Model\Entity\Type
      */
@@ -426,7 +428,7 @@ class Customer extends AbstractDb
      * @param null $storeId
      * @return array
      */
-    public function getCustomerCollection($data, $storeId = null)
+    public function getCustomerCollection($data, $storeId = null, $currentPageNumber = 0)
     {
         $customers = $this->customerModel->create()
             ->getCollection()
@@ -448,7 +450,10 @@ class Customer extends AbstractDb
             $customers->addFieldToFilter('created_at', ['to' => $toDateUTC]);
         }
 
-        $customers->addFieldToFilter('website_id', ['eq' => $data['website']]);
+        if ($currentPageNumber) {
+            $customers->setPageSize(self::BATCH_SIZE)
+                ->setCurPage($currentPageNumber);
+        }
 
         if ($storeId) {
             $customers->addFieldToFilter('store_id', ['eq' => $data['storeId']]);

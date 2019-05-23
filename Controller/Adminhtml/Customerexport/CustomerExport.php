@@ -128,38 +128,24 @@ class CustomerExport extends Action
 
             //check emarsys enable for website
             if ($this->emarsysDataHelper->getEmarsysConnectionSetting($websiteId)) {
-
                 //calculate time difference
                 if (isset($data['fromDate']) && $data['fromDate'] != '') {
-                    if (isset($data['toDate']) && $data['toDate'] != '') {
-                        $data['fromDate'] = $this->date->date('Y-m-d H:i:s', strtotime($data['fromDate']));
-                        $data['toDate'] = $this->date->date('Y-m-d H:i:s', strtotime($data['toDate']));
-                    }
+                    $data['fromDate'] = $this->date->date('Y-m-d H:i:s', strtotime($data['fromDate']));
+                }
+                if (isset($data['toDate']) && $data['toDate'] != '') {
+                    $data['toDate'] = $this->date->date('Y-m-d H:i:s', strtotime($data['toDate']));
                 }
 
                 /** @var Customer $customerCollection */
                 $customerCollection = $this->customerResourceModel->getCustomerCollection($data, $storeId);
                 if ($customerCollection->getSize()) {
-                    $cronJobScheduled = false;
-                    $cronJobName = '';
-
-                    if ($customerCollection->getSize() <= self::MAX_CUSTOMER_RECORDS) {
-                        //export customers through API
-                        $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API, $storeId);
-                        if (!$isCronjobScheduled) {
-                            //no cron job scheduled yet, schedule a new cron job
-                            $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API, $storeId);
-                            $cronJobScheduled = true;
-                            $cronJobName = EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API;
-                        }
-                    } else {
-                        //export customers through WebDav
-                        $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_WEBDAV, $storeId);
-                        if (!$isCronjobScheduled) {
-                            $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_WEBDAV, $storeId);
-                            $cronJobScheduled = true;
-                            $cronJobName = EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_WEBDAV;
-                        }
+                    //export customers through API
+                    $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API, $storeId);
+                    if (!$isCronjobScheduled) {
+                        //no cron job scheduled yet, schedule a new cron job
+                        $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API, $storeId);
+                        $cronJobScheduled = true;
+                        $cronJobName = EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API;
                     }
 
                     if ($cronJobScheduled) {
@@ -169,12 +155,11 @@ class CustomerExport extends Action
                         //save details in cron details table
                         $this->emarsysCronDetails->addEmarsysCronDetails($cron->getScheduleId(), $params);
 
-                        $this->messageManager->addSuccessMessage(
-                            __(
-                                'A cron named "%1" have been scheduled for customers export for the store %2.',
-                                $cronJobName,
-                                $store->getName()
-                            ));
+                        $this->messageManager->addSuccessMessage(__(
+                            'A cron named "%1" have been scheduled for customers export for the store %2.',
+                            $cronJobName,
+                            $store->getName()
+                        ));
                     } else {
                         //cron job already scheduled
                         $this->messageManager->addErrorMessage(__('A cron is already scheduled to export customers for the store %1 ', $store->getName()));
