@@ -2,23 +2,27 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 
 namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Event;
 
-use Magento\Backend\App\Action;
-use Magento\Backend\App\Action\Context;
-use Magento\Framework\View\Result\PageFactory;
-use Emarsys\Emarsys\Model\ResourceModel\Event;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Emarsys\Emarsys\Helper\Data;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Emarsys\Emarsys\Model\ResourceModel\Emarsysevents\CollectionFactory;
-use Emarsys\Emarsys\Helper\Logs;
-use Emarsys\Emarsys\Model\ResourceModel\Emarsysmagentoevents\CollectionFactory as EmarsysmagentoeventsCollectionFactory;
-use Emarsys\Emarsys\Model\Api\Api;
+use Magento\{
+    Backend\App\Action,
+    Backend\App\Action\Context,
+    Framework\View\Result\PageFactory,
+    Framework\App\Config\ScopeConfigInterface,
+    Store\Model\StoreManagerInterface,
+    Framework\Stdlib\DateTime\DateTime
+};
+use Emarsys\Emarsys\{
+    Model\ResourceModel\Event,
+    Helper\Data,
+    Model\ResourceModel\Emarsysevents\CollectionFactory,
+    Helper\Logs,
+    Model\ResourceModel\Emarsysmagentoevents\CollectionFactory as EmarsysmagentoeventsCollectionFactory,
+    Model\Api\Api
+};
 
 class SaveRecommended extends Action
 {
@@ -48,18 +52,13 @@ class SaveRecommended extends Action
     protected $_storeManager;
 
     /**
-     * @var Data
-     */
-    protected $emarsysHelper;
-
-    /**
      * SaveRecommended constructor.
      * @param Context $context
      * @param Event $eventResourceModel
      * @param PageFactory $resultPageFactory
      * @param ScopeConfigInterface $scopeConfigInterface
      * @param StoreManagerInterface $storeManager
-     * @param Data $EmarsysHelper
+     * @param Data $emarsysHelper
      * @param DateTime $date
      * @param CollectionFactory $EmarsyseventCollection
      * @param Logs $logHelper
@@ -72,7 +71,7 @@ class SaveRecommended extends Action
         PageFactory $resultPageFactory,
         ScopeConfigInterface $scopeConfigInterface,
         StoreManagerInterface $storeManager,
-        Data $EmarsysHelper,
+        Data $emarsysHelper,
         DateTime $date,
         CollectionFactory $EmarsyseventCollection,
         Logs $logHelper,
@@ -87,7 +86,7 @@ class SaveRecommended extends Action
         $this->emarsysEventCollection = $EmarsyseventCollection;
         $this->scopeConfigInterface = $scopeConfigInterface;
         $this->_storeManager = $storeManager;
-        $this->emarsysHelper = $EmarsysHelper;
+        $this->emarsysHelper = $emarsysHelper;
         $this->_urlInterface = $context->getUrl();
         $this->date = $date;
         $this->logHelper = $logHelper;
@@ -96,16 +95,16 @@ class SaveRecommended extends Action
 
     /**
      * @return $this|\Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface
+     * @throws \Exception
      */
     public function execute()
     {
+        $storeId = $this->getRequest()->getParam('store');
         $resultRedirect = $this->resultRedirectFactory->create();
         $errorStatus = true;
         $urlHasRecommendation = false;
         try {
             $eventsCreated = [];
-            $session = $this->session;
-            $storeId = $session->getStoreId();
             $websiteId = $this->_storeManager->getStore($storeId)->getWebsiteId();
             $logsArray['job_code'] = 'Event Mapping';
             $logsArray['status'] = 'started';
@@ -137,7 +136,7 @@ class SaveRecommended extends Action
                 $logsArray['website_id'] = $websiteId;
                 $this->logHelper->logs($logsArray);
 
-                $this->emarsysHelper->importEvents($logId);
+                $this->emarsysHelper->importEvents($storeId, $logId);
                 $emarsysEvents = $this->emarsysEventCollection->create();
                 $this->api->setWebsiteId($websiteId);
                 $dbEvents = [];
@@ -167,12 +166,12 @@ class SaveRecommended extends Action
                     $this->logHelper->logs($logsArray);
                 }
                 if ($hasNewEvents) {
-                    $this->emarsysHelper->importEvents($logId);
+                    $this->emarsysHelper->importEvents($storeId, $logId);
                 }
                 $errorStatus = false;
                 $urlHasRecommendation = true;
                 $this->messageManager->addSuccessMessage("Recommended Emarsys Events Created Successfully!");
-                $this->messageManager->addSuccessMessage('Important: Hit "Save Mapping" to complete the mapping!');
+                $this->messageManager->addSuccessMessage('Important: Hit "Save" to complete the mapping!');
             }
         } catch (\Exception $e) {
             $logsArray['id'] = $logId;
