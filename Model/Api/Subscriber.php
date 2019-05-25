@@ -433,7 +433,7 @@ class Subscriber
             } else {
                 //error response from emarsys
                 $logsArray['message_type'] = 'Error';
-                $logsArray['description'] = $result['body']['replyText'] . $res;
+                $logsArray['description'] = $res;
                 $this->messageManager->addErrorMessage(
                     __('Subscriber export have an error. Please check emarsys logs for more details!!')
                 );
