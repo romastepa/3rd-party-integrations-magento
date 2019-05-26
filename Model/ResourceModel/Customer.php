@@ -16,6 +16,7 @@ use Magento\{
     Framework\Stdlib\DateTime\DateTime,
     Framework\Stdlib\DateTime\TimezoneInterface,
     Customer\Model\CustomerFactory,
+    Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory,
     Store\Model\StoreManagerInterface,
     Framework\App\Config\ScopeConfigInterface
 };
@@ -60,6 +61,11 @@ class Customer extends AbstractDb
     protected $customerModel;
 
     /**
+     * @var \Customer\Model\ResourceModel\Customer\Collection
+     */
+    protected $customerCollection;
+
+    /**
      * @var StoreManagerInterface
      */
     protected $storeManager;
@@ -82,6 +88,7 @@ class Customer extends AbstractDb
      * @param Attribute $attribute
      * @param TimezoneInterface $timezoneInterface
      * @param CustomerFactory $customerModel
+     * @param CustomerCollectionFactory $customerCollection
      * @param EmarsysModelLog $emarsysLogs
      * @param StoreManagerInterface $storeManager
      * @param ScopeConfigInterface $scopeConfigInterface
@@ -94,6 +101,7 @@ class Customer extends AbstractDb
         Attribute $attribute,
         TimezoneInterface $timezoneInterface,
         CustomerFactory $customerModel,
+        CustomerCollectionFactory $customerCollection,
         EmarsysModelLog $emarsysLogs,
         StoreManagerInterface $storeManager,
         ScopeConfigInterface $scopeConfigInterface,
@@ -106,6 +114,7 @@ class Customer extends AbstractDb
         $this->scopeConfigInterface = $scopeConfigInterface;
         $this->emarsysLogs = $emarsysLogs;
         $this->customerModel = $customerModel;
+        $this->customerCollection = $customerCollection;
         $this->storeManager = $storeManager;
         $this->dateTime = $dateTime ?: ObjectManager::getInstance()->get(DateTime::class);
         parent::__construct($context, $connectionName);
@@ -425,13 +434,13 @@ class Customer extends AbstractDb
      * get all customer based on website and date
      *
      * @param type $data
-     * @param null $storeId
+     * @param int|null $storeId
+     * @param int $currentPageNumber
      * @return array
      */
     public function getCustomerCollection($data, $storeId = null, $currentPageNumber = 0)
     {
-        $customers = $this->customerModel->create()
-            ->getCollection()
+        $customers = $this->customerCollection->create()
             ->addFieldToFilter('website_id', ['eq' => $data['website']]);
 
         if (isset($data['fromDate']) &&  !empty($data['fromDate'])) {

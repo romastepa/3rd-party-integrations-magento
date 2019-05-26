@@ -21,7 +21,8 @@ use Emarsys\Emarsys\{
     Helper\Cron as EmarsysCronHelper,
     Helper\Country as EmarsysCountryHelper,
     Model\QueueFactory,
-    Model\ResourceModel\Customer as customerResourceModel,
+    Model\ResourceModel\Customer as CustomerResourceModel,
+    Model\ResourceModel\CustomerFactory as CustomerResourceModelFactory,
     Logger\Logger as EmarsysLogger
 };
 
@@ -49,9 +50,14 @@ class Contact
     protected $customerFactory;
 
     /**
-     * @var
+     * @var CustomerResourceModel
      */
     protected $customerResourceModel;
+
+    /**
+     * @var CustomerResourceModelFactory
+     */
+    protected $customerResourceModelFactory;
 
     /**
      * @var DateTime
@@ -134,7 +140,8 @@ class Contact
      * @param Api $api
      * @param Customer $customer
      * @param CustomerFactory $customerFactory
-     * @param customerResourceModel $customerResourceModel
+     * @param CustomerResourceModel $customerResourceModel
+     * @param CustomerResourceModelFactory $customerResourceModelFactory
      * @param DateTime $date
      * @param Logs $logsHelper
      * @param EmarsysHelperData $emarsysHelper
@@ -151,7 +158,8 @@ class Contact
         Api $api,
         Customer $customer,
         CustomerFactory $customerFactory,
-        customerResourceModel $customerResourceModel,
+        CustomerResourceModel $customerResourceModel,
+        CustomerResourceModelFactory $customerResourceModelFactory,
         DateTime $date,
         Logs $logsHelper,
         EmarsysHelperData $emarsysHelper,
@@ -168,6 +176,7 @@ class Contact
         $this->customer = $customer;
         $this->customerFactory = $customerFactory;
         $this->customerResourceModel = $customerResourceModel;
+        $this->customerResourceModelFactory = $customerResourceModelFactory;
         $this->date = $date;
         $this->logsHelper = $logsHelper;
         $this->emarsysHelper = $emarsysHelper;
@@ -321,12 +330,12 @@ class Contact
 
     /**
      * Fetch Customer's Mapped Address attributes values
-     *
      * @param $customer
-     * @param int $storeId
-     * @param null|\Magento\Customer\Model\Address $customerAddress
+     * @param $storeId
+     * @param null $customerAddress
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Zend_Json_Exception
      */
     public function getMappedCustomersAddressAttributes($customer, $storeId, $customerAddress = null)
     {
@@ -529,13 +538,17 @@ class Contact
                 $this->processBatch($allCustomersPayload, $emailKey, $logsArray);
             } else {
                 $currentPageNumber = 1;
-                $customerCollection = $this->customerResourceModel->getCustomerCollection($params, $storeId, $currentPageNumber);
+                $customerCollection = $this->customerResourceModelFactory->create()->getCustomerCollection(
+                    $params,
+                    $storeId,
+                    $currentPageNumber
+                );
                 $lastPageNumber = $customerCollection->getLastPageNumber();
 
                 //Prepare Customers Payload Array
                 while ($currentPageNumber <= $lastPageNumber) {
                     if ($currentPageNumber != 1) {
-                        $customerCollection = $this->customerResourceModel->getCustomerCollection(
+                        $customerCollection = $this->customerResourceModelFactory->create()->getCustomerCollection(
                             $params,
                             $storeId,
                             $currentPageNumber
@@ -557,6 +570,8 @@ class Contact
                     $logsArray['message_type'] = $success ? 'Success' : 'False';
                     $this->logsHelper->logs($logsArray);
                     $currentPageNumber++;
+                    unset($customerCollection);
+                    unset($allCustomersPayload);
                 }
             }
         } else {
