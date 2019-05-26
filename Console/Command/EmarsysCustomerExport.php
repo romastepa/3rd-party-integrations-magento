@@ -68,10 +68,16 @@ class EmarsysCustomerExport extends Command
                 InputOption::VALUE_OPTIONAL,
                 '--to="Y-m-d" (2017-12-31)'
             ),
+            new InputOption(
+                'page',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                '--page="1"'
+            ),
         ];
 
         $this->setName('emarsys:export:customer')
-            ->setDescription('Customer bulk export (--from=\'Y-m-d\' (2016-01-31) --to=\'Y-m-d\' (2017-12-31))')
+            ->setDescription('Customer bulk export (--from=\'Y-m-d\' (2016-01-31) --to=\'Y-m-d\' (2017-12-31)) --page=\'1\'')
             ->setDefinition($options);
         parent::configure();
     }
@@ -90,6 +96,7 @@ class EmarsysCustomerExport extends Command
         foreach ($this->storeManager->getStores() as $storeId => $store) {
             if ($store->getConfig(\Emarsys\Emarsys\Helper\Data::XPATH_EMARSYS_ENABLED) && $store->getConfig(\Emarsys\Emarsys\Helper\Data::XPATH_EMARSYS_ENABLED)) {
                 $data = [];
+                $data['page'] = ($input->getOption('page') && !empty($input->getOption('page'))) ? $input->getOption('page') : 1;
                 $data['fromDate'] = ($input->getOption('from') && !empty($input->getOption('from'))) ? $input->getOption('from') . ' 00:00:01' : '';
                 $data['toDate'] = ($input->getOption('to') && !empty($input->getOption('to'))) ? $input->getOption('to') . ' 23:59:59' : '';
                 $data['website'] = $store->getWebsiteId();

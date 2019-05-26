@@ -537,7 +537,8 @@ class Contact
 
                 $this->processBatch($allCustomersPayload, $emailKey, $logsArray);
             } else {
-                $currentPageNumber = 1;
+                $firstPageNumber = $currentPageNumber = isset($data['page']) ? $data['page'] : 1;
+
                 $customerCollection = $this->customerResourceModelFactory->create()->getCustomerCollection(
                     $params,
                     $storeId,
@@ -547,7 +548,7 @@ class Contact
 
                 //Prepare Customers Payload Array
                 while ($currentPageNumber <= $lastPageNumber) {
-                    if ($currentPageNumber != 1) {
+                    if ($currentPageNumber != $firstPageNumber) {
                         $customerCollection = $this->customerResourceModelFactory->create()->getCustomerCollection(
                             $params,
                             $storeId,
@@ -716,14 +717,17 @@ class Contact
         } else {
             $storeId = $this->emarsysHelper->getFirstStoreIdOfWebsite($websiteId);
         }
+
         $fromDate = (isset($data['fromDate']) && !empty($data['fromDate'])) ? $data['fromDate'] : '';
         $toDate = (isset($data['toDate']) && !empty($data['toDate'])) ? $data['toDate'] : $this->date->date('Y-m-d') . ' 23:59:59';
+        $page = (isset($data['page']) && !empty($data['page'])) ? $data['page'] : 1;
 
         $params = [
             'website' => $websiteId,
             'storeId' => $storeId,
             'fromDate' => $fromDate,
-            'toDate' => $toDate
+            'toDate' => $toDate,
+            'page' => $page,
         ];
         $errorStatus = true;
 
