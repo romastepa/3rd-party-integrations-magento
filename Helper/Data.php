@@ -1287,14 +1287,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function insertFirstTimeMappingPlaceholders($mappingId, $storeId)
     {
-        $magentoPlaceholderarray = [];
+        $magentoPlaceholderArray = [];
+        $value = '';
         $emarsysEventMappingColl = $this->emarsysEventMapping->create()->getCollection()
-            ->addFieldToFilter('id', $mappingId);
-        $magentoEventColl = $this->magentoEventsCollection->create()
-            ->addFieldToFilter('id', $emarsysEventMappingColl->getData()[0]['magento_event_id']);
-        $value = $this->scopeConfig->getValue($magentoEventColl->getData()[0]['config_path'], 'default', 0);
+            ->addFieldToFilter('id', $mappingId)
+            ->addFieldToFilter('store_id', $storeId);
+        $emarsysEventMappingItem = $emarsysEventMappingColl->getFirstItem();
 
-        if ($value == "") {
+        if ($emarsysEventMappingItem->getMagentoEventId()) {
+            $magentoEventColl = $this->magentoEventsCollection->create()
+                ->addFieldToFilter('id', $emarsysEventMappingItem->getMagentoEventId());
+            $magentoEventItem = $magentoEventColl->getFirstItem();
+            $value = $this->scopeConfig->getValue($magentoEventItem->getConfigPath(), 'default', 0);
+        }
+
+        if (empty($value)) {
             return '';
         }
         if (is_numeric($value)) {
@@ -1351,11 +1358,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $array[$i]["store_id"] = $storeId;
                 $i++;
             }
-            $emarsysVariable = "";
         }
 
         foreach ($array as $key => $value) {
-            if (in_array($value['magento_placeholder_name'], $magentoPlaceholderarray)) {
+            if (in_array($value['magento_placeholder_name'], $magentoPlaceholderArray)) {
                 continue;
             }
             $placeholderModel = $this->emarsysEventPlaceholderMappingFactory->create();
@@ -1363,7 +1369,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $placeholderModel->setMagentoPlaceholderName($value['magento_placeholder_name']);
             $placeholderModel->setEmarsysPlaceholderName($value['emarsys_placeholder_name']);
             $placeholderModel->setStoreId($value['store_id']);
-            $magentoPlaceholderarray[] =$value['magento_placeholder_name'];
+            $magentoPlaceholderArray[] = $value['magento_placeholder_name'];
             $placeholderModel->save();
         }
 
@@ -1389,11 +1395,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $emarsysEventMappingColl = $this->emarsysEventMapping->create()
             ->getCollection()
-            ->addFieldToFilter('id', $mappingId);
-        $magentoEventColl = $this->magentoEventsCollection->create()
-            ->addFieldToFilter('id', $emarsysEventMappingColl->getData()[0]['magento_event_id']);
+            ->addFieldToFilter('id', $mappingId)
+            ->addFieldToFilter('store_id', $storeId);
 
-        $value = $this->scopeConfig->getValue($magentoEventColl->getData()[0]['config_path'], 'store', $storeId);
+        $emarsysEventMappingItem = $emarsysEventMappingColl->getFirstItem();
+
+        $magentoEventColl = $this->magentoEventsCollection->create()
+            ->addFieldToFilter('id', $emarsysEventMappingItem->getMagentoEventId());
+
+        $magentoEventItem = $magentoEventColl->getFirstItem();
+
+        $value = $this->scopeConfig->getValue($magentoEventItem->getConfigPath(), 'store', $storeId);
 
         if (is_numeric($value)) {
             $emailTemplateModelColl = $this->templateFactory->create()
