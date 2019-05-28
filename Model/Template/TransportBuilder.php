@@ -7,6 +7,7 @@
 
 namespace Emarsys\Emarsys\Model\Template;
 
+use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
 use Magento\{
     Catalog\Helper\Image,
     Framework\App\TemplateTypesInterface,
@@ -17,7 +18,6 @@ use Magento\{
     Framework\Mail\Template\SenderResolverInterface,
     Store\Model\StoreManagerInterface
 };
-use Emarsys\Emarsys\Helper\Data\Proxy as EmarsysHelper;
 
 /**
  * Class TransportBuilder
