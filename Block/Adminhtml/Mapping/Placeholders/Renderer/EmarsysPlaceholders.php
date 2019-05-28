@@ -24,9 +24,7 @@ class EmarsysPlaceholders extends AbstractRenderer
     {
         static $i = 0;
         ?>
-        <textarea name="emarsys_placeholder_name" id="<?php printf($row->getData("id")); ?>">
-                <?php printf($row->getData("emarsys_placeholder_name")); ?>
-            </textarea>
+        <input name="emarsys_placeholder_name" id="<?php printf($row->getData("id")); ?>" value="<?php printf($row->getData("emarsys_placeholder_name")); ?>" width="100%"/>
         <div class="placeholder-error validation-advice" id="<?php printf ("divErrPlaceholder_" . $i); ?>"
              style="display:none; color:red">Placeholders can only have
             Alphanumerics

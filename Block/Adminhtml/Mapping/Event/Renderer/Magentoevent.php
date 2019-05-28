@@ -47,7 +47,7 @@ class Magentoevent extends AbstractRenderer
     public function render(DataObject $row)
     {
         $collection = $this->collectionFactory->create()
-            ->addFilter("id", $row->getData("magento_event_id"))
+            ->addFilter("id", $row->getId())
             ->getFirstItem();
 
         return $collection->getData("magento_event");

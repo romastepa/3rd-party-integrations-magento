@@ -101,7 +101,7 @@ class Event extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     {
         $select = $this->getConnection()
             ->select()
-            ->from($this->getTable('emarsys_event_mapping'), 'count(*)')
+            ->from($this->getTable('emarsys_events'), 'count(*)')
             ->where("store_id = ?", $storeId);
 
         return $this->getConnection()->fetchOne($select);

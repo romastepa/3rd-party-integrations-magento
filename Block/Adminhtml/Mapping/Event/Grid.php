@@ -11,10 +11,10 @@ use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Grid\Extended;
 use Magento\Backend\Model\Session;
 use Magento\Backend\Helper\Data;
+use Emarsys\Emarsys\Model\EmarsysmagentoeventsFactory as EmarsysMagentoEvents;
 use Emarsys\Emarsys\Model\EmarsyseventmappingFactory as EmarsysEventsFactory;
 use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
 use Magento\Framework\App\ResourceConnection;
-use Magento\Store\Model\StoreManagerInterface;
 use Emarsys\Emarsys\Helper\Logs as EmarsysHelperLogs;
 
 /**
@@ -29,11 +29,6 @@ class Grid extends Extended
     protected $session;
 
     /**
-     * @var StoreManagerInterface
-     */
-    protected $_storeManager;
-
-    /**
      * @var EmarsysHelper
      */
     protected $emarsysHelper;
@@ -42,6 +37,11 @@ class Grid extends Extended
      * @var EmarsysEventsFactory
      */
     protected $emarsysEventsFactory;
+
+    /**
+     * @var EmarsysMagentoEvents
+     */
+    protected $emarsysMagentoEvents;
 
     /**
      * @var ResourceConnection
@@ -56,6 +56,7 @@ class Grid extends Extended
     /**
      * Grid constructor.
      *
+     * @param EmarsysMagentoEvents $emarsysMagentoEvents
      * @param EmarsysEventsFactory $emarsysEventsFactory
      * @param EmarsysHelper $emarsysHelper
      * @param ResourceConnection $resourceConnection
@@ -65,6 +66,7 @@ class Grid extends Extended
      * @param array $data
      */
     public function __construct(
+        EmarsysMagentoEvents $emarsysMagentoEvents,
         EmarsyseventsFactory $emarsysEventsFactory,
         EmarsysHelper $emarsysHelper,
         ResourceConnection $resourceConnection,
@@ -74,8 +76,8 @@ class Grid extends Extended
         $data = []
     ) {
         $this->session = $context->getBackendSession();
+        $this->emarsysMagentoEvents = $emarsysMagentoEvents;
         $this->emarsysEventsFactory = $emarsysEventsFactory;
-        $this->_storeManager = $context->getStoreManager();
         $this->emarsysHelper = $emarsysHelper;
         $this->resourceConnection = $resourceConnection;
         $this->logsHelper = $logsHelper;
@@ -88,15 +90,15 @@ class Grid extends Extended
      */
     protected function _prepareCollection()
     {
-        $storeId = $this->getRequest()->getParam('store');
-
-        $eventMappingCollection = $this->emarsysEventsFactory->create()->getCollection()->addFieldToFilter('store_id', $storeId);
-
+        $eventMappingCollection = $this->emarsysMagentoEvents->create()->getCollection();
+        $storeId = (int)$this->getRequest()->getParam('store');
         $eventMappingCollection->getSelect()->joinLeft(
-            ['magento_events' => $this->resourceConnection->getTableName('emarsys_magento_events')],
-            'main_table.magento_event_id = magento_events.id',
-            ['magento_event']
+            ['emarsys_event_mapping' => $this->resourceConnection->getTableName('emarsys_event_mapping')],
+            'main_table.id = emarsys_event_mapping.magento_event_id AND store_id = ' . $storeId,
+            ['emarsys_event_id']
         );
+        $eventMappingCollection->setOrder('main_table.id', 'ASC');
+
         $this->setCollection($eventMappingCollection);
         return parent::_prepareCollection();
     }
@@ -112,12 +114,13 @@ class Grid extends Extended
             $storeId = $this->emarsysHelper->getFirstStoreId();
         }
         $this->session->setData('store', $storeId);
-        $this->session->setMappingGridData('');
-        $collection = $this->emarsysEventsFactory->create()->getCollection()->addFieldToFilter('store_id', $storeId);
+        $this->session->setMappingGridData([]);
+        $collection = $this->emarsysEventsFactory->create()->getCollection()
+            ->addFieldToFilter('store_id', $storeId);
         $mappingGridArray = [];
         foreach ($collection as $col) {
-            $mappingGridArray[$col->getData("id")]['magento_event_id'] = $col->getData('magento_event_id');
-            $mappingGridArray[$col->getData("id")]['emarsys_event_id'] = $col->getData('emarsys_event_id');
+            $mappingGridArray[$col->getData('magento_event_id')]['magento_event_id'] = $col->getData('magento_event_id');
+            $mappingGridArray[$col->getData('magento_event_id')]['emarsys_event_id'] = $col->getData('emarsys_event_id');
         }
         $this->setDefaultSort('id');
         $this->setDefaultDir('ASC');
@@ -149,7 +152,6 @@ class Grid extends Extended
                 'header' => __('Emarsys Event'),
                 'renderer' => 'Emarsys\Emarsys\Block\Adminhtml\Mapping\Event\Renderer\EmarsysEvent',
                 'filter' => false
-
             ]);
         }
 

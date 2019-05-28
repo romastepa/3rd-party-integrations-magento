@@ -358,21 +358,17 @@ class Customer extends AbstractDb
     }
 
     /**
-     * @param type $path
-     * @param type $scope
-     * @param type $scopeId
+     * @param string $path
+     * @param string|null $scope
+     * @param int|null $scopeId
      * @return array
      */
     public function getDataFromCoreConfig($path, $scope = NULL, $scopeId = NULL)
     {
-        try {
-            if ($scope && $scopeId) {
-                return $this->scopeConfigInterface->getValue($path, $scope, $scopeId);
-            } else {
-                return $this->scopeConfigInterface->getValue($path);
-            }
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog($e->getMessage(), $scopeId, 'getDataFromCoreConfig in Customer.php');
+        if ($scope && $scopeId) {
+            return $this->scopeConfigInterface->getValue($path, $scope, $scopeId);
+        } else {
+            return $this->scopeConfigInterface->getValue($path);
         }
     }
 
@@ -625,7 +621,12 @@ class Customer extends AbstractDb
                     }
                 }
             } catch (\Exception $e) {
-                $this->emarsysLogs->addErrorLog($e->getMessage(), $storeId, 'insertCustomerMageAtts(ResourceModel)');
+                $this->emarsysLogs->addErrorLog(
+                    'insertCustomerMageAtts',
+                    $e->getMessage(),
+                    $storeId,
+                    'insertCustomerMageAtts(ResourceModel)'
+                );
             }
         }
     }
@@ -649,8 +650,8 @@ class Customer extends AbstractDb
 
     /**
      *
-     * @param type $attdata
-     * @param type $storeId
+     * @param int $attdata
+     * @param int $storeId
      * @return array
      */
     public function getEmarsysFieldNameContact($attdata, $storeId)
@@ -666,8 +667,8 @@ class Customer extends AbstractDb
 
     /**
      *
-     * @param type $id
-     * @param type $storeId
+     * @param int $id
+     * @param int $storeId
      * @return array
      */
     public function getMagentoAttributeCode($id, $storeId)

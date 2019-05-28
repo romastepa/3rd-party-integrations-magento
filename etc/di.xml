@@ -28,12 +28,9 @@
     <preference for="\Magento\Framework\Mail\TransportInterface" type="Emarsys\Emarsys\Model\Transport"/>
     <preference for="\Magento\Framework\Mail\Message" type="Emarsys\Emarsys\Model\Message"/>
     <preference for="\Magento\Framework\Mail\Template\TransportBuilder" type="Emarsys\Emarsys\Model\Template\TransportBuilder"/>
-    <preference for="Magento\Email\Model\Template" type="Emarsys\Emarsys\Model\Template"/>
-    <preference for="Magento\Newsletter\Model\Subscriber" type="Emarsys\Emarsys\Model\Subscriber"/>
-    <type name="Magento\Checkout\Block\Checkout\LayoutProcessor">
-        <plugin name="emarsys_subscription" type="Emarsys\Emarsys\Plugin\Checkout\Model\Checkout\LayoutProcessor" sortOrder="100"/>
-    </type>
-    <type name="Magento\Framework\Console\CommandListInterface">
+    <preference for="\Magento\Email\Model\Template" type="Emarsys\Emarsys\Model\Template"/>
+    <preference for="\Magento\Newsletter\Model\Subscriber" type="Emarsys\Emarsys\Model\Subscriber"/>
+    <type name="\Magento\Framework\Console\CommandListInterface">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="emarsysProductExport" xsi:type="object">Emarsys\Emarsys\Console\Command\EmarsysProductExport</item>
@@ -41,5 +38,8 @@
                 <item name="emarsysCustomerExport" xsi:type="object">Emarsys\Emarsys\Console\Command\EmarsysCustomerExport</item>
             </argument>
         </arguments>
+    </type>
+    <type name="Magento\Checkout\Block\Checkout\LayoutProcessor">
+        <plugin name="emarsys_subscription" type="Emarsys\Emarsys\Plugin\Checkout\Model\Checkout\LayoutProcessor" sortOrder="100"/>
     </type>
 </config>

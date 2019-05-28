@@ -7,11 +7,12 @@
 
 namespace Emarsys\Emarsys\Model;
 
-use Emarsys\Emarsys\Helper\Data\Proxy as EmarsysHelper;
-use Magento\{
-    Customer\Api\AccountManagementInterface,
+use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
+use Magento\{Customer\Api\AccountManagementInterface,
     Customer\Api\CustomerRepositoryInterface,
+    Customer\Api\Data\CustomerInterfaceFactory,
     Customer\Model\Session,
+    Framework\Api\DataObjectHelper,
     Framework\App\Config\ScopeConfigInterface,
     Framework\Data\Collection\AbstractDb,
     Framework\Mail\Template\TransportBuilder,
@@ -52,8 +53,10 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
      * @param StateInterface $inlineTranslation
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
-     * @param DateTime|null $dateTime
      * @param array $data
+     * @param DateTime|null $dateTime
+     * @param CustomerInterfaceFactory|null $customerFactory
+     * @param DataObjectHelper|null $dataObjectHelper
      */
     public function __construct
     (
@@ -70,8 +73,10 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         StateInterface $inlineTranslation,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
+        array $data = [],
         DateTime $dateTime = null,
-        array $data = []
+        CustomerInterfaceFactory $customerFactory = null,
+        DataObjectHelper $dataObjectHelper = null
     ) {
         $this->emarsysHelper = $emarsysHelper;
         parent::__construct(
@@ -87,7 +92,10 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
             $inlineTranslation,
             $resource,
             $resourceCollection,
-            $data
+            $data,
+            $dateTime,
+            $customerFactory,
+            $dataObjectHelper
         );
     }
 
@@ -135,7 +143,7 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         //It will return boolean value, If customer is logged in and email Id is the same.
         $isSubscribeOwnEmail = $this->_customerSession->isLoggedIn()
             && $this->_customerSession->getCustomerDataObject()->getEmail() == $email;
-        $optinForcedConfirmation = $this->emarsysHelper->isOptinForcedConfirmationEnabled($store->getWebsiteId());
+        $optinForcedConfirmation = $store->getConfig(EmarsysHelper::XPATH_OPTIN_FORCED_CONFIRMATION);
         $isOwnSubscribes = $isSubscribeOwnEmail;
 
         if (!$this->getId() || $this->getStatus() == self::STATUS_UNSUBSCRIBED || $this->getStatus() == self::STATUS_NOT_ACTIVE) {
@@ -183,87 +191,5 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
-    }
-
-    /**
-     * Load subscriber info by customerId
-     *
-     * @param int $customerId
-     * @return $this
-     */
-    public function loadByCustomerId($customerId)
-    {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $http    = $objectManager->get('\Magento\Framework\HTTP\PhpEnvironment\RemoteAddress');
-        $request = $objectManager->get('\Magento\Framework\App\RequestInterface');
-        $page    = (!empty($request->getParam('page')) != false) ? 'customer_my_account' : 'customer_registration';
-        try {
-            $customerData = $this->customerRepository->getById($customerId);
-            $customerData->setStoreId($this->_storeManager->getStore()->getId());
-            $data = $this->getResource()->loadByCustomerData($customerData);
-            $this->setData(['ip' => $http->getRemoteAddress(), 'page' => $page]);
-            $this->addData($data);
-            if (!empty($data) && $customerData->getId() && !$this->getCustomerId()) {
-                $this->setCustomerId($customerData->getId());
-                $this->setSubscriberConfirmCode($this->randomSequence());
-                $this->save();
-            }
-        } catch (NoSuchEntityException $e) {
-        }
-        return $this;
-    }
-
-
-    /**
-     * Sends out confirmation success email
-     *
-     * @return $this
-     */
-    public function sendConfirmationSuccessEmail()
-    {
-        if ($this->getImportMode()) {
-            return $this;
-        }
-
-        if (!$this->_scopeConfig->getValue(
-                self::XML_PATH_SUCCESS_EMAIL_TEMPLATE,
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-            ) || !$this->_scopeConfig->getValue(
-                self::XML_PATH_SUCCESS_EMAIL_IDENTITY,
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-            )
-        ) {
-            return $this;
-        }
-
-        $this->inlineTranslation->suspend();
-
-        $this->_transportBuilder->setTemplateIdentifier(
-            $this->_scopeConfig->getValue(
-                self::XML_PATH_SUCCESS_EMAIL_TEMPLATE,
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-            )
-        )->setTemplateOptions(
-            [
-                'area' => \Magento\Framework\App\Area::AREA_FRONTEND,
-                'store' => $this->_storeManager->getStore()->getId(),
-            ]
-        )->setTemplateVars(
-            ['subscriber' => $this]
-        )->setFrom(
-            $this->_scopeConfig->getValue(
-                self::XML_PATH_SUCCESS_EMAIL_IDENTITY,
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-            )
-        )->addTo(
-            $this->getEmail(),
-            $this->getName()
-        );
-        $transport = $this->_transportBuilder->getTransport();
-        $transport->sendMessage();
-
-        $this->inlineTranslation->resume();
-
-        return $this;
     }
 }

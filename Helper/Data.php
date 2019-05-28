@@ -48,8 +48,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const MODULE_NAME = 'Emarsys_Emarsys';
 
-    const Version = '2.1';
-
     const OPTIN_PRIORITY = 'Emarsys';
 
     const EMARSYS_CDN_API_URL = 'https://api-cdn.emarsys.net/api/v2/';
