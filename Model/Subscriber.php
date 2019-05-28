@@ -8,7 +8,8 @@
 namespace Emarsys\Emarsys\Model;
 
 use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
-use Magento\{Customer\Api\AccountManagementInterface,
+use Magento\{
+    Customer\Api\AccountManagementInterface,
     Customer\Api\CustomerRepositoryInterface,
     Customer\Api\Data\CustomerInterfaceFactory,
     Customer\Model\Session,
