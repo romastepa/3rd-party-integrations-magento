@@ -1290,7 +1290,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $magentoPlaceholderArray = [];
         $value = '';
         $emarsysEventMappingColl = $this->emarsysEventMapping->create()->getCollection()
-            ->addFieldToFilter('id', $mappingId)
+            ->addFieldToFilter('magento_event_id', $mappingId)
             ->addFieldToFilter('store_id', $storeId);
         $emarsysEventMappingItem = $emarsysEventMappingColl->getFirstItem();
 
@@ -1310,9 +1310,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $emailText = $emailTemplateModelColl->getData()[0]['template_text'];
         } else {
             $template = $this->emailTemplate->initTemplate('id');
-            $templateId = $value;
-            $template->setForcedArea($templateId);
-            $template->loadDefault($templateId);
+            $template->setForcedArea($value);
+            $template->loadDefault($value);
             $emailText = $template->getData()['template_text'];
         }
 
@@ -1364,7 +1363,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             if (in_array($value['magento_placeholder_name'], $magentoPlaceholderArray)) {
                 continue;
             }
-            $placeholderModel = $this->emarsysEventPlaceholderMappingFactory->create();
+            $placeholderModel = $this->emarsysEventPlaceholderMappingFactory->create()->getCollection()
+                ->addFieldToFilter('event_mapping_id', $value['event_mapping_id'])
+                ->addFieldToFilter('store_id',$value['store_id'])
+                ->addFieldToFilter('magento_placeholder_name', $value['magento_placeholder_name'])
+                ->getFirstItem();
+
             $placeholderModel->setEventMappingId($value['event_mapping_id']);
             $placeholderModel->setMagentoPlaceholderName($value['magento_placeholder_name']);
             $placeholderModel->setEmarsysPlaceholderName($value['emarsys_placeholder_name']);
@@ -1395,7 +1399,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $emarsysEventMappingColl = $this->emarsysEventMapping->create()
             ->getCollection()
-            ->addFieldToFilter('id', $mappingId)
+            ->addFieldToFilter('magento_event_id', $mappingId)
             ->addFieldToFilter('store_id', $storeId);
 
         $emarsysEventMappingItem = $emarsysEventMappingColl->getFirstItem();
@@ -1414,10 +1418,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $emailText = $emailTemplateModelColl->getData()[0]['template_text'];
         } else {
             $template = $this->emailTemplate->initTemplate('id');
-            $templateId = $value;
-            $template->setForcedArea($templateId);
-            $template->loadDefault($templateId);
-
+            $template->setForcedArea($value);
+            $template->loadDefault($value);
             $emailText = $template->getData()['template_text'];
         }
 
@@ -1932,21 +1934,23 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @param $emarsysEventMappingId
+     * @param $storeId
      * @return array
      */
-    public function getPlaceHolders($emarsysEventMappingId)
+    public function getPlaceHolders($emarsysEventMappingId, $storeId)
     {
         $placeHolders = [];
         try {
             $emarsysPlaceholderCollection = $this->emarsysEventPlaceholderMappingFactory->create()
                 ->getCollection()
-                ->addFieldToFilter('event_mapping_id', $emarsysEventMappingId);
+                ->addFieldToFilter('event_mapping_id', $emarsysEventMappingId)
+                ->addFieldToFilter('store_id', $storeId);
 
             $variables = [];
 
-            if (count($emarsysPlaceholderCollection->getData())) {
-                foreach ($emarsysPlaceholderCollection->getData() as $value) {
-                    $variables[$value['emarsys_placeholder_name']] = $value['magento_placeholder_name'];
+            if ($emarsysPlaceholderCollection->getSize()) {
+                foreach ($emarsysPlaceholderCollection as $value) {
+                    $variables[$value->getEmarsysPlaceholderName()] = $value->getMagentoPlaceholderName();
                 }
 
                 return $variables;

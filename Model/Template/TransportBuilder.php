@@ -115,19 +115,6 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             return $this;
         }
 
-        $emarsysEventMappingID = $this->emarsysHelper->getEmarsysEventMappingId($magentoEventID, $storeId);
-        if (!$emarsysEventMappingID) {
-            $this->message->setMessageType($types[$template->getType()])
-                ->setBody($body)
-                ->setSubject(html_entity_decode($template->getSubject(), ENT_QUOTES))
-                ->setEmarsysData([
-                    "emarsysPlaceholders" => '',
-                    "emarsysEventId" => '',
-                    "store_id" => $storeId,
-                ]);
-            return $this;
-        }
-
         $emarsysEventApiID = $this->emarsysHelper->getEmarsysEventApiId($magentoEventID, $storeId);
         if (!$emarsysEventApiID) {
             $this->message->setMessageType($types[$template->getType()])
@@ -141,28 +128,28 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             return $this;
         }
 
-        $emarsysPlaceholders = $this->emarsysHelper->getPlaceHolders($emarsysEventMappingID);
+        $emarsysPlaceholders = $this->emarsysHelper->getPlaceHolders($magentoEventID, $storeId);
         if (!$emarsysPlaceholders) {
-            $this->emarsysHelper->insertFirstTimeMappingPlaceholders($emarsysEventMappingID, $storeId);
-            $emarsysPlaceholders = $this->emarsysHelper->getPlaceHolders($emarsysEventMappingID);
+            $this->emarsysHelper->insertFirstTimeMappingPlaceholders($magentoEventID, $storeId);
+            $emarsysPlaceholders = $this->emarsysHelper->getPlaceHolders($magentoEventID, $storeId);
         }
 
-        $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
+        $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($magentoEventID, $storeId);
         if (!$emarsysHeaderPlaceholders) {
             $this->emarsysHelper->insertFirstTimeHeaderMappingPlaceholders(
-                $emarsysEventMappingID,
+                $magentoEventID,
                 $storeId
             );
-            $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($emarsysEventMappingID, $storeId);
+            $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($magentoEventID, $storeId);
         }
 
-        $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
+        $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($magentoEventID, $storeId);
         if (!$emarsysFooterPlaceholders) {
             $this->emarsysHelper->insertFirstTimeFooterMappingPlaceholders(
-                $emarsysEventMappingID,
+                $magentoEventID,
                 $storeId
             );
-            $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($emarsysEventMappingID, $storeId);
+            $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($magentoEventID, $storeId);
         }
 
         $processedVariables = [];
