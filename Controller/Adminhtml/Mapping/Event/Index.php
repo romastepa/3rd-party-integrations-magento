@@ -10,8 +10,10 @@ namespace Emarsys\Emarsys\Controller\Adminhtml\Mapping\Event;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
-use Emarsys\Emarsys\Helper\Data;
-use Emarsys\Emarsys\Model\ResourceModel\Emarsysmagentoevents\CollectionFactory;
+use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
+use Emarsys\Emarsys\Model\EmarsyseventmappingFactory as EmarsysEventsFactory;
+use Emarsys\Emarsys\Helper\Logs as EmarsysHelperLogs;
+use Magento\Store\Model\StoreManagerInterface as StoreManager;
 
 /**
  * Class Index
@@ -25,35 +27,86 @@ class Index extends Action
     protected $resultPageFactory;
 
     /**
+     * @var EmarsysEventsFactory
+     */
+    protected $emarsysEventsFactory;
+
+    /**
+     * @var EmarsysHelper
+     */
+    protected $emarsysHelper;
+
+    /**
+     * @var EmarsysHelperLogs
+     */
+    protected $logsHelper;
+
+    /**
+     * @var StoreManager
+     */
+    protected $storeManager;
+
+    /**
      * Index constructor.
+     *
      * @param Context $context
      * @param PageFactory $resultPageFactory
-     * @param Data $emarsysHelper
-     * @param CollectionFactory $CollectionFactory
+     * @param EmarsysHelper $emarsysHelper
+     * @param EmarsysEventsFactory $emarsysEventsFactory
+     * @param EmarsysHelperLogs $logsHelper
      */
     public function __construct(
         Context $context,
         PageFactory $resultPageFactory,
-        Data $emarsysHelper,
-        CollectionFactory $CollectionFactory
+        EmarsysHelper $emarsysHelper,
+        EmarsyseventsFactory $emarsysEventsFactory,
+        EmarsysHelperLogs $logsHelper,
+        StoreManager $storeManager
     ) {
         parent::__construct($context);
         $this->resultPageFactory = $resultPageFactory;
         $this->emarsysHelper = $emarsysHelper;
-        $this->CollectionFactory = $CollectionFactory;
+        $this->emarsysEventsFactory = $emarsysEventsFactory;
+        $this->logsHelper = $logsHelper;
+        $this->storeManager = $storeManager;
     }
 
     /**
      * Index action
      *
      * @return \Magento\Backend\Model\View\Result\Page
+     * @throws \Exception
      */
     public function execute()
     {
-        $store = $this->getRequest()->getParam('store');
-        if (!$store) {
+        $storeId = $this->getRequest()->getParam('store');
+        if (!$storeId) {
             $storeId = $this->emarsysHelper->getFirstStoreId();
             return $this->resultRedirectFactory->create()->setUrl($this->getUrl('*/*', ['store' => $storeId]));
+        }
+
+        $store = $this->storeManager->getStore($storeId);
+
+        $eventMappingCollection = $this->emarsysEventsFactory->create()->getCollection()->addFieldToFilter('store_id', $storeId);
+        if ($this->emarsysHelper->isEmarsysEnabled($store->getWebsiteId())) {
+            if (!$eventMappingCollection->getSize()) {
+                $logsArray['job_code'] = 'Event Mapping';
+                $logsArray['status'] = 'started';
+                $logsArray['messages'] = 'Running Update Schema';
+                $logsArray['created_at'] = date('Y-m-d H:i:s');
+                $logsArray['executed_at'] = date('Y-m-d H:i:s');
+                $logsArray['run_mode'] = 'Automatic';
+                $logsArray['auto_log'] = 'Complete';
+                $logsArray['store_id'] = $storeId;
+                $logsArray['website_id'] = $store->getWebsiteId();
+                $logId = $this->logsHelper->manualLogs($logsArray);
+                $logsArray['id'] = $logId;
+
+                $this->emarsysHelper->importEvents($storeId, $logId);
+                $this->emarsysHelper->insertFirstTime($storeId);
+
+                return $this->resultRedirectFactory->create()->setUrl($this->getUrl('*/*', ['store' => $storeId]));
+            }
         }
         /** @var \Magento\Backend\Model\View\Result\Page $resultPage */
         $resultPage = $this->resultPageFactory->create();

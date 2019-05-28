@@ -172,7 +172,7 @@ class Grid extends Extended
         $emarsysEventPlaceholderMappingColl->addFieldToFilter('store_id', $storeId);
 
         if (!$emarsysEventPlaceholderMappingColl->getSize()) {
-            $val = $this->EmarsysHelper->insertFirstimeMappingPlaceholders($mapping_id, $storeId);
+            $val = $this->EmarsysHelper->insertFirstTimeMappingPlaceholders($mapping_id, $storeId);
             if ($val == "") {
                 $this->_messageManager->addErrorMessage(__("Please Assign Email Template to event"));
                 $RedirectUrl = $this->_url->getUrl('emarsys_emarsys/mapping_event/index', ["store_id" => $storeId]);

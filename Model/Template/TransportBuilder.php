@@ -7,7 +7,7 @@
 
 namespace Emarsys\Emarsys\Model\Template;
 
-use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
+use Emarsys\Emarsys\Helper\Data\Proxy as EmarsysHelper;
 use Magento\{
     Catalog\Helper\Image,
     Framework\App\TemplateTypesInterface,

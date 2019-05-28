@@ -31,7 +31,7 @@ use Emarsys\Emarsys\{
     Model\ResourceModel\Emarsysmagentoevents\CollectionFactory,
     Model\PlaceholdersFactory,
     Controller\Adminhtml\Email\Template,
-    Model\EmarsyseventmappingFactory,
+    Model\EmarsyseventmappingFactory as EmarsysEventMappingFactory,
     Model\ResourceModel\Emarsysevents\CollectionFactory as EmarsyseventsCollectionFactory,
     Model\Api as EmarsysApi,
     Model\Emarsysevents,
@@ -255,7 +255,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $magentoProductAttributeColl;
 
     /**
-     * @var EmarsyseventmappingFactory
+     * @var EmarsysEventMappingFactory
      */
     protected $emarsysEventMapping;
 
@@ -396,7 +396,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         PlaceholdersFactory $emarsysEventPlaceholderMappingFactory,
         Template $emailTemplate,
         ProductCollectionFactory $magentoProductAttributeColl,
-        EmarsyseventmappingFactory $emarsysEventMapping,
+        EmarsysEventMappingFactory $emarsysEventMapping,
         EmarsyseventsCollectionFactory $emarsysEventCollectionFactory,
         EmarsysApi $modelApi,
         Emarsysevents $emarsysEventsModel,
@@ -741,7 +741,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $storeId
      * @throws \Exception
      */
-    public function insertFirstime($storeId)
+    public function insertFirstTime($storeId)
     {
         $magentoEvents = $this->magentoEventsCollection->create();
 
@@ -1285,7 +1285,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $storeId
      * @return string
      */
-    public function insertFirstimeMappingPlaceholders($mappingId, $storeId)
+    public function insertFirstTimeMappingPlaceholders($mappingId, $storeId)
     {
         $magentoPlaceholderarray = [];
         $emarsysEventMappingColl = $this->emarsysEventMapping->create()->getCollection()
@@ -1649,7 +1649,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 ->addFieldToFilter('magento_event_id', $magentoEventsCollection->getData()[0]['id']);
             $emarsysEventMappingColl->addFieldToFilter('store_id', $store_id);
 
-            return $this->insertFirstimeMappingPlaceholders(
+            return $this->insertFirstTimeMappingPlaceholders(
                 $emarsysEventMappingColl->getFirstItem()->getMagentoEventId(),
                 $store_id
             );
@@ -1680,7 +1680,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             $emarsysEventMappingColl->addFieldToFilter('store_id', $store_id);
 
-            return $this->insertFirstimeMappingPlaceholders(
+            return $this->insertFirstTimeMappingPlaceholders(
                 $emarsysEventMappingColl->getFirstItem()->getMagentoEventId(),
                 $store_id
             );
