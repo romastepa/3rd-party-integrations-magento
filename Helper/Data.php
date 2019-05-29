@@ -101,8 +101,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const XPATH_OPTIN_EVERYPAGE_STRATEGY = 'opt_in/optin_enable/opt_in_strategy';
 
-    const XPATH_OPTIN_FORCED_CONFIRMATION = 'opt_in/optin_enable/force_optin_confirmation';
-
     const XPATH_OPTIN_SUBSCRIPTION_CHECKOUT_PROCESS = 'opt_in/subscription_checkout_process/newsletter_sub_checkout_yes_no';
 
     //Smart Insight
@@ -2668,18 +2666,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $path = BP . '/var/' . $outputFile;
 
         return $path;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isOptinForcedConfirmationEnabled($websiteId)
-    {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_OPTIN_FORCED_CONFIRMATION,
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
-            $websiteId
-        );
     }
 
     /**

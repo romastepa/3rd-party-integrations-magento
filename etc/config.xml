@@ -34,7 +34,6 @@
         <opt_in>
             <optin_enable>
                 <enable_optin>0</enable_optin>
-                <force_optin_confirmation>0</force_optin_confirmation>
             </optin_enable>
             <subscription_checkout_process>
                 <newsletter_sub_checkout_yes_no>0</newsletter_sub_checkout_yes_no>

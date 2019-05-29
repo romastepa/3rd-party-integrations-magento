@@ -144,7 +144,6 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         //It will return boolean value, If customer is logged in and email Id is the same.
         $isSubscribeOwnEmail = $this->_customerSession->isLoggedIn()
             && $this->_customerSession->getCustomerDataObject()->getEmail() == $email;
-        $optinForcedConfirmation = $store->getConfig(EmarsysHelper::XPATH_OPTIN_FORCED_CONFIRMATION);
 
         if (!$this->getId() || $this->getStatus() == self::STATUS_UNSUBSCRIBED || $this->getStatus() == self::STATUS_NOT_ACTIVE) {
             if ($isConfirmNeed) {
@@ -152,11 +151,9 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
             } else {
                 $this->setStatus(self::STATUS_SUBSCRIBED);
             }
-        } elseif (($this->getId() && $this->getStatus() == self::STATUS_SUBSCRIBED) || $isSubscribeOwnEmail) {
-            if ($isConfirmNeed && $optinForcedConfirmation) {
+        } elseif ($this->getId() && $this->getStatus() == self::STATUS_SUBSCRIBED) {
+            if ($isConfirmNeed) {
                 $this->setStatus(self::STATUS_NOT_ACTIVE);
-            } elseif ($isConfirmNeed && !$optinForcedConfirmation) {
-                $this->setStatus(self::STATUS_SUBSCRIBED);
             } else {
                 $this->setStatus(self::STATUS_SUBSCRIBED);
             }

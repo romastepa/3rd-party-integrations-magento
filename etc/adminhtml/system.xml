@@ -164,10 +164,6 @@
                     <label>Opt-In Strategy</label>
                     <source_model>Emarsys\Emarsys\Model\Config\Source\OptInStrategy</source_model>
                 </field>
-                <field id="force_optin_confirmation" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Force Optin Confirmation</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
             </group>
             <group id="subscription_checkout_process" type="text" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="0">
                 <label>Subscription: Checkout process</label>
