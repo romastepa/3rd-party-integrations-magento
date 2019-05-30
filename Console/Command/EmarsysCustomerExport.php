@@ -42,8 +42,7 @@ class EmarsysCustomerExport extends Command
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Emarsys\Emarsys\Model\ResourceModel\Customer $customerResourceModel,
         \Magento\Framework\App\State $state
-    )
-    {
+    ) {
         $this->storeManager = $storeManager;
         $this->customerResourceModel = $customerResourceModel;
         $this->state = $state;
@@ -88,7 +87,6 @@ class EmarsysCustomerExport extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_GLOBAL);
-        $this->updateMemoryLimit();
         $output->writeln('');
         $output->writeln('<info>Starting customer bulk export.</info>');
 
@@ -120,40 +118,5 @@ class EmarsysCustomerExport extends Command
 
         $output->writeln('<info>Customer bulk export complete</info>');
         $output->writeln('');
-    }
-
-    /**
-     * @return void
-     */
-    private function updateMemoryLimit()
-    {
-        if (function_exists('ini_set')) {
-            @ini_set('display_errors', 1);
-            $memoryLimit = trim(ini_get('memory_limit'));
-            if ($memoryLimit != -1 && $this->getMemoryInBytes($memoryLimit) < 756 * 1024 * 1024) {
-                @ini_set('memory_limit', '756M');
-            }
-        }
-    }
-
-    /**
-     * @param string $value
-     * @return int
-     */
-    private function getMemoryInBytes($value)
-    {
-        $unit = strtolower(substr($value, -1, 1));
-        $value = (int)$value;
-        switch ($unit) {
-            case 'g':
-                $value *= 1024 * 1024 * 1024;
-                break;
-            case 'm':
-                $value *= 1024 * 1024;
-                break;
-            case 'k':
-                $value *= 1024;
-        }
-        return $value;
     }
 }

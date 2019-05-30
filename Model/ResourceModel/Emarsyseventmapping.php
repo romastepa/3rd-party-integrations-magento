@@ -65,6 +65,9 @@ class Emarsyseventmapping extends \Magento\Framework\Model\ResourceModel\Db\Abst
      */
     public function truncateMappingTable($storeId)
     {
-        $this->getConnection()->delete($this->getMainTable(), $this->getConnection()->quoteInto('store_id = ?', $storeId));
+        $this->getConnection()->delete(
+            $this->getMainTable(),
+            $this->getConnection()->quoteInto('store_id = ?', $storeId)
+        );
     }
 }

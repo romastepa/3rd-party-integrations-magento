@@ -13,6 +13,7 @@ use Magento\Framework\Mail\TransportInterface;
 
 /**
  * Class Transport
+ *
  * @package Emarsys\Emarsys\Model
  */
 class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterface
@@ -29,6 +30,7 @@ class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterf
 
     /**
      * Transport constructor.
+     *
      * @param MessageInterface $message
      * @param SendEmail $sendEmail
      * @param null $parameters
@@ -37,7 +39,8 @@ class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterf
         MessageInterface $message,
         SendEmail $sendEmail,
         $parameters = null
-    ) {
+    )
+    {
         if (!$message instanceof \Zend_Mail) {
             if (!$message instanceof \Magento\Framework\Mail\MailMessageInterface) {
                 throw new \InvalidArgumentException('Invalid message instance');
@@ -50,7 +53,7 @@ class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterf
     }
 
     /**
-     * @throws \Zend_Mail_Transport_Exception
+     * @throws MailException
      */
     public function sendMessage()
     {

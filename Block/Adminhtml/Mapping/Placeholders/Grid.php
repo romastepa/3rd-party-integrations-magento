@@ -83,6 +83,16 @@ class Grid extends Extended
     protected $formKey;
 
     /**
+     * @var EmarsyseventmappingFactory
+     */
+    protected $emarsysEventMappingFactory;
+
+    /**
+     * @var PlaceholdersFactory
+     */
+    protected $emarsysEventPlaceholderMappingFactory;
+
+    /**
      * Grid constructor.
      * @param Context $context
      * @param Data $backendHelper
@@ -91,7 +101,7 @@ class Grid extends Extended
      * @param Collection $dataCollection
      * @param DataObjectFactory $dataObjectFactory
      * @param Event $resourceModelEvent
-     * @param EmarsyseventmappingFactory $EmarsyseventmappingFactory
+     * @param EmarsyseventmappingFactory $emarsysEventMappingFactory
      * @param PlaceholdersFactory $emarsysEventPlaceholderMappingFactory
      * @param EmarsysHelper $EmarsysHelper
      * @param ModuleManager $moduleManager
@@ -107,7 +117,7 @@ class Grid extends Extended
         Collection $dataCollection,
         DataObjectFactory $dataObjectFactory,
         Event $resourceModelEvent,
-        EmarsyseventmappingFactory $EmarsyseventmappingFactory,
+        EmarsyseventmappingFactory $emarsysEventMappingFactory,
         PlaceholdersFactory $emarsysEventPlaceholderMappingFactory,
         EmarsysHelper $EmarsysHelper,
         ModuleManager $moduleManager,
@@ -120,7 +130,7 @@ class Grid extends Extended
         $this->attribute = $attribute;
         $this->moduleManager = $moduleManager;
         $this->backendHelper = $backendHelper;
-        $this->EmarsyseventmappingFactory = $EmarsyseventmappingFactory;
+        $this->emarsysEventMappingFactory = $emarsysEventMappingFactory;
         $this->emarsysEventPlaceholderMappingFactory = $emarsysEventPlaceholderMappingFactory;
         $this->dataCollection = $dataCollection;
         $this->dataObjectFactory = $dataObjectFactory;
@@ -141,12 +151,14 @@ class Grid extends Extended
     {
         $storeId = $this->getRequest()->getParam('store');
         $mappingId = $this->getRequest()->getParam('mapping_id');
-        if (!isset($storeId)) {
-            $storeId = 1;
+
+        if (!$storeId) {
+            $storeId = $this->EmarsysHelper->getFirstStoreId();
         }
+
         $EventMappingCollection = $this->emarsysEventPlaceholderMappingFactory->create()->getCollection()
-                                    ->addFieldToFilter("store_id", $storeId)
-                                    ->addFieldToFilter("event_mapping_id", $mappingId);
+            ->addFieldToFilter("store_id", $storeId)
+            ->addFieldToFilter("event_mapping_id", $mappingId);
 
         $this->setCollection($EventMappingCollection);
 
@@ -160,19 +172,19 @@ class Grid extends Extended
     {
         parent::_construct();
         $this->session->setData('gridData', '');
-        $mapping_id = $this->getRequest()->getParam('mapping_id');
+        $mappingId = $this->getRequest()->getParam('mapping_id');
         $storeId = $this->getRequest()->getParam('store_id');
 
-        if (!isset($storeId)) {
-            $storeId = 1;
+        if (!$storeId) {
+            $storeId = $this->EmarsysHelper->getFirstStoreId();
         }
 
-        $emarsysEventPlaceholderMappingColl = $this->emarsysEventPlaceholderMappingFactory->create()->getCollection();
-        $emarsysEventPlaceholderMappingColl->addFieldToFilter('event_mapping_id', $mapping_id);
-        $emarsysEventPlaceholderMappingColl->addFieldToFilter('store_id', $storeId);
+        $emarsysEventPlaceholderMappingColl = $this->emarsysEventPlaceholderMappingFactory->create()->getCollection()
+            ->addFieldToFilter('event_mapping_id', $mappingId)
+            ->addFieldToFilter('store_id', $storeId);
 
         if (!$emarsysEventPlaceholderMappingColl->getSize()) {
-            $val = $this->EmarsysHelper->insertFirstTimeMappingPlaceholders($mapping_id, $storeId);
+            $val = $this->EmarsysHelper->insertFirstTimeMappingPlaceholders($mappingId, $storeId);
             if ($val == "") {
                 $this->_messageManager->addErrorMessage(__("Please Assign Email Template to event"));
                 $RedirectUrl = $this->_url->getUrl('emarsys_emarsys/mapping_event/index', ["store_id" => $storeId]);

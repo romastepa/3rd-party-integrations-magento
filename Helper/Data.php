@@ -6,39 +6,39 @@
  */
 namespace Emarsys\Emarsys\Helper;
 
-use Magento\Framework\App\Helper\Context;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Config\Model\ResourceModel\Config;
-use Magento\Framework\Stdlib\DateTime\Timezone;
-use Emarsys\Emarsys\Helper\Logs as EmarsysHelperLogs;
-use Magento\Store\Model\StoreManagerInterface;
-use Emarsys\Emarsys\Model\ResourceModel\Customer as ModelResourceModelCustomer;
-use Emarsys\Emarsys\Model\Queue;
-use Magento\Framework\App\ProductMetadataInterface;
-use Emarsys\Emarsys\Model\QueueFactory as EmarsysQueueFactory;
-use Emarsys\Emarsys\Model\ResourceModel\Emarsysmagentoevents\CollectionFactory;
-use Emarsys\Emarsys\Model\PlaceholdersFactory;
-use Emarsys\Emarsys\Controller\Adminhtml\Email\Template;
-use Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as ProductCollectionFactory;
-use Emarsys\Emarsys\Model\EmarsyseventmappingFactory;
-use Emarsys\Emarsys\Model\ResourceModel\Emarsysevents\CollectionFactory as EmarsyseventsCollectionFactory;
-use Emarsys\Emarsys\Model\Api as EmarsysApi;
-use Emarsys\Emarsys\Model\Emarsysevents;
-use Emarsys\Emarsys\Model\ResourceModel\Event as ModelResourceModelEvent;
-use Magento\Email\Model\TemplateFactory as EmailTemplateFactory;
-use Magento\Backend\Model\Session as BackendSession;
-use Emarsys\Emarsys\Model\EmarsyseventsFactory;
-use Emarsys\Emarsys\Model\Api\Api as EmarsysApiApi;
-use Emarsys\Emarsys\Model\Logs as EmarsysModelLogs;
-use Magento\Store\Model\ResourceModel\Store\CollectionFactory as StoreCollectionFactory;
-use Magento\Framework\Module\ModuleListInterface;
-use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
-use Magento\Newsletter\Model\Subscriber;
-use Magento\Newsletter\Model\SubscriberFactory;
-use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\Io\File as FilesystemIoFile;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Framework\Filesystem\Io\Ftp;
+use Magento\{
+    Framework\App\Helper\Context,
+    Framework\Stdlib\DateTime\DateTime,
+    Framework\Stdlib\DateTime\Timezone,
+    Store\Model\StoreManagerInterface,
+    Framework\App\ProductMetadataInterface,
+    Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as ProductCollectionFactory,
+    Email\Model\TemplateFactory as EmailTemplateFactory,
+    Backend\Model\Session as BackendSession,
+    Store\Model\ResourceModel\Store\CollectionFactory as StoreCollectionFactory,
+    Framework\Module\ModuleListInterface,
+    Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory,
+    Framework\App\Filesystem\DirectoryList,
+    Framework\Filesystem\Io\File as FilesystemIoFile,
+    Store\Model\ScopeInterface,
+    Framework\Filesystem\Io\Ftp
+};
+use Emarsys\Emarsys\{
+    Helper\Logs as EmarsysHelperLogs,
+    Model\ResourceModel\Customer as ModelResourceModelCustomer,
+    Model\Queue,
+    Model\QueueFactory as EmarsysQueueFactory,
+    Model\ResourceModel\Emarsysmagentoevents\CollectionFactory,
+    Model\PlaceholdersFactory,
+    Controller\Adminhtml\Email\Template,
+    Model\EmarsyseventmappingFactory as EmarsysEventMappingFactory,
+    Model\ResourceModel\Emarsysevents\CollectionFactory as EmarsyseventsCollectionFactory,
+    Model\Api as EmarsysApi,
+    Model\Emarsysevents,
+    Model\ResourceModel\Event as ModelResourceModelEvent,
+    Model\EmarsyseventsFactory,
+    Model\Api\Api as EmarsysApiApi,
+    Model\Logs as EmarsysModelLogs};
 
 /**
  * Class Data
@@ -47,8 +47,6 @@ use Magento\Framework\Filesystem\Io\Ftp;
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const MODULE_NAME = 'Emarsys_Emarsys';
-
-    const Version = '2.1';
 
     const OPTIN_PRIORITY = 'Emarsys';
 
@@ -257,7 +255,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $magentoProductAttributeColl;
 
     /**
-     * @var EmarsyseventmappingFactory
+     * @var EmarsysEventMappingFactory
      */
     protected $emarsysEventMapping;
 
@@ -312,29 +310,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $moduleListInterface;
 
     /**
-     * @var Subscriber
-     */
-    protected $subscriber;
-
-    /**
      * @var SubscriberCollectionFactory
      */
     protected $newsLetterCollectionFactory;
 
     /**
-     * @var SubscriberFactory
-     */
-    protected $subscriberFactory;
-
-    /**
      * @var StoreManagerInterface
      */
     protected $storeManager;
-
-    /**
-     * @var ScopeConfigInterface
-     */
-    protected $scopeConfigInterface;
 
     /**
      * @var
@@ -395,8 +378,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param StoreCollectionFactory $storeCollection
      * @param ModuleListInterface $moduleListInterface
      * @param SubscriberCollectionFactory $newsLetterCollectionFactory
-     * @param Subscriber $subscriber
-     * @param SubscriberFactory $subscriberFactory
+     * @param DirectoryList $directoryList
+     * @param FilesystemIoFile $filesystemIoFile
      * @param Ftp $ftp
      */
     public function __construct(
@@ -413,7 +396,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         PlaceholdersFactory $emarsysEventPlaceholderMappingFactory,
         Template $emailTemplate,
         ProductCollectionFactory $magentoProductAttributeColl,
-        EmarsyseventmappingFactory $emarsysEventMapping,
+        EmarsysEventMappingFactory $emarsysEventMapping,
         EmarsyseventsCollectionFactory $emarsysEventCollectionFactory,
         EmarsysApi $modelApi,
         Emarsysevents $emarsysEventsModel,
@@ -426,8 +409,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         StoreCollectionFactory $storeCollection,
         ModuleListInterface $moduleListInterface,
         SubscriberCollectionFactory $newsLetterCollectionFactory,
-        Subscriber $subscriber,
-        SubscriberFactory $subscriberFactory,
         DirectoryList $directoryList,
         FilesystemIoFile $filesystemIoFile,
         Ftp $ftp
@@ -442,7 +423,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->customerResourceModel = $customerResourceModel;
         $this->queue = $queueModel;
         $this->queueColl = $queueModelColl;
-        $this->scopeConfigInterface = $context->getScopeConfig();
         $this->magentoEventsCollection = $magentoEventsCollection;
         $this->emarsysEventPlaceholderMappingFactory = $emarsysEventPlaceholderMappingFactory;
         $this->emailTemplate = $emailTemplate;
@@ -459,9 +439,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->modelApi = $modelApi;
         $this->storeCollection = $storeCollection;
         $this->moduleListInterface = $moduleListInterface;
-        $this->subscriber = $subscriber;
         $this->newsLetterCollectionFactory = $newsLetterCollectionFactory;
-        $this->subscriberFactory = $subscriberFactory;
         $this->directoryList = $directoryList;
         $this->filesystemIoFile = $filesystemIoFile;
         $this->ftp = $ftp;
@@ -657,18 +635,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Get Emarsys API Details
      *
-     * @param type $storeId
+     * @param int $storeId
      */
     public function getEmarsysAPIDetails($storeId)
     {
         $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
         $scope = ScopeInterface::SCOPE_WEBSITES;
-        $username = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_USER, $scope, $websiteId);
-        $password = $this->_secret = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_PASS, $scope, $websiteId);
-        $endpoint = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_ENDPOINT, $scope, $websiteId);
+        $username = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_USER, $scope, $websiteId);
+        $password = $this->_secret = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_PASS, $scope, $websiteId);
+        $endpoint = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_ENDPOINT, $scope, $websiteId);
 
         if ($endpoint == 'custom') {
-            $url = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_CUSTOM_URL, $scope, $websiteId);
+            $url = $this->scopeConfig->getValue(self::XPATH_EMARSYS_CUSTOM_URL, $scope, $websiteId);
             $this->_emarsysApiUrl = rtrim($url, '/') . "/";
         } elseif ($endpoint == 'cdn') {
             $this->_emarsysApiUrl = self::EMARSYS_CDN_API_URL;
@@ -763,7 +741,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $storeId
      * @throws \Exception
      */
-    public function insertFirstime($storeId)
+    public function insertFirstTime($storeId)
     {
         $magentoEvents = $this->magentoEventsCollection->create();
 
@@ -1219,9 +1197,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $scope = ScopeInterface::SCOPE_WEBSITES;
 
         if ($scope && $websiteId) {
-            $host = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_FTP_HOSTNAME, $scope, $websiteId);
+            $host = $this->scopeConfig->getValue(self::XPATH_EMARSYS_FTP_HOSTNAME, $scope, $websiteId);
         } else {
-            $host = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_FTP_HOSTNAME);
+            $host = $this->scopeConfig->getValue(self::XPATH_EMARSYS_FTP_HOSTNAME);
         }
 
         $ports = [21, rand(32000, 32500), rand(32000, 32500)];
@@ -1309,14 +1287,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function insertFirstTimeMappingPlaceholders($mappingId, $storeId)
     {
-        $magentoPlaceholderarray = [];
+        $magentoPlaceholderArray = [];
+        $value = '';
         $emarsysEventMappingColl = $this->emarsysEventMapping->create()->getCollection()
-            ->addFieldToFilter('id', $mappingId);
-        $magentoEventColl = $this->magentoEventsCollection->create()
-            ->addFieldToFilter('id', $emarsysEventMappingColl->getData()[0]['magento_event_id']);
-        $value = $this->scopeConfigInterface->getValue($magentoEventColl->getData()[0]['config_path'], 'default', 0);
+            ->addFieldToFilter('magento_event_id', $mappingId)
+            ->addFieldToFilter('store_id', $storeId);
+        $emarsysEventMappingItem = $emarsysEventMappingColl->getFirstItem();
 
-        if ($value == "") {
+        if ($emarsysEventMappingItem->getMagentoEventId()) {
+            $magentoEventColl = $this->magentoEventsCollection->create()
+                ->addFieldToFilter('id', $emarsysEventMappingItem->getMagentoEventId());
+            $magentoEventItem = $magentoEventColl->getFirstItem();
+            $value = $this->scopeConfig->getValue($magentoEventItem->getConfigPath(), 'default', 0);
+        }
+
+        if (empty($value)) {
             return '';
         }
         if (is_numeric($value)) {
@@ -1325,9 +1310,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $emailText = $emailTemplateModelColl->getData()[0]['template_text'];
         } else {
             $template = $this->emailTemplate->initTemplate('id');
-            $templateId = $value;
-            $template->setForcedArea($templateId);
-            $template->loadDefault($templateId);
+            $template->setForcedArea($value);
+            $template->loadDefault($value);
             $emailText = $template->getData()['template_text'];
         }
 
@@ -1373,19 +1357,23 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $array[$i]["store_id"] = $storeId;
                 $i++;
             }
-            $emarsysVariable = "";
         }
 
         foreach ($array as $key => $value) {
-            if (in_array($value['magento_placeholder_name'], $magentoPlaceholderarray)) {
+            if (in_array($value['magento_placeholder_name'], $magentoPlaceholderArray)) {
                 continue;
             }
-            $placeholderModel = $this->emarsysEventPlaceholderMappingFactory->create();
+            $placeholderModel = $this->emarsysEventPlaceholderMappingFactory->create()->getCollection()
+                ->addFieldToFilter('event_mapping_id', $value['event_mapping_id'])
+                ->addFieldToFilter('store_id',$value['store_id'])
+                ->addFieldToFilter('magento_placeholder_name', $value['magento_placeholder_name'])
+                ->getFirstItem();
+
             $placeholderModel->setEventMappingId($value['event_mapping_id']);
             $placeholderModel->setMagentoPlaceholderName($value['magento_placeholder_name']);
             $placeholderModel->setEmarsysPlaceholderName($value['emarsys_placeholder_name']);
             $placeholderModel->setStoreId($value['store_id']);
-            $magentoPlaceholderarray[] =$value['magento_placeholder_name'];
+            $magentoPlaceholderArray[] = $value['magento_placeholder_name'];
             $placeholderModel->save();
         }
 
@@ -1411,11 +1399,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $emarsysEventMappingColl = $this->emarsysEventMapping->create()
             ->getCollection()
-            ->addFieldToFilter('id', $mappingId);
-        $magentoEventColl = $this->magentoEventsCollection->create()
-            ->addFieldToFilter('id', $emarsysEventMappingColl->getData()[0]['magento_event_id']);
+            ->addFieldToFilter('magento_event_id', $mappingId)
+            ->addFieldToFilter('store_id', $storeId);
 
-        $value = $this->scopeConfigInterface->getValue($magentoEventColl->getData()[0]['config_path'], 'store', $storeId);
+        $emarsysEventMappingItem = $emarsysEventMappingColl->getFirstItem();
+
+        $magentoEventColl = $this->magentoEventsCollection->create()
+            ->addFieldToFilter('id', $emarsysEventMappingItem->getMagentoEventId());
+
+        $magentoEventItem = $magentoEventColl->getFirstItem();
+
+        $value = $this->scopeConfig->getValue($magentoEventItem->getConfigPath(), 'store', $storeId);
 
         if (is_numeric($value)) {
             $emailTemplateModelColl = $this->templateFactory->create()
@@ -1424,10 +1418,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $emailText = $emailTemplateModelColl->getData()[0]['template_text'];
         } else {
             $template = $this->emailTemplate->initTemplate('id');
-            $templateId = $value;
-            $template->setForcedArea($templateId);
-            $template->loadDefault($templateId);
-
+            $template->setForcedArea($value);
+            $template->loadDefault($value);
             $emailText = $template->getData()['template_text'];
         }
 
@@ -1795,11 +1787,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $smartInsight = false;
 
         if ($websiteId) {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_SMARTINSIGHT_ENABLED, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
+            if ($this->scopeConfig->getValue(self::XPATH_SMARTINSIGHT_ENABLED, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
                 $smartInsight = true;
             }
         } else {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_SMARTINSIGHT_ENABLED)) {
+            if ($this->scopeConfig->getValue(self::XPATH_SMARTINSIGHT_ENABLED)) {
                 $smartInsight = true;
             };
         }
@@ -1825,11 +1817,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $result = false;
 
         if ($websiteId) {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_ENABLED, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
+            if ($this->scopeConfig->getValue(self::XPATH_EMARSYS_ENABLED, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
                 $result = true;
             }
         } else {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_ENABLED)) {
+            if ($this->scopeConfig->getValue(self::XPATH_EMARSYS_ENABLED)) {
                 $result = true;
             }
         }
@@ -1848,7 +1840,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create();
             foreach ($magentoEventsCollection as $magentoEvent) {
-                if ($this->scopeConfigInterface->getValue($magentoEvent->getConfigPath(), $storeScope) == $templateId) {
+                if ($this->scopeConfig->getValue($magentoEvent->getConfigPath(), $storeScope) == $templateId) {
                     $event_id = $magentoEvent->getId();
                 }
             }
@@ -1942,21 +1934,23 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @param $emarsysEventMappingId
+     * @param $storeId
      * @return array
      */
-    public function getPlaceHolders($emarsysEventMappingId)
+    public function getPlaceHolders($emarsysEventMappingId, $storeId)
     {
         $placeHolders = [];
         try {
             $emarsysPlaceholderCollection = $this->emarsysEventPlaceholderMappingFactory->create()
                 ->getCollection()
-                ->addFieldToFilter('event_mapping_id', $emarsysEventMappingId);
+                ->addFieldToFilter('event_mapping_id', $emarsysEventMappingId)
+                ->addFieldToFilter('store_id', $storeId);
 
             $variables = [];
 
-            if (count($emarsysPlaceholderCollection->getData())) {
-                foreach ($emarsysPlaceholderCollection->getData() as $value) {
-                    $variables[$value['emarsys_placeholder_name']] = $value['magento_placeholder_name'];
+            if ($emarsysPlaceholderCollection->getSize()) {
+                foreach ($emarsysPlaceholderCollection as $value) {
+                    $variables[$value->getEmarsysPlaceholderName()] = $value->getMagentoPlaceholderName();
                 }
 
                 return $variables;
@@ -1981,9 +1975,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getConfigValue($path, $storeCode, $storeId)
     {
         if ($storeCode == "default") {
-            return $this->scopeConfigInterface->getValue($path, 'default', 0);
+            return $this->scopeConfig->getValue($path, 'default', 0);
         } else {
-            return $this->scopeConfigInterface->getValue($path, $storeCode, $storeId);
+            return $this->scopeConfig->getValue($path, $storeCode, $storeId);
         }
     }
 
@@ -2049,7 +2043,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $magentoEventsCollection = $this->magentoEventsCollection->create();
 
             foreach ($magentoEventsCollection as $magentoEvent) {
-                if ($this->scopeConfigInterface->getValue($magentoEvent->getConfigPath(), $storeScope, $storeId) == $templateId) {
+                if ($this->scopeConfig->getValue($magentoEvent->getConfigPath(), $storeScope, $storeId) == $templateId) {
                     $event_id = $magentoEvent->getId();
                     $configPath = $magentoEvent->getConfigPath();
                 }
@@ -2090,17 +2084,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $emarsysEnabled = false;
 
         if ($websiteId) {
-            $emarsysUserName = $this->scopeConfigInterface->getValue(
+            $emarsysUserName = $this->scopeConfig->getValue(
                 self::XPATH_EMARSYS_API_USER,
                 \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
                 $websiteId
             );
-            $emarsysPassword = $this->scopeConfigInterface->getValue(
+            $emarsysPassword = $this->scopeConfig->getValue(
                 self::XPATH_EMARSYS_API_PASS,
                 \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
                 $websiteId
             );
-            $emarsysFlag = $this->scopeConfigInterface->getValue(
+            $emarsysFlag = $this->scopeConfig->getValue(
                 self::XPATH_EMARSYS_ENABLED,
                 \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
                 $websiteId
@@ -2110,9 +2104,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $emarsysEnabled = true;
             }
         } else {
-            $emarsysUserName = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_USER);
-            $emarsysPassword = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_PASS);
-            $emarsysFlag = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_ENABLED);
+            $emarsysUserName = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_USER);
+            $emarsysPassword = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_PASS);
+            $emarsysFlag = $this->scopeConfig->getValue(self::XPATH_EMARSYS_ENABLED);
 
             if ($emarsysUserName && $emarsysPassword && $emarsysFlag) {
                 $emarsysEnabled = true;
@@ -2134,13 +2128,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         if ($this->isEmarsysEnabled($websiteId)) {
             if ($websiteId) {
-                $contactsSynchronization = $this->scopeConfigInterface->getValue(
+                $contactsSynchronization = $this->scopeConfig->getValue(
                     self::XPATH_EMARSYS_ENABLE_CONTACT_FEED,
                     \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
                     $websiteId
                 );
             } else {
-                $contactsSynchronization = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_ENABLE_CONTACT_FEED);
+                $contactsSynchronization = $this->scopeConfig->getValue(self::XPATH_EMARSYS_ENABLE_CONTACT_FEED);
             }
         }
 
@@ -2360,7 +2354,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $offset = 0;
                 $limit = 500;
                 do {
-                    $exportId = $this->scopeConfigInterface->getValue(
+                    $exportId = $this->scopeConfig->getValue(
                         'emarsys_suite2/storage/export_id',
                         \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
                         $this->websiteId
@@ -2445,7 +2439,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getEmarsysLatestVersionInfo()
     {
-        $apiUrl = $this->scopeConfigInterface->getValue('emarsys_settings/ftp_settings/apiurl', 'default', 0);
+        $apiUrl = $this->scopeConfig->getValue('emarsys_settings/ftp_settings/apiurl', 'default', 0);
 
         $ch = curl_init();
 

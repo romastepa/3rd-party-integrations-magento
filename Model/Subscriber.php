@@ -8,7 +8,8 @@
 namespace Emarsys\Emarsys\Model;
 
 use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
-use Magento\{Customer\Api\AccountManagementInterface,
+use Magento\{
+    Customer\Api\AccountManagementInterface,
     Customer\Api\CustomerRepositoryInterface,
     Customer\Api\Data\CustomerInterfaceFactory,
     Customer\Model\Session,
@@ -22,7 +23,8 @@ use Magento\{Customer\Api\AccountManagementInterface,
     Framework\Stdlib\DateTime\DateTime,
     Framework\Translate\Inline\StateInterface,
     Newsletter\Helper\Data,
-    Store\Model\StoreManagerInterface};
+    Store\Model\StoreManagerInterface
+};
 
 /**
  * Class Subscriber
@@ -143,15 +145,14 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         $isSubscribeOwnEmail = $this->_customerSession->isLoggedIn()
             && $this->_customerSession->getCustomerDataObject()->getEmail() == $email;
         $optinForcedConfirmation = $store->getConfig(EmarsysHelper::XPATH_OPTIN_FORCED_CONFIRMATION);
-        $isOwnSubscribes = $isSubscribeOwnEmail;
 
         if (!$this->getId() || $this->getStatus() == self::STATUS_UNSUBSCRIBED || $this->getStatus() == self::STATUS_NOT_ACTIVE) {
-            if ($isConfirmNeed && ($optinForcedConfirmation || !$optinForcedConfirmation)) {
+            if ($isConfirmNeed) {
                 $this->setStatus(self::STATUS_NOT_ACTIVE);
             } else {
                 $this->setStatus(self::STATUS_SUBSCRIBED);
             }
-        } elseif (($this->getId() && $this->getStatus() == self::STATUS_SUBSCRIBED) || $isOwnSubscribes) {
+        } elseif (($this->getId() && $this->getStatus() == self::STATUS_SUBSCRIBED) || $isSubscribeOwnEmail) {
             if ($isConfirmNeed && $optinForcedConfirmation) {
                 $this->setStatus(self::STATUS_NOT_ACTIVE);
             } elseif ($isConfirmNeed && !$optinForcedConfirmation) {

@@ -7,16 +7,20 @@
 
 namespace Emarsys\Emarsys\Helper;
 
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Helper\Context;
-use Magento\Store\Model\StoreManagerInterface;
-use Emarsys\Emarsys\Model\LogScheduleFactory;
-use Emarsys\Emarsys\Model\LogsFactory;
-use Magento\Framework\Translate\Inline\StateInterface;
-use Magento\Framework\Mail\Template\TransportBuilder;
-use Magento\Framework\Registry;
+use Magento\{
+    Framework\App\Helper\AbstractHelper,
+    Framework\Stdlib\DateTime\DateTime,
+    Framework\App\Config\ScopeConfigInterface,
+    Framework\App\Helper\Context,
+    Store\Model\StoreManagerInterface,
+    Framework\Translate\Inline\StateInterface,
+    Framework\Mail\Template\TransportBuilder,
+    Framework\Registry
+};
+use Emarsys\Emarsys\{
+    Model\LogScheduleFactory,
+    Model\LogsFactory
+};
 
 /**
  * Class Logs
