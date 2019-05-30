@@ -31,6 +31,7 @@ use Magento\{
 class Subscriber
 {
     const BATCH_SIZE = 1000;
+
     /**
      * @var Api
      */
