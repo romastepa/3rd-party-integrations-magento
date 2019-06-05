@@ -130,28 +130,17 @@ class SubscriberExport extends Action
                     implode(',', $websiteStoreIds),
                     false
                 );
-                if (!empty($subscriberCollection)) {
+                if ($subscriberCollection->getSize()) {
                     $cronJobScheduled = false;
                     $cronJobName = '';
 
-                    if (count($subscriberCollection) <= self::MAX_SUBSCRIBERS_RECORDS) {
-                        //export subscribers through API
-                        $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API, $storeId);
-                        if (!$isCronjobScheduled) {
-                            //no cron job scheduled yet, schedule a new cron job
-                            $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API, $storeId);
-                            $cronJobScheduled = true;
-                            $cronJobName = EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API;
-                        }
-                    } else {
-                        //export subscribers through WebDav
-                        $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_WEBDAV, $storeId);
-                        if (!$isCronjobScheduled) {
-                            //no cron job scheduled yet, schedule a new cron job
-                            $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_WEBDAV, $storeId);
-                            $cronJobScheduled = true;
-                            $cronJobName = EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_WEBDAV;
-                        }
+                    //export subscribers through API
+                    $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API, $storeId);
+                    if (!$isCronjobScheduled) {
+                        //no cron job scheduled yet, schedule a new cron job
+                        $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API, $storeId);
+                        $cronJobScheduled = true;
+                        $cronJobName = EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API;
                     }
 
                     if ($cronJobScheduled) {

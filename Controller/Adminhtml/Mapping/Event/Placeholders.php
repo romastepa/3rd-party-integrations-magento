@@ -66,18 +66,12 @@ class Placeholders extends Action
         $resultPage = $this->resultPageFactory->create();
         $magentoEvent = $result = false;
         $this->_setActiveMenu('Emarsys_Emarsys::emarsys_emarsysadminindex7');
-        $mappingId = $this->getRequest()->getParam("mapping_id");
-        $storeId = $this->getRequest()->getParam("store");
-        $eventMapping = $this->emarsysEventMappingCollection->create()
-            ->addFieldToFilter("id", $mappingId)
-            ->addFieldToFilter('store_id', $storeId)
-            ->getFirstItem();
+        $mappingId = $this->getRequest()->getParam('mapping_id');
+        $storeId = $this->getRequest()->getParam('store');
 
-        if ($eventMapping->getId()) {
-            $result = $this->emarsysMagentoEventsCollection->create()
-                ->addFieldToFilter("id", $eventMapping->getMagentoEventId())
-                ->getFirstItem();
-        }
+        $result = $this->emarsysMagentoEventsCollection->create()
+            ->addFieldToFilter('id', $mappingId)
+            ->getFirstItem();
 
         if ($result && $result->getId()) {
             $magentoEvent = $result->getMagentoEvent();

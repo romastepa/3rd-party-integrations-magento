@@ -94,9 +94,10 @@ class Grid extends Extended
         $storeId = (int)$this->getRequest()->getParam('store');
         $eventMappingCollection->getSelect()->joinLeft(
             ['emarsys_event_mapping' => $this->resourceConnection->getTableName('emarsys_event_mapping')],
-            'main_table.id = emarsys_event_mapping.magento_event_id AND store_id = ' . $storeId,
+            'main_table.id = emarsys_event_mapping.magento_event_id',
             ['emarsys_event_id']
         );
+        $eventMappingCollection->addFieldToFilter('store_id', $storeId);
         $eventMappingCollection->setOrder('main_table.id', 'ASC');
 
         $this->setCollection($eventMappingCollection);

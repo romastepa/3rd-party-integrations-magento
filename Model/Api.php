@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
  */
 
 namespace Emarsys\Emarsys\Model;
@@ -63,7 +63,7 @@ class Api extends \Magento\Framework\HTTP\ZendClient
             'Content-Type' => 'application/json',
             'Accept-encoding' => 'utf-8',
             'X-WSSE' => $this->_getWSSEHeader(),
-            'Extension-Version' => '1.0.12+easyspirit',
+            'Extension-Version' => '1.0.12+blauer',
         ]);
         $response = [];
         try {

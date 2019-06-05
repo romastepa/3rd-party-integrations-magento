@@ -11,7 +11,7 @@ namespace Emarsys\Emarsys\Model\ResourceModel;
  * Class Emarsyseventmapping
  * @package Emarsys\Emarsys\Model\ResourceModel
  */
-class  Emarsyseventmapping extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
+class Emarsyseventmapping extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 {
     /**
      * @var \Magento\Store\Api\StoreRepositoryInterface
@@ -65,6 +65,9 @@ class  Emarsyseventmapping extends \Magento\Framework\Model\ResourceModel\Db\Abs
      */
     public function truncateMappingTable($storeId)
     {
-        $this->getConnection()->delete($this->getMainTable(), $this->getConnection()->quoteInto('store_id = ?', $storeId));
+        $this->getConnection()->delete(
+            $this->getMainTable(),
+            $this->getConnection()->quoteInto('store_id = ?', $storeId)
+        );
     }
 }

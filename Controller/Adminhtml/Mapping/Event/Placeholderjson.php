@@ -88,7 +88,7 @@ class Placeholderjson extends Action
         $magentoEventName = $emarsysMagentoEventsColl[0]['magento_event'];
 
         if (!$emarsysEventPlaceholderMappingColl->getSize()) {
-            $this->EmarsysHelper->insertFirstimeMappingPlaceholders($mappingID, $storeId);
+            $this->EmarsysHelper->insertFirstTimeMappingPlaceholders($mappingID, $storeId);
         }
         $emarsysEventPlaceholderMappingColl = $this->emarsysEventPlaceholderMappingFactory->create()->getCollection();
         $emarsysEventPlaceholderMappingColl->addFieldToFilter('event_mapping_id', $mappingID);

@@ -1,0 +1,14 @@
+<?php
+/**
+ * @category   Emarsys
+ * @package    Emarsys_Emarsys
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
+ */
+
+/** @var \Emarsys\Emarsys\Block\Success $block */
+?>
+<script type="text/javascript">
+    window.Emarsys = window.Emarsys || {};
+    window.Emarsys.Magento2 = window.Emarsys.Magento2 || {};
+    window.Emarsys.Magento2.orderData = <?php echo $block->getOrderData(); ?>;
+</script>
