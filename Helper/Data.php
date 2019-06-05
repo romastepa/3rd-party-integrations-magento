@@ -6,41 +6,39 @@
  */
 namespace Emarsys\Emarsys\Helper;
 
-use Magento\Framework\App\Helper\Context;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Config\Model\ResourceModel\Config;
-use Magento\Framework\Stdlib\DateTime\Timezone;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Emarsys\Emarsys\Helper\Logs as EmarsysHelperLogs;
-use Magento\Store\Model\StoreManagerInterface;
-use Emarsys\Emarsys\Model\ResourceModel\Customer as ModelResourceModelCustomer;
-use Emarsys\Emarsys\Model\Queue;
-use Magento\Framework\App\ProductMetadataInterface;
-use Emarsys\Emarsys\Model\QueueFactory as EmarsysQueueFactory;
-use Emarsys\Emarsys\Model\ResourceModel\Emarsysmagentoevents\CollectionFactory;
-use Emarsys\Emarsys\Model\PlaceholdersFactory;
-use Emarsys\Emarsys\Controller\Adminhtml\Email\Template;
-use Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as ProductCollectionFactory;
-use Emarsys\Emarsys\Model\EmarsyseventmappingFactory;
-use Emarsys\Emarsys\Model\ResourceModel\Emarsysevents\CollectionFactory as EmarsyseventsCollectionFactory;
-use Emarsys\Emarsys\Model\Api as EmarsysApi;
-use Emarsys\Emarsys\Model\Emarsysevents;
-use Emarsys\Emarsys\Model\ResourceModel\Event as ModelResourceModelEvent;
-use Magento\Email\Model\TemplateFactory as EmailTemplateFactory;
-use Magento\Backend\Model\Session as BackendSession;
-use Emarsys\Emarsys\Model\EmarsyseventsFactory;
-use Emarsys\Emarsys\Model\Api\Api as EmarsysApiApi;
-use Emarsys\Emarsys\Model\Logs as EmarsysModelLogs;
-use Magento\Store\Model\ResourceModel\Store\CollectionFactory as StoreCollectionFactory;
-use Magento\Framework\Module\ModuleListInterface;
-use Magento\Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory;
-use Magento\Newsletter\Model\Subscriber;
-use Magento\Newsletter\Model\SubscriberFactory;
-use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\Io\File as FilesystemIoFile;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Framework\Filesystem\Io\Ftp;
+use Magento\{
+    Framework\App\Helper\Context,
+    Framework\Stdlib\DateTime\DateTime,
+    Framework\Stdlib\DateTime\Timezone,
+    Store\Model\StoreManagerInterface,
+    Framework\App\ProductMetadataInterface,
+    Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as ProductCollectionFactory,
+    Email\Model\TemplateFactory as EmailTemplateFactory,
+    Backend\Model\Session as BackendSession,
+    Store\Model\ResourceModel\Store\CollectionFactory as StoreCollectionFactory,
+    Framework\Module\ModuleListInterface,
+    Newsletter\Model\ResourceModel\Subscriber\CollectionFactory as SubscriberCollectionFactory,
+    Framework\App\Filesystem\DirectoryList,
+    Framework\Filesystem\Io\File as FilesystemIoFile,
+    Store\Model\ScopeInterface,
+    Framework\Filesystem\Io\Ftp
+};
+use Emarsys\Emarsys\{
+    Helper\Logs as EmarsysHelperLogs,
+    Model\ResourceModel\Customer as ModelResourceModelCustomer,
+    Model\Queue,
+    Model\QueueFactory as EmarsysQueueFactory,
+    Model\ResourceModel\Emarsysmagentoevents\CollectionFactory,
+    Model\PlaceholdersFactory,
+    Controller\Adminhtml\Email\Template,
+    Model\EmarsyseventmappingFactory,
+    Model\ResourceModel\Emarsysevents\CollectionFactory as EmarsyseventsCollectionFactory,
+    Model\Api as EmarsysApi,
+    Model\Emarsysevents,
+    Model\ResourceModel\Event as ModelResourceModelEvent,
+    Model\EmarsyseventsFactory,
+    Model\Api\Api as EmarsysApiApi,
+    Model\Logs as EmarsysModelLogs};
 
 /**
  * Class Data
@@ -49,8 +47,6 @@ use Magento\Framework\Filesystem\Io\Ftp;
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const MODULE_NAME = 'Emarsys_Emarsys';
-
-    const Version = '2.1';
 
     const OPTIN_PRIORITY = 'Emarsys';
 
@@ -92,6 +88,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XPATH_EMARSYS_FTP_USE_PASSIVE_MODE = 'emarsys_settings/ftp_settings/usepassive_mode';
 
     //Contacts Synchronization
+    const XPATH_EMARSYS_ENABLE_CONTACT_FEED = 'contacts_synchronization/enable/contact_feed';
+
     const XPATH_EMARSYS_REALTIME_SYNC = 'contacts_synchronization/emarsys_emarsys/realtime_sync';
 
     const XPATH_EMARSYS_BACKGROUND_RUNTIME = 'contacts_synchronization/emarsys_emarsys/background_runtime';
@@ -105,10 +103,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const XPATH_OPTIN_FORCED_CONFIRMATION = 'opt_in/optin_enable/force_optin_confirmation';
 
+    const XPATH_OPTIN_SUBSCRIPTION_CHECKOUT_PROCESS = 'opt_in/subscription_checkout_process/newsletter_sub_checkout_yes_no';
+
     //Smart Insight
     const XPATH_SMARTINSIGHT_ENABLED = 'smart_insight/smart_insight/smartinsight_enabled';
-
-    const XPATH_SMARTINSIGHT_EXPORT_ORDER_STATUS = 'smart_insight/smart_insight/orderexportforstatus';
 
     const XPATH_SMARTINSIGHT_EXPORTGUEST_CHECKOUTORDERS = 'smart_insight/smart_insight/exportguest_checkoutorders';
 
@@ -178,6 +176,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const ENTITY_EXPORT_MODE_MANUAL = 'Manual';
 
     const EMARSYS_RELEASE_URL = 'about_emarsys/emarsys_release/release_url';
+
+    const CUSTOMER_EMAIL = 'Email';
+
+    const SUBSCRIBER_ID = 'Magento Subscriber ID';
+
+    const CUSTOMER_ID = 'Magento Customer ID';
+
+    const CUSTOMER_UNIQUE_ID = 'Magento Customer Unique ID';
+
+    const OPT_IN = 'Opt-In';
+
+    const BATCH_SIZE = 1000;
 
     /**
      * @var Context
@@ -300,29 +310,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $moduleListInterface;
 
     /**
-     * @var Subscriber
-     */
-    protected $subscriber;
-
-    /**
      * @var SubscriberCollectionFactory
      */
     protected $newsLetterCollectionFactory;
 
     /**
-     * @var SubscriberFactory
-     */
-    protected $subscriberFactory;
-
-    /**
      * @var StoreManagerInterface
      */
     protected $storeManager;
-
-    /**
-     * @var ScopeConfigInterface
-     */
-    protected $scopeConfigInterface;
 
     /**
      * @var
@@ -348,6 +343,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @var Ftp
      */
     protected $ftp;
+
+    /**
+     * @var null
+     */
+    protected $websiteId = null;
 
     /**
      * Data constructor.
@@ -378,8 +378,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param StoreCollectionFactory $storeCollection
      * @param ModuleListInterface $moduleListInterface
      * @param SubscriberCollectionFactory $newsLetterCollectionFactory
-     * @param Subscriber $subscriber
-     * @param SubscriberFactory $subscriberFactory
+     * @param DirectoryList $directoryList
+     * @param FilesystemIoFile $filesystemIoFile
      * @param Ftp $ftp
      */
     public function __construct(
@@ -409,8 +409,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         StoreCollectionFactory $storeCollection,
         ModuleListInterface $moduleListInterface,
         SubscriberCollectionFactory $newsLetterCollectionFactory,
-        Subscriber $subscriber,
-        SubscriberFactory $subscriberFactory,
         DirectoryList $directoryList,
         FilesystemIoFile $filesystemIoFile,
         Ftp $ftp
@@ -425,7 +423,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->customerResourceModel = $customerResourceModel;
         $this->queue = $queueModel;
         $this->queueColl = $queueModelColl;
-        $this->scopeConfigInterface = $context->getScopeConfig();
         $this->magentoEventsCollection = $magentoEventsCollection;
         $this->emarsysEventPlaceholderMappingFactory = $emarsysEventPlaceholderMappingFactory;
         $this->emailTemplate = $emailTemplate;
@@ -442,9 +439,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->modelApi = $modelApi;
         $this->storeCollection = $storeCollection;
         $this->moduleListInterface = $moduleListInterface;
-        $this->subscriber = $subscriber;
         $this->newsLetterCollectionFactory = $newsLetterCollectionFactory;
-        $this->subscriberFactory = $subscriberFactory;
         $this->directoryList = $directoryList;
         $this->filesystemIoFile = $filesystemIoFile;
         $this->ftp = $ftp;
@@ -624,37 +619,34 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @return \Magento\Framework\HTTP\ZendClient
+     * @return EmarsysApi
      */
     public function getClient()
     {
-        $url = $this->_emarsysApiUrl;
-        $username = $this->_username;
-        $password = $this->_secret;
-        $config = [
-            'api_url' => $url,
-            'api_username' => $username,
-            'api_password' => $password,
-        ];
+        $this->modelApi->setParams([
+            'api_url' => $this->_emarsysApiUrl,
+            'api_username' => $this->_username,
+            'api_password' => $this->_secret,
+        ]);
 
-        return $this->modelApi->_construct($config);
+        return $this->modelApi;
     }
 
     /**
      * Get Emarsys API Details
      *
-     * @param type $storeId
+     * @param int $storeId
      */
     public function getEmarsysAPIDetails($storeId)
     {
         $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
         $scope = ScopeInterface::SCOPE_WEBSITES;
-        $username = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_USER, $scope, $websiteId);
-        $password = $this->_secret = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_PASS, $scope, $websiteId);
-        $endpoint = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_ENDPOINT, $scope, $websiteId);
+        $username = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_USER, $scope, $websiteId);
+        $password = $this->_secret = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_PASS, $scope, $websiteId);
+        $endpoint = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_ENDPOINT, $scope, $websiteId);
 
         if ($endpoint == 'custom') {
-            $url = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_CUSTOM_URL, $scope, $websiteId);
+            $url = $this->scopeConfig->getValue(self::XPATH_EMARSYS_CUSTOM_URL, $scope, $websiteId);
             $this->_emarsysApiUrl = rtrim($url, '/') . "/";
         } elseif ($endpoint == 'cdn') {
             $this->_emarsysApiUrl = self::EMARSYS_CDN_API_URL;
@@ -727,6 +719,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             'Created="' . $timestamp . '"',
             'Content-type: application/json;charset="utf-8"',
         ]);
+
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
         $output = curl_exec($ch);
 
         if (curl_error($ch)) {
@@ -744,6 +739,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @param $storeId
+     * @throws \Exception
      */
     public function insertFirstime($storeId)
     {
@@ -753,7 +749,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $magentoEvent->getId();
             $eventMappingModel = $this->emarsysEventMapping->create();
             $eventMappingModel->setMagentoEventId($magentoEvent->getId());
-            $eventMappingModel->setEmarsysEventId('');
+            $eventMappingModel->setEmarsysEventId(0);
             $eventMappingModel->setStoreId($storeId);
             $eventMappingModel->save();
         }
@@ -782,30 +778,24 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param int|null $storeId
      * @param null $logId
+     * @throws \Exception
      */
-    public function importEvents($logId = null)
+    public function importEvents($storeId = null, $logId = null)
     {
         $logsArray['id'] = $logId;
         $logsArray['emarsys_info'] = 'Update Schema';
 
         try {
-            $storeId = "";
-
-            if ($this->session->getStoreId()) {
+            if (!$storeId && $this->session->getStoreId()) {
                 $storeId = $this->session->getStoreId();
             }
             //get emarsys events and store it into array
-            $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
-            $apiEvents = $this->getEvents($storeId, $logId);
+            $eventArray = $this->getEvents($storeId, $logId);
 
-            if (count($apiEvents) == 0) {
+            if (!count($eventArray)) {
                 return;
-            }
-
-            $eventArray = [];
-            foreach ($apiEvents as $key => $value) {
-                $eventArray[$key] = $value;
             }
 
             //Delete unwanted events exist in database
@@ -813,6 +803,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             foreach ($emarsysEvents as $emarsysEvent) {
                 if (!array_key_exists($emarsysEvent->getEventId(), $eventArray)) {
                     $this->eventsResourceModel->deleteEvent($emarsysEvent->getEventId(), $storeId);
+                    $this->eventsResourceModel->deleteEventMapping($emarsysEvent->getId(), $storeId);
                 }
             }
             //Update & create new events found in Emarsys
@@ -840,7 +831,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $logsArray['store_id'] = $storeId;
             $logsArray['message_type'] = 'Error';
             $logsArray['log_action'] = 'True';
-            $logsArray['website_id'] = $websiteId;
+            $logsArray['website_id'] = 0;
             $this->logHelper->logs($logsArray);
 
             return;
@@ -850,26 +841,26 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @param $storeId
      * @param null $logId
-     * @return array|void
+     * @return array
+     * @throws \Exception
      */
-    public function getEvents($storeId, $logId=null)
+    public function getEvents($storeId, $logId = null)
     {
         $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
         $logsArray['id'] = $logId;
         $logsArray['store_id'] = $storeId;
         $logsArray['emarsys_info'] = 'Update Schema';
-
+        $result = [];
         try {
-            $result = [];
             $this->api->setWebsiteId($websiteId);
             $response = $this->api->sendRequest('GET', 'event');
 
-            if ($response['status']==200) {
-                if (!empty($response['body']['data'])) {
+            if ($response['status'] == 200) {
+                if (isset($response['body']['data'])) {
                     foreach ($response['body']['data'] as $item) {
                         $result[$item['id']] = $item['name'];
                     }
-                    $logsArray['description'] = print_r($result,true);
+                    $logsArray['description'] = \Zend_Json::encode($result);
                     $logsArray['action'] = 'Update Schema';
                     $logsArray['message_type'] = 'Success';
                     $logsArray['log_action'] = 'True';
@@ -877,17 +868,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     $this->logHelper->logs($logsArray);
                 }
             } else {
-                $logsArray['description'] = $response['body']['replyText'];
+                $logsArray['description'] = \Zend_Json::encode($response);
                 $logsArray['action'] = 'Update Schema';
                 $logsArray['message_type'] = 'Error';
                 $logsArray['log_action'] = 'True';
                 $logsArray['website_id'] = $websiteId;
                 $this->logHelper->logs($logsArray);
-
-                return;
             }
-
-            return $result;
         } catch (\Exception $e) {
             $logsArray['description'] = $e->getMessage();
             $logsArray['action'] = 'Mail Sent';
@@ -897,19 +884,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             $this->logHelper->logs($logsArray);
         }
-    }
 
-    /**
-     * @param $websiteId
-     * @return mixed
-     */
-    public function getContactUniqueField($websiteId)
-    {
-        return $this->scopeConfigInterface->getValue(
-            self::XPATH_EMARSYS_UNIQUE_FIELD,
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
-            $websiteId
-        );
+        return $result;
     }
 
     /**
@@ -1221,9 +1197,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $scope = ScopeInterface::SCOPE_WEBSITES;
 
         if ($scope && $websiteId) {
-            $host = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_FTP_HOSTNAME, $scope, $websiteId);
+            $host = $this->scopeConfig->getValue(self::XPATH_EMARSYS_FTP_HOSTNAME, $scope, $websiteId);
         } else {
-            $host = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_FTP_HOSTNAME);
+            $host = $this->scopeConfig->getValue(self::XPATH_EMARSYS_FTP_HOSTNAME);
         }
 
         $ports = [21, rand(32000, 32500), rand(32000, 32500)];
@@ -1316,7 +1292,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             ->addFieldToFilter('id', $mappingId);
         $magentoEventColl = $this->magentoEventsCollection->create()
             ->addFieldToFilter('id', $emarsysEventMappingColl->getData()[0]['magento_event_id']);
-        $value = $this->scopeConfigInterface->getValue($magentoEventColl->getData()[0]['config_path'], 'default', 0);
+        $value = $this->scopeConfig->getValue($magentoEventColl->getData()[0]['config_path'], 'default', 0);
 
         if ($value == "") {
             return '';
@@ -1417,7 +1393,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $magentoEventColl = $this->magentoEventsCollection->create()
             ->addFieldToFilter('id', $emarsysEventMappingColl->getData()[0]['magento_event_id']);
 
-        $value = $this->scopeConfigInterface->getValue($magentoEventColl->getData()[0]['config_path'], 'store', $storeId);
+        $value = $this->scopeConfig->getValue($magentoEventColl->getData()[0]['config_path'], 'store', $storeId);
 
         if (is_numeric($value)) {
             $emailTemplateModelColl = $this->templateFactory->create()
@@ -1663,7 +1639,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $store_id
      * @return string
      */
-    public function insertFirstimeHeaderMappingPlaceholders($mapping_id, $store_id)
+    public function insertFirstTimeHeaderMappingPlaceholders($mapping_id, $store_id)
     {
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create()
@@ -1681,7 +1657,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->emarsysLogs->addErrorLog(
                 htmlentities($e->getMessage()),
                 $store_id,
-                'insertFirstimeHeaderMappingPlaceholders'
+                'insertFirstTimeHeaderMappingPlaceholders'
             );
         }
     }
@@ -1691,7 +1667,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $store_id
      * @return string
      */
-    public function insertFirstimeFooterMappingPlaceholders($mapping_id, $store_id)
+    public function insertFirstTimeFooterMappingPlaceholders($mapping_id, $store_id)
     {
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create()
@@ -1712,7 +1688,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->emarsysLogs->addErrorLog(
                 htmlentities($e->getMessage()),
                 $store_id,
-                'insertFirstimeFooterMappingPlaceholders'
+                'insertFirstTimeFooterMappingPlaceholders'
             );
         }
     }
@@ -1797,11 +1773,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $smartInsight = false;
 
         if ($websiteId) {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_SMARTINSIGHT_ENABLED, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
+            if ($this->scopeConfig->getValue(self::XPATH_SMARTINSIGHT_ENABLED, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
                 $smartInsight = true;
             }
         } else {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_SMARTINSIGHT_ENABLED)) {
+            if ($this->scopeConfig->getValue(self::XPATH_SMARTINSIGHT_ENABLED)) {
                 $smartInsight = true;
             };
         }
@@ -1815,19 +1791,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getRealTimeSync($websiteId)
     {
-        $realTimeSync = 'Disable';
-
-        if ($websiteId) {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_REALTIME_SYNC, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE, $websiteId)) {
-                $realTimeSync = 'Enable';
-            }
-        } else {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_REALTIME_SYNC)) {
-                $realTimeSync = 'Enable';
-            }
-        }
-
-        return $realTimeSync;
+        return 'Enable';
     }
 
     /**
@@ -1839,11 +1803,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $result = false;
 
         if ($websiteId) {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_ENABLED, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
+            if ($this->scopeConfig->getValue(self::XPATH_EMARSYS_ENABLED, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
                 $result = true;
             }
         } else {
-            if ($this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_ENABLED)) {
+            if ($this->scopeConfig->getValue(self::XPATH_EMARSYS_ENABLED)) {
                 $result = true;
             }
         }
@@ -1862,7 +1826,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create();
             foreach ($magentoEventsCollection as $magentoEvent) {
-                if ($this->scopeConfigInterface->getValue($magentoEvent->getConfigPath(), $storeScope) == $templateId) {
+                if ($this->scopeConfig->getValue($magentoEvent->getConfigPath(), $storeScope) == $templateId) {
                     $event_id = $magentoEvent->getId();
                 }
             }
@@ -1995,9 +1959,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getConfigValue($path, $storeCode, $storeId)
     {
         if ($storeCode == "default") {
-            return $this->scopeConfigInterface->getValue($path, 'default', 0);
+            return $this->scopeConfig->getValue($path, 'default', 0);
         } else {
-            return $this->scopeConfigInterface->getValue($path, $storeCode, $storeId);
+            return $this->scopeConfig->getValue($path, $storeCode, $storeId);
         }
     }
 
@@ -2020,12 +1984,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getFirstStoreId()
     {
-        $firstStoreId = $this->storeManager->getStore()->getId();
-        $listOfStores = $this->storeCollection->create()->addFieldToFilter('store_id', ['neq' => 0]);
-
-        if ($listOfStores) {
-            $firstStoreId = $listOfStores->getFirstItem()->getStoreId();
-        }
+        $stores = $this->storeManager->getStores();
+        $store = current($stores);
+        $firstStoreId = $store->getId();
 
         return $firstStoreId;
     }
@@ -2036,13 +1997,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getFirstStoreIdOfWebsite($websiteId)
     {
-        $firstStoreId = $this->storeManager->getStore()->getId();
-        $listOfStores = $this->storeCollection->create()
-            ->addFieldToFilter('website_id', $websiteId)
-            ->addFieldToFilter('store_id', ['neq' => 0]);
+        /** @var \Magento\Store\Api\Data\WebsiteInterface $websiteId */
+        $website = $this->storeManager->getWebsite($websiteId);
 
-        if ($listOfStores) {
-            $firstStoreId = $listOfStores->getFirstItem()->getStoreId();
+        $defaultStore = @$website->getDefaultStore();
+        if ($defaultStore && $defaultStore->getId()) {
+            $firstStoreId = $defaultStore->getId();
+        } else {
+            $stores = $website->getStores();
+            $store = current($stores);
+            $firstStoreId = $store->getId();
         }
 
         return $firstStoreId;
@@ -2051,7 +2015,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @param $templateId
      * @param $storeScope
+     * @param null $storeId
      * @return array
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getMagentoEventIdAndPath($templateId, $storeScope, $storeId = null)
     {
@@ -2061,7 +2027,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $magentoEventsCollection = $this->magentoEventsCollection->create();
 
             foreach ($magentoEventsCollection as $magentoEvent) {
-                if ($this->scopeConfigInterface->getValue($magentoEvent->getConfigPath(), $storeScope, $storeId) == $templateId) {
+                if ($this->scopeConfig->getValue($magentoEvent->getConfigPath(), $storeScope, $storeId) == $templateId) {
                     $event_id = $magentoEvent->getId();
                     $configPath = $magentoEvent->getConfigPath();
                 }
@@ -2095,43 +2061,68 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Checks whether emarsys is enabled or not.
      * @param null $websiteId
-     * @return string
+     * @return boolean
      */
     public function isEmarsysEnabled($websiteId = null)
     {
-        $emarsysEnabled = 'false';
+        $emarsysEnabled = false;
 
         if ($websiteId) {
-            $emarsysUserName = $this->scopeConfigInterface->getValue(
+            $emarsysUserName = $this->scopeConfig->getValue(
                 self::XPATH_EMARSYS_API_USER,
                 \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
                 $websiteId
             );
-            $emarsysPassword = $this->scopeConfigInterface->getValue(
+            $emarsysPassword = $this->scopeConfig->getValue(
                 self::XPATH_EMARSYS_API_PASS,
                 \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
                 $websiteId
             );
-            $emarsysFlag = $this->scopeConfigInterface->getValue(
+            $emarsysFlag = $this->scopeConfig->getValue(
                 self::XPATH_EMARSYS_ENABLED,
                 \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
                 $websiteId
             );
 
             if ($emarsysUserName && $emarsysPassword && $emarsysFlag) {
-                $emarsysEnabled = 'true';
+                $emarsysEnabled = true;
             }
         } else {
-            $emarsysUserName = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_USER);
-            $emarsysPassword = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_API_PASS);
-            $emarsysFlag = $this->scopeConfigInterface->getValue(self::XPATH_EMARSYS_ENABLED);
+            $emarsysUserName = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_USER);
+            $emarsysPassword = $this->scopeConfig->getValue(self::XPATH_EMARSYS_API_PASS);
+            $emarsysFlag = $this->scopeConfig->getValue(self::XPATH_EMARSYS_ENABLED);
 
             if ($emarsysUserName && $emarsysPassword && $emarsysFlag) {
-                $emarsysEnabled = 'true';
+                $emarsysEnabled = true;
             }
         }
 
         return $emarsysEnabled;
+    }
+
+    /**
+     * Checks whether contacts synchronization is enabled or not.
+     *
+     * @param null $websiteId
+     * @return bool
+     */
+    public function isContactsSynchronizationEnable($websiteId = null)
+    {
+        $contactsSynchronization = false;
+
+        if ($this->isEmarsysEnabled($websiteId)) {
+            if ($websiteId) {
+                $contactsSynchronization = $this->scopeConfig->getValue(
+                    self::XPATH_EMARSYS_ENABLE_CONTACT_FEED,
+                    \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
+                    $websiteId
+                );
+            } else {
+                $contactsSynchronization = $this->scopeConfig->getValue(self::XPATH_EMARSYS_ENABLE_CONTACT_FEED);
+            }
+        }
+
+        return (bool)$contactsSynchronization;
     }
 
     /**
@@ -2143,66 +2134,60 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param $subscriber
+     * @param \Magento\Newsletter\Model\Subscriber $subscriber
      */
     public function realtimeTimeBasedOptinSync($subscriber)
     {
         try {
-            $emarsysTime = '';
-            $emarsysDate = '';
-            $scopeId = $this->storeManager->getStore($subscriber->getStoreId())->getWebsiteId();
-            $configkeyId = $this->scopeConfigInterface->getValue(
-                self::XPATH_EMARSYS_UNIQUE_FIELD,
-                \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
-                $scopeId
-            );
+            $fieldId = $this->customerResourceModel->getKeyId(self::OPT_IN, $subscriber->getStoreId());
 
-            $fieldId = $this->customerResourceModel->getEmarsysFieldId('Opt-In', $subscriber->getStoreId());
-
-            if ($configkeyId == 'email') {
-                $keyId = $this->customerResourceModel->getEmarsysFieldId('Email', $subscriber->getStoreId());
-                $keyValue = $subscriber->getSubscriberEmail();
-            } else {
-                $keyId = $keyId = $this->customerResourceModel->getEmarsysFieldId(
-                    'Magento Subscriber ID',
-                    $subscriber->getStoreId()
-                );
-                $keyValue = $subscriber->getSubscriberId();
-            }
             $payload = [
-                'key_id' => $keyId,
-                'key_value' => $keyValue,
-                'field_id' => $fieldId
+                'keyId' => $this->customerResourceModel->getKeyId(self::CUSTOMER_EMAIL, $subscriber->getStoreId()),
+                'keyValues' => [$subscriber->getSubscriberEmail()],
+                'fieldId' => $fieldId,
             ];
-            $this->getEmarsysAPIDetails($subscriber->getStoreId());
-            $this->getClient();
-            $response = $this->modelApi->get('contact/last_change', $payload);
 
-            if (isset($response['data']['time'])) {
-                $emarsysTime = $response['data']['time'];
-                $EmarsysOptinChangeTime = $this->convertToUtc($emarsysTime);
+            $websiteId = $this->storeManager->getStore($subscriber->getStoreId())->getWebsiteId();
+
+            $this->api->setWebsiteId($websiteId);
+            $response = $this->api->sendRequest('POST', 'contact/last_change', $payload);
+
+            if (isset($response['body']['data']['result'][$subscriber->getSubscriberEmail()]['time'])) {
+                $subscriberResponse = $response['body']['data']['result'][$subscriber->getSubscriberEmail()];
+                $emarsysTime = $subscriberResponse['time'];
+                $emarsysOptinChangeTime = $this->convertToUtc($emarsysTime);
                 $magentoOptinChangeTime = $subscriber->getChangeStatusAt();
 
-                if (isset($response['data']['current_value'])) {
-                    $emarsysOptinValue = $response['data']['current_value'];
+                if (isset($subscriberResponse['current_value'])) {
+                    $emarsysOptinValue = $subscriberResponse['current_value'];
                 }
                 $magentoOptinValue = $subscriber->getSubscriberStatus();
 
-                if ((($EmarsysOptinChangeTime == $magentoOptinChangeTime && self::OPTIN_PRIORITY =='Emarsys') || ($EmarsysOptinChangeTime >= $magentoOptinChangeTime)) && $emarsysOptinValue != $magentoOptinValue) {
+                if ($emarsysOptinChangeTime >= $magentoOptinChangeTime && $emarsysOptinValue != $magentoOptinValue) {
                     if ($emarsysOptinValue == 1) {
                         $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED;
                     } elseif ($emarsysOptinValue == 2) {
                         $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_UNSUBSCRIBED;
                     } else {
-                        $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_UNSUBSCRIBED;
+                        $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_NOT_ACTIVE;
                     }
-                    $subscriber->setSubscriberStatus($statusToBeChanged)
-                        ->setEmarsysNoExport(true)
-                        ->save();
+                    if (!in_array($magentoOptinValue, [\Magento\Newsletter\Model\Subscriber::STATUS_NOT_ACTIVE, \Magento\Newsletter\Model\Subscriber::STATUS_UNCONFIRMED])
+                        && !in_array($statusToBeChanged, [\Magento\Newsletter\Model\Subscriber::STATUS_NOT_ACTIVE, \Magento\Newsletter\Model\Subscriber::STATUS_UNCONFIRMED]
+                    )) {
+                        $subscriber->setSubscriberStatus($statusToBeChanged)
+                            ->setEmarsysNoExport(true)
+                            ->save();
+                    }
                 }
+            } elseif (isset($response['status']) && $response['status'] != 200) {
+                $this->addErrorLog(
+                    \Zend_Json::encode($response),
+                    $subscriber->getStoreId(),
+                    'realtimeTimeBasedOptinSync'
+                );
             }
         } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
+            $this->addErrorLog(
                 htmlentities($e->getMessage()),
                 $subscriber->getStoreId(),
                 'realtimeTimeBasedOptinSync'
@@ -2225,7 +2210,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $acst_date = clone $emarsysDate; // we don't want PHP's default pass object by reference here
             $acst_date->setTimeZone(new \DateTimeZone('UTC'));
 
-            return $EmarsysOptinChangeTime = $acst_date->format('Y-m-d H:i:s');  // UTC:  2011-04-27 2:exit;
+            return $emarsysOptinChangeTime = $acst_date->format('Y-m-d H:i:s');  // UTC:  2011-04-27 2:exit;
 
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
@@ -2240,9 +2225,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * Time based optin sync for backgourd type
      *
      * @param $subscriberIdsArray
-     * @param $storeId
      */
-    public function backgroudTimeBasedOptinSync($subscriberIdsArray, $storeId)
+    public function backgroudTimeBasedOptinSync($subscriberIdsArray)
     {
         try {
             $logsArray['job_code'] = 'Backgroud Time Based Optin Sync';
@@ -2252,104 +2236,88 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $logsArray['executed_at'] = $this->date->date('Y-m-d H:i:s', time());
             $logsArray['run_mode'] = 'Automatic';
             $logsArray['auto_log'] = 'Complete';
-            $logsArray['store_id'] = $storeId;
+            $logsArray['store_id'] = 0;
             $logId = $this->logHelper->manualLogs($logsArray);
-            $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
-            $fieldId = $this->customerResourceModel->getEmarsysFieldId('Opt-In', $storeId);
+
             $subscribersCollection = $this->newsLetterCollectionFactory->create()
                 ->addFieldToFilter('subscriber_id', ['in' => $subscriberIdsArray]);
             $magLastModifiedStatus = [];
-            $configkeyId = $this->scopeConfigInterface->getValue(
-                self::XPATH_EMARSYS_UNIQUE_FIELD,
-                \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
-                $websiteId
-            );
-
-            if ($configkeyId == 'email') {
-                $keyId = $this->customerResourceModel->getEmarsysFieldId('Email', $storeId);
-                $keyValue = $subscribersCollection->getColumnValues('subscriber_email');
-
-                foreach ($subscribersCollection as $_subscriber) {
-                    $magLastModifiedStatus[$_subscriber->getSubscriberEmail()] =  [
-                        'change_status_at' => $_subscriber->getChangeStatusAt(),
-                        'subscriber_status' => $_subscriber->getSubscriberStatus()
-                    ];
-                }
-            } else {
-                $keyId = $keyId = $this->customerResourceModel->getEmarsysFieldId('Magento Subscriber ID', $storeId );
-                $keyValue = $subscriberIdsArray;
-
-                foreach ($subscribersCollection as $_subscriber) {
-                    $magLastModifiedStatus[$_subscriber->getSubscriberId()] =  [
-                        'change_status_at' => $_subscriber->getChangeStatusAt(),
-                        'subscriber_status' => $_subscriber->getSubscriberStatus()
-                    ];
-                }
+            foreach ($subscribersCollection as $_subscriber) {
+                $magLastModifiedStatus[$_subscriber->getSubscriberEmail()] = [
+                    'change_status_at' => $_subscriber->getChangeStatusAt(),
+                    'subscriber_status' => $_subscriber->getSubscriberStatus(),
+                    'subscriber_id' => $_subscriber->getId(),
+                ];
             }
 
-            $payload = [
-                'keyId' => $keyId,
-                'keyValues' => $keyValue,
-                'fieldId' => $fieldId
-            ];
-            $this->getEmarsysAPIDetails($storeId);
-            $this->getClient();
-            $response = $this->modelApi->post('contact/last_change', $payload);
+            /** @var \Magento\Store\Model\Website $website */
+            $website = $this->storeManager->getWebsite($this->websiteId);
+            $storeId = current($website->getStoreIds());
 
-            if (isset($response['data']['result'])) {
-                $emarsysSubscribers = $response['data']['result'];
+            $fieldId = $this->customerResourceModel->getKeyId(self::OPT_IN, $storeId);
+            $emailKey = $this->customerResourceModel->getKeyId(self::CUSTOMER_EMAIL, $storeId);
+
+            $payload = [
+                'keyId' => $emailKey,
+                'keyValues' => array_keys($magLastModifiedStatus),
+                'fieldId' => $fieldId,
+            ];
+
+            $this->api->setWebsiteId($this->websiteId);
+            $response = $this->api->sendRequest('POST', 'contact/last_change', $payload);
+            $statuses = [];
+            if (isset($response['body']['data']['result'])) {
+                $emarsysSubscribers = $response['body']['data']['result'];
                 foreach ($emarsysSubscribers as $emarsysSubscriberKey => $emarsysSubscriberValue) {
                     $magentoLastUpdatedTime = $magLastModifiedStatus[$emarsysSubscriberKey]['change_status_at'];
                     $magentoSubscriptionStatus = $magLastModifiedStatus[$emarsysSubscriberKey]['subscriber_status'];
+                    $subscriberId = $magLastModifiedStatus[$emarsysSubscriberKey]['subscriber_id'];
+
                     $currentEmarsysSubcsriptionStatus = $emarsysSubscriberValue['current_value'];
                     $emarsysLastUpdateTime = $this->convertToUtc($emarsysSubscriberValue['time']);
 
-                    if ($currentEmarsysSubcsriptionStatus != $magentoSubscriptionStatus) {
-                        if ($emarsysLastUpdateTime > $magentoLastUpdatedTime || ($emarsysLastUpdateTime == $magentoLastUpdatedTime && self::OPTIN_PRIORITY == 'Emarsys')) {
-                            if ($currentEmarsysSubcsriptionStatus == 1) {
-                                $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED;
-                            } elseif ($currentEmarsysSubcsriptionStatus ==2) {
-                                $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_UNSUBSCRIBED;
-                            } else {
-                                $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_UNSUBSCRIBED;
-                            }
+                    if ($currentEmarsysSubcsriptionStatus == 1) {
+                        $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED;
+                    } elseif ($currentEmarsysSubcsriptionStatus == 2) {
+                        $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_UNSUBSCRIBED;
+                    } else {
+                        $statusToBeChanged = \Magento\Newsletter\Model\Subscriber::STATUS_NOT_ACTIVE;
+                    }
 
-                            if ($configkeyId == 'email') {
-                                $emarsysSubscriber = $this->subscriber->loadByEmail($emarsysSubscriberKey);
-                            } else {
-                                $emarsysSubscriber = $this->subscriber->load($emarsysSubscriberKey);
-                            }
+                    if ($statusToBeChanged != $magentoSubscriptionStatus && $emarsysLastUpdateTime >= $magentoLastUpdatedTime) {
+                        $statuses[$statusToBeChanged][] = $subscriberId;
+                    }
+                }
 
-                            $emarsysSubscriber->setSubscriberStatus($statusToBeChanged)
-                                ->setEmarsysNoExport(true)
-                                ->save();
-
-                            $logsArray['id'] = $logId;
-                            $logsArray['emarsys_info'] = 'Backgroud Time Based Optin Sync Success';
-                            $logsArray['description'] = $emarsysSubscriber->getSubscriberId() . " => Optin Updated to " . $statusToBeChanged;
-                            $logsArray['action'] = 'Backgroud Time Based Optin Sync';
-                            $logsArray['message_type'] = 'Success';
-                            $logsArray['log_action'] = 'True';
-                            $logsArray['website_id'] = $websiteId;
-                            $this->logHelper->logs($logsArray);
-                        }
+                if (!empty($statuses)) {
+                    foreach ($statuses as $status => $subscriberIds) {
+                        $this->customerResourceModel->updateStatusOfSubscribers($status, $subscriberIds);
+                        $logsArray['id'] = $logId;
+                        $logsArray['emarsys_info'] = 'Backgroud Time Based Optin Sync Success';
+                        $logsArray['description'] = 'Status: ' . $status . ' set to: ' . \Zend_Json::encode($subscriberIds);
+                        $logsArray['action'] = 'Backgroud Time Based Optin Sync';
+                        $logsArray['message_type'] = 'Success';
+                        $logsArray['log_action'] = 'True';
+                        $logsArray['website_id'] = $this->websiteId;
+                        $this->logHelper->logs($logsArray);
                     }
                 }
             }
         } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
+            $this->addErrorLog(
                 htmlentities($e->getMessage()),
-                $storeId,
+                0,
                 'backgroudTimeBasedOptinSync'
             );
         }
     }
 
     /**
-     * @param array $websiteIds
+     * @param int $websiteId
      * @param bool $isTimeBased
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function importSubscriptionUpdates(array $websiteIds, $isTimeBased = false)
+    public function importSubscriptionUpdates($websiteId, $isTimeBased = false)
     {
         try {
             $logsArray['job_code'] = 'Sync contact Export';
@@ -2360,35 +2328,39 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $logsArray['executed_at'] = $this->date->date('Y-m-d H:i:s', time());
             $logsArray['run_mode'] = 'Automatic';
             $logsArray['auto_log'] = 'Complete';
-            $logsArray['website_id'] = current($websiteIds);
-            $logsArray['store_id'] = $this->storeManager->getWebsite(current($websiteIds))->getDefaultStore()->getId();
+            $logsArray['website_id'] = $websiteId;
+            $logsArray['store_id'] = 0;
             $logId = $this->logHelper->manualLogs($logsArray);
-            $this->getEmarsysAPIDetails(current($websiteIds));
-            $this->getClient();
+            $logsArray['id'] = $logId;
 
-            if ($this->isEmarsysEnabled(current($websiteIds))) {
+            if ($this->isEmarsysEnabled($websiteId)) {
+                $this->websiteId = $websiteId;
                 $offset = 0;
-                $limit = 100;
+                $limit = 500;
                 do {
-                    $exportId = $this->scopeConfigInterface->getValue(
+                    $exportId = $this->scopeConfig->getValue(
                         'emarsys_suite2/storage/export_id',
                         \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
-                        current($websiteIds)
+                        $this->websiteId
                     );
 
                     $apiCall = sprintf('export/%s/data/offset=%s&limit=%s', $exportId, $offset, $limit);
-                    $mesage = "Request "  . $apiCall;
-                    $response = $this->modelApi->get($apiCall, [], false);
-                    $mesage .= "Response "  . $response;
-
-                    $this->logHelper->childLogs($logId, $mesage, current($websiteIds));
-                    $offset+=$limit;
-                } while ($this->_processSubscriptionUpdates($response, $isTimeBased));
+                    $message = 'Request ' . $apiCall . ' ';
+                    $this->api->setWebsiteId($websiteId);
+                    $response = $this->api->sendRequest('GET', $apiCall);
+                    $message .= "\nResponse: " . (\Zend_Json::encode($response));
+                    $logsArray['messages'] = $message;
+                    $this->logHelper->logs($logsArray);
+                    $offset += $limit;
+                    if (!isset($response['body']) || empty($response['body'])) {
+                        break;
+                    }
+                } while ($this->_processSubscriptionUpdates($response['body'], $isTimeBased));
             }
         } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
+            $this->addErrorLog(
                 $e->getMessage(),
-                $this->storeManager->getWebsite(current($websiteIds))->getDefaultStore()->getId(),
+                0,
                 'importSubscriptionUpdates(helperData)'
             );
         }
@@ -2411,26 +2383,20 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             if (!isset($changedOptinArray) || count($changedOptinArray) <= 1) {
                 return false;
             }
+
+            if (count($changedOptinArray) == 2 && (!isset($changedOptinArray[1][0]) || empty($changedOptinArray[1][0]))) {
+                return false;
+            }
+
             $subscriberIds = [];
 
             foreach ($changedOptinArray as $optIn) {
-                if (isset($optIn['0']) && isset($optIn['1']) && is_numeric($optIn['0'])) {
-                    $userId = $optIn['0'];
-                    $userSubscriberId = $optIn['1'];
-                    $model = $this->subscriberFactory->create()->load($userSubscriberId);
-
-                    if ($userSubscriberId && $model->getId()) {
-                        $subscriberIds[] = $model->getId();
-                        $storeId = $model->getStoreId();
-                    }
-                } else {
-                    if (count($changedOptinArray) <= 2) {
-                        return false;
-                    }
+                if (isset($optIn['1']) && is_numeric($optIn['1'])) {
+                    $subscriberIds[] = $optIn['1'];
                 }
             }
-            if (count($subscriberIds) > 0 && $storeId) {
-                $this->backgroudTimeBasedOptinSync($subscriberIds, $storeId);
+            if (count($subscriberIds) > 0) {
+                $this->backgroudTimeBasedOptinSync($subscriberIds);
             }
 
             return true;
@@ -2457,13 +2423,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getEmarsysLatestVersionInfo()
     {
-        $apiUrl = $this->scopeConfigInterface->getValue('emarsys_settings/ftp_settings/apiurl', 'default', 0);
+        $apiUrl = $this->scopeConfig->getValue('emarsys_settings/ftp_settings/apiurl', 'default', 0);
+
         $ch = curl_init();
-        $timeout = 500;
+
         curl_setopt($ch, CURLOPT_URL, $apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
         $data = curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -2575,19 +2544,27 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * @param int $storeId
+     * @param bool $getAllheaders
      * @return array
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getSalesOrderCsvDefaultHeader($store = 0)
+    public function getSalesOrderCsvDefaultHeader($storeId = 0, $getAllheaders = false)
     {
-        /** @var \Magento\Store\Model\Store $store */
-        $store = $this->storeManager->getStore($store);
+        $header = ['order', 'timestamp', 'customer', 'email', 'item', 'price', 'quantity'];
 
-        $emailAsIdentifierStatus = (bool)$store->getConfig(self::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
-        if ($emailAsIdentifierStatus) {
-            return ['order', 'timestamp', 'email', 'item', 'price', 'quantity'];
-        } else {
-            return ['order', 'timestamp', 'customer', 'item', 'price', 'quantity'];
+        if (!$getAllheaders) {
+            /** @var \Magento\Store\Model\Store $store */
+            $store = $this->storeManager->getStore($storeId);
+            $emailAsIdentifierStatus = (bool)$store->getConfig(self::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
+            if ($emailAsIdentifierStatus) {
+                unset($header[2]);
+            } else {
+                unset($header[3]);
+            }
         }
+
+        return $header;
     }
 
     /**
@@ -2612,6 +2589,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getEmarsysMediaDirectoryPath($folderName)
     {
         return $this->directoryList->getPath(DirectoryList::MEDIA) . '/emarsys/' . $folderName;
+    }
+
+    /**
+     * @param $folderName
+     * @param $csvFilePath
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getEmarsysMediaUrlPath($folderName, $csvFilePath)
+    {
+        return $this->storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA)
+            . 'emarsys/' . $folderName . '/' . basename($csvFilePath);
     }
 
     /**
@@ -2675,5 +2664,47 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
             $websiteId
         );
+    }
+
+    /**
+     * @param $messages
+     * @param $storeId
+     * @param $info
+     */
+    public function addErrorLog($messages, $storeId, $info)
+    {
+        return $this->emarsysLogs->addErrorLog($messages, $storeId, $info);
+    }
+
+    /**
+     * @param string $fileDirectory
+     * @return bool
+     */
+    public function removeFilesInFolder($fileDirectory)
+    {
+        if ($handle = opendir($fileDirectory)) {
+            while (false !== ($file = readdir($handle))) {
+                if ($file == '.' || $file == '..') {
+                    continue;
+                }
+                $filePath = $fileDirectory . '/' . $file;
+                $fileLastModified = filemtime($filePath);
+                if ((time() - $fileLastModified) > 1 * 24 * 3600) {
+                    unlink($filePath);
+                }
+            }
+            closedir($handle);
+        }
+        return true;
+    }
+
+    /**
+     * @param $websiteId
+     * @return $this
+     */
+    public function setWebsiteId($websiteId)
+    {
+        $this->websiteId = $websiteId;
+        return $this;
     }
 }

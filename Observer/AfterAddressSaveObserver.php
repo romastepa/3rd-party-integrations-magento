@@ -11,7 +11,6 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Registry;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\CustomerFactory;
 use Emarsys\Emarsys\Helper\Data;
 use Emarsys\Emarsys\Model\Api\Contact;
@@ -27,7 +26,7 @@ class AfterAddressSaveObserver implements ObserverInterface
     /**
      * @var Data
      */
-    private $dataHelper;
+    private $emarsysHelper;
 
     /**
      * @var Registry
@@ -62,7 +61,7 @@ class AfterAddressSaveObserver implements ObserverInterface
     /**
      * AfterAddressSaveObserver constructor.
      *
-     * @param Data $dataHelper
+     * @param Data $emarsysHelper
      * @param Registry $registry
      * @param Contact $contactModel
      * @param StoreManagerInterface $storeManager
@@ -71,7 +70,7 @@ class AfterAddressSaveObserver implements ObserverInterface
      * @param CustomerFactory $customerFactory
      */
     public function __construct(
-        Data $dataHelper,
+        Data $emarsysHelper,
         Registry $registry,
         Contact $contactModel,
         StoreManagerInterface $storeManager,
@@ -79,7 +78,7 @@ class AfterAddressSaveObserver implements ObserverInterface
         Logs $emarsysLogs,
         CustomerFactory $customerFactory
     ) {
-        $this->dataHelper = $dataHelper;
+        $this->emarsysHelper = $emarsysHelper;
         $this->registry = $registry;
         $this->contactModel = $contactModel;
         $this->storeManager = $storeManager;
@@ -90,6 +89,7 @@ class AfterAddressSaveObserver implements ObserverInterface
 
     /**
      * @param Observer $observer
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute(Observer $observer)
     {
@@ -104,31 +104,24 @@ class AfterAddressSaveObserver implements ObserverInterface
             $defaultBillingId = $customerObj->getDefaultBilling();
             $defaultShippingId = $customerObj->getDefaultShipping();
 
-            if (!in_array($customerAddress->getId(), [$defaultBillingId, $defaultShippingId])) {
-                return;
-            }
-
-            if (!$this->dataHelper->isEmarsysEnabled($websiteId)) {
-                return;
-            }
-
-            $realTimeStatus = $this->customerResourceModel->getDataFromCoreConfig(
-                Data::XPATH_EMARSYS_REALTIME_SYNC,
-                ScopeInterface::SCOPE_WEBSITE,
-                $websiteId
-            );
-
-            $storeId = $customerObj->getStoreId();
-            if ($realTimeStatus) {
-                $customerVar = 'create_customer_variable_' . $customerId;
-                if ($this->registry->registry($customerVar) == 'created') {
+            if (!empty($defaultBillingId) || !empty($defaultShippingId)) {
+                if (!in_array($customerAddress->getId(), [$defaultBillingId, $defaultShippingId])) {
                     return;
                 }
-                $this->contactModel->syncContact($customerId, $websiteId, $storeId);
-                $this->registry->register($customerVar, 'created');
-            } else {
-                $this->dataHelper->syncFail($customerId, $websiteId, $storeId, 0, 1);
             }
+
+            if (!$this->emarsysHelper->isContactsSynchronizationEnable($websiteId)) {
+                return;
+            }
+
+            $storeId = $customerObj->getStoreId();
+
+            $customerVar = 'create_customer_variable_' . $customerId;
+            if ($this->registry->registry($customerVar) == 'created') {
+                return;
+            }
+            $this->contactModel->syncContact($customer, $websiteId, $storeId, 0, $customerAddress);
+            $this->registry->register($customerVar, 'created');
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),

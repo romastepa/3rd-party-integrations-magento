@@ -2,13 +2,21 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 
 namespace Emarsys\Emarsys\Observer;
 
-use Psr\Log\LoggerInterface;
-use Magento\Framework\Event\ObserverInterface;
+use Emarsys\{
+    Emarsys\Helper\Data,
+    Emarsys\Model\Api\Subscriber
+};
+use Magento\{
+    Framework\App\Request\Http,
+    Framework\Event\Observer,
+    Store\Model\StoreManagerInterface,
+    Framework\Event\ObserverInterface
+};
 
 /**
  * Class RealTimeAdminSubscriber
@@ -16,52 +24,66 @@ use Magento\Framework\Event\ObserverInterface;
  */
 class RealTimeAdminSubscriber implements ObserverInterface
 {
-    private $logger;
+    /**
+     * @var Subscriber
+     */
+    protected $subscriberModel;
 
-    protected $customerFactory;
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
 
-    protected $customerResourceModel;
+    /**
+     * @var Data
+     */
+    protected $emarsysHelper;
+
+    /**
+     * @var Http
+     */
+    protected $request;
 
     /**
      * RealTimeAdminSubscriber constructor.
-     * @param LoggerInterface $logger
-     * @param \Magento\Customer\Model\CustomerFactory $customerFactory
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \Emarsys\Emarsys\Model\Api\Subscriber $subscriberModel
-     * @param \Magento\Framework\App\Request\Http $request
-     * @param \Emarsys\Emarsys\Helper\Data $dataHelper
-     * @param \Emarsys\Emarsys\Model\ResourceModel\Customer $customerResourceModel
+     * @param Subscriber $subscriberModel
+     * @param StoreManagerInterface $storeManager
+     * @param Data $emarsysHelper
+     * @param Http $request
      */
     public function __construct(
-        LoggerInterface $logger,
-        \Magento\Customer\Model\CustomerFactory $customerFactory,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Emarsys\Emarsys\Model\Api\Subscriber $subscriberModel,
-        \Magento\Framework\App\Request\Http $request,
-        \Emarsys\Emarsys\Helper\Data $dataHelper,
-        \Emarsys\Emarsys\Model\ResourceModel\Customer $customerResourceModel
+        Subscriber $subscriberModel,
+        StoreManagerInterface $storeManager,
+        Data $emarsysHelper,
+        Http $request
     ) {
-        $this->logger = $logger;
         $this->subscriberModel = $subscriberModel;
-        $this->_storeManager = $storeManager;
-        $this->dataHelper = $dataHelper;
-        $this->customerResourceModel = $customerResourceModel;
-        $this->_request = $request;
-        $this->customerFactory = $customerFactory;
+        $this->storeManager = $storeManager;
+        $this->emarsysHelper = $emarsysHelper;
+        $this->request = $request;
     }
 
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    /**
+     * @param Observer $observer
+     * @throws \Exception
+     */
+    public function execute(Observer $observer)
     {
-        $pageHandle = $this->_request->getFullActionName();
         $subscriberId = $observer->getEvent()->getSubscriber()->getId();
         $storeId = $observer->getEvent()->getSubscriber()->getStoreId();
-        $websiteId = $this->_storeManager->getStore($storeId)->getWebsiteId();
-        $realtimeStatus = $this->customerResourceModel->getDataFromCoreConfig('contacts_synchronization/emarsys_emarsys/realtime_sync', \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE, $websiteId);
+
+        /** @var \Magento\Store\Model\Store $store */
+        $store = $this->storeManager->getStore($storeId);
+        if (!$this->emarsysHelper->isContactsSynchronizationEnable($store->getWebsiteId())) {
+            return;
+        }
+
+        $realtimeStatus = $store->getConfig(Data::XPATH_EMARSYS_REALTIME_SYNC);
         if ($realtimeStatus == 1) {
             $frontendFlag = '';
-            $result = $this->subscriberModel->syncSubscriber($subscriberId, $storeId, $frontendFlag, $pageHandle, $websiteId);
+            $this->subscriberModel->syncSubscriber($subscriberId, $storeId, $frontendFlag);
         } else {
-            $this->dataHelper->syncFail($subscriberId, $websiteId, $storeId, 0, 2);
+            $this->emarsysHelper->syncFail($subscriberId, $store->getWebsiteId(), $storeId, 0, 2);
         }
     }
 }

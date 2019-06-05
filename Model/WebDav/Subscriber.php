@@ -2,26 +2,31 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Model\WebDav;
 
-use Emarsys\Emarsys\Helper\Data;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Backend\App\Action\Context;
-use Magento\Store\Model\StoreManagerInterface;
-use Emarsys\Emarsys\Model\ResourceModel\Customer;
-use Emarsys\Emarsys\Helper\Logs;
-use Magento\Store\Model\ScopeInterface;
+use Magento\{
+    Framework\DataObject,
+    Framework\Stdlib\DateTime\DateTime,
+    Backend\App\Action\Context,
+    Store\Model\StoreManagerInterface,
+    Store\Model\ScopeInterface
+};
+use Emarsys\Emarsys\{
+    Model\ResourceModel\Customer,
+    Helper\Data as EmarsysHelperData,
+    Helper\Logs
+};
 
 /**
  * Class Subscriber
  * @package Emarsys\Emarsys\Model\WebDav
  */
-class Subscriber extends \Magento\Framework\DataObject
+class Subscriber extends DataObject
 {
     /**
-     * @var Data
+     * @var EmarsysHelperData
      */
     protected $emarsysHelper;
 
@@ -52,15 +57,17 @@ class Subscriber extends \Magento\Framework\DataObject
 
     /**
      * Subscriber constructor.
-     * @param Data $emarsysHelper
+     *
+     * @param EmarsysHelperData $emarsysHelper
      * @param Context $context
      * @param DateTime $date
      * @param StoreManagerInterface $storeManager
      * @param Customer $customerResourceModel
      * @param Logs $logsHelper
+     * @param WebDavExport $webDavExport
      */
     public function __construct(
-        Data $emarsysHelper,
+        EmarsysHelperData $emarsysHelper,
         Context $context,
         DateTime $date,
         StoreManagerInterface $storeManager,
@@ -116,18 +123,18 @@ class Subscriber extends \Magento\Framework\DataObject
         if ($optInStatus == 'attribute') {
             $data['subscribeStatus'] = $data['attributevalue'];
         }
-        $emarsysFieldNames = ['Email', 'Magento Subscriber ID', 'Magento Customer Unique ID'];
+        $emarsysFieldNames = [EmarsysHelperData::CUSTOMER_EMAIL, EmarsysHelperData::SUBSCRIBER_ID];
         if ($optInStatus != '') {
-            $emarsysFieldNames[] = 'Opt-In';
+            $emarsysFieldNames[] = EmarsysHelperData::OPT_IN;
         }
 
-        $customervalues = $this->customerResourceModel->getSubscribedCustomerCollection(
+        $customerValues = $this->customerResourceModel->getSubscribedCustomerCollection(
             $data,
             implode(',', $websiteStoreIds),
             1
         );
 
-        if ($customervalues) {
+        if ($customerValues) {
             //webDav credentials from admin configurations
             $webDavCredentials = $this->emarsysHelper->collectWebDavCredentials($scope, $websiteId);
             if ($webDavCredentials && !empty($webDavCredentials)) {
@@ -149,11 +156,11 @@ class Subscriber extends \Magento\Framework\DataObject
                     //write header to subscribers csv
                     fputcsv($handle, $emarsysFieldNames);
 
-                    foreach ($customervalues as $value) {
+                    foreach ($customerValues as $value) {
                         $values = [];
                         $values[] = $value['subscriber_email'];
                         $values[] = $value['subscriber_id'];
-                        $values[] = $value['subscriber_email'] . "#" . $websiteId . "#" . $value['store_id'];
+
                         if ($optInStatus == 'true') {
                             $values[] = '1';
                         } elseif ($optInStatus == 'empty') {
@@ -175,7 +182,9 @@ class Subscriber extends \Magento\Framework\DataObject
                     );
 
                     //remove csv file after export
-                    unlink($filePath);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
 
                     if ($exportStatus['status']) {
                         //Subscriber file uploaded to server successfully

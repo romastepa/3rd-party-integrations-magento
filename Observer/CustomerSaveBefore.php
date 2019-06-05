@@ -2,15 +2,17 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Observer;
 
 use Emarsys\Emarsys\Model\Logs;
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\Registry as Registry;
-use Magento\Customer\Model\CustomerFactory;
+use Magento\{
+    Framework\Event\ObserverInterface,
+    Store\Model\StoreManagerInterface,
+    Framework\Registry as Registry,
+    Customer\Model\CustomerFactory
+};
 
 /**
  * Class CustomerSaveBefore
@@ -43,6 +45,7 @@ class CustomerSaveBefore implements ObserverInterface
      * @param Logs $emarsysLogs
      * @param StoreManagerInterface $storeManager
      * @param Registry $registry
+     * @param CustomerFactory $customerFactory
      */
     public function __construct(
         Logs $emarsysLogs,
@@ -59,15 +62,11 @@ class CustomerSaveBefore implements ObserverInterface
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
         try {
-            $data = $observer->getEvent();
-            $customer = $data->getCustomer();
-            $_customerId = $customer->getId();
-            if (isset($_customerId)) {
-                $customerObj = $this->customerFactory->create()->load($_customerId);
-                $customerEmailSaved = $customerObj->getEmail();
-                $observer->getEvent()->getCustomer()->setOrigData('customer_email', $customerEmailSaved);
+            $customer = $observer->getEvent()->getCustomer();
+            if ($customer->getId()) {
+                $customer->setOrigData('customer_email', $customer->getEmail());
             } else {
-                $observer->getEvent()->getCustomer()->setOrigData('NewCustomerCheck', true);
+                $customer->setOrigData('NewCustomerCheck', true);
             }
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(

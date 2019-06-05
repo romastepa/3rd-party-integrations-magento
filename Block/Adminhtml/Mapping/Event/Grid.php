@@ -5,126 +5,101 @@
  * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
  */
 
-
 namespace Emarsys\Emarsys\Block\Adminhtml\Mapping\Event;
+
+use Magento\Backend\Block\Template\Context;
+use Magento\Backend\Block\Widget\Grid\Extended;
+use Magento\Backend\Model\Session;
+use Magento\Backend\Helper\Data;
+use Emarsys\Emarsys\Model\EmarsysmagentoeventsFactory as EmarsysMagentoEvents;
+use Emarsys\Emarsys\Model\EmarsyseventmappingFactory as EmarsysEventsFactory;
+use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
+use Magento\Framework\App\ResourceConnection;
+use Emarsys\Emarsys\Helper\Logs as EmarsysHelperLogs;
 
 /**
  * Class Grid
  * @package Emarsys\Emarsys\Block\Adminhtml\Mapping\Event
  */
-class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
+class Grid extends Extended
 {
     /**
-     * @var \Magento\Framework\Module\Manager
-     */
-    protected $moduleManager;
-
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\Attribute\Collection
-     */
-    protected $_collection;
-
-    /**
-     * @var \Magento\Backend\Model\Session
+     * @var Session
      */
     protected $session;
 
     /**
-     * @var \Magento\Backend\Helper\Data
+     * @var EmarsysHelper
      */
-    protected $backendHelper;
+    protected $emarsysHelper;
 
     /**
-     * @var \Emarsys\Emarsys\Model\ResourceModel\Event
+     * @var EmarsysEventsFactory
      */
-    protected $resourceModelEvent;
+    protected $emarsysEventsFactory;
 
     /**
-     * @var \Magento\Framework\Data\Collection
+     * @var EmarsysMagentoEvents
      */
-    protected $dataCollection;
+    protected $emarsysMagentoEvents;
 
     /**
-     * @var \Magento\Framework\DataObjectFactory
+     * @var ResourceConnection
      */
-    protected $dataObjectFactory;
+    protected $resourceConnection;
 
     /**
-     * @var \Magento\Eav\Model\Entity\Type
+     * @var EmarsysHelperLogs
      */
-    protected $entityType;
-
-    /**
-     * @var \Magento\Eav\Model\Entity\Attribute
-     */
-    protected $attribute;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $_storeManager;
+    protected $logsHelper;
 
     /**
      * Grid constructor.
-     * @param \Magento\Backend\Block\Template\Context $context
-     * @param \Magento\Backend\Helper\Data $backendHelper
-     * @param \Magento\Eav\Model\Entity\Type $entityType
-     * @param \Magento\Eav\Model\Entity\Attribute $attribute
-     * @param \Magento\Framework\Data\Collection $dataCollection
-     * @param \Magento\Framework\DataObjectFactory $dataObjectFactory
-     * @param \Emarsys\Emarsys\Model\ResourceModel\Event $resourceModelEvent
-     * @param \Emarsys\Emarsys\Model\EmarsyseventmappingFactory $EmarsyseventmappingFactory
-     * @param \Emarsys\Emarsys\Helper\Data $EmarsysHelper
-     * @param \Magento\Framework\Module\Manager $moduleManager
-     * @param \Magento\Framework\App\ResourceConnection $resourceConnection
+     *
+     * @param EmarsysMagentoEvents $emarsysMagentoEvents
+     * @param EmarsysEventsFactory $emarsysEventsFactory
+     * @param EmarsysHelper $emarsysHelper
+     * @param ResourceConnection $resourceConnection
+     * @param EmarsysHelperLogs $logsHelper
+     * @param Context $context
+     * @param Data $backendHelper
      * @param array $data
      */
     public function __construct(
-        \Magento\Backend\Block\Template\Context $context,
-        \Magento\Backend\Helper\Data $backendHelper,
-        \Magento\Eav\Model\Entity\Type $entityType,
-        \Magento\Eav\Model\Entity\Attribute $attribute,
-        \Magento\Framework\Data\Collection $dataCollection,
-        \Magento\Framework\DataObjectFactory $dataObjectFactory,
-        \Emarsys\Emarsys\Model\ResourceModel\Event $resourceModelEvent,
-        \Emarsys\Emarsys\Model\EmarsyseventmappingFactory $EmarsyseventmappingFactory,
-        \Emarsys\Emarsys\Helper\Data $EmarsysHelper,
-        \Magento\Framework\Module\Manager $moduleManager,
-        \Magento\Framework\App\ResourceConnection $resourceConnection,
+        EmarsysMagentoEvents $emarsysMagentoEvents,
+        EmarsyseventsFactory $emarsysEventsFactory,
+        EmarsysHelper $emarsysHelper,
+        ResourceConnection $resourceConnection,
+        EmarsysHelperLogs $logsHelper,
+        Context $context,
+        Data $backendHelper,
         $data = []
     ) {
         $this->session = $context->getBackendSession();
-        $this->entityType = $entityType;
-        $this->attribute = $attribute;
-        $this->moduleManager = $moduleManager;
-        $this->backendHelper = $backendHelper;
-        $this->EmarsyseventmappingFactory = $EmarsyseventmappingFactory;
-        $this->dataCollection = $dataCollection;
-        $this->dataObjectFactory = $dataObjectFactory;
-        $this->resourceModelEvent = $resourceModelEvent;
-        $this->_storeManager = $context->getStoreManager();
-        $this->EmarsysHelper = $EmarsysHelper;
+        $this->emarsysMagentoEvents = $emarsysMagentoEvents;
+        $this->emarsysEventsFactory = $emarsysEventsFactory;
+        $this->emarsysHelper = $emarsysHelper;
         $this->resourceConnection = $resourceConnection;
+        $this->logsHelper = $logsHelper;
         parent::__construct($context, $backendHelper, $data);
     }
 
     /**
-     * @return $this
+     * @return Extended
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     protected function _prepareCollection()
     {
-        $storeId = $this->getRequest()->getParam('store');
-        if (!isset($storeId)) {
-            $storeId = $this->EmarsysHelper->getFirstStoreId();
-        }
-        $EventMappingCollection = $this->EmarsyseventmappingFactory->create()->getCollection()->addFieldToFilter("store_id", $storeId);
-        if (!$EventMappingCollection->getSize()) {
-            $this->EmarsysHelper->insertFirstime($storeId);
-        }
-        $EventMappingCollection = $this->EmarsyseventmappingFactory->create()->getCollection()->addFieldToFilter("store_id", $storeId);
-        $tableName = $this->resourceConnection->getTableName('emarsys_magento_events');
-        $EventMappingCollection->getSelect()->joinLeft(['magento_events' => $tableName], 'main_table.magento_event_id = magento_events.id', ['magento_event']);
-        $this->setCollection($EventMappingCollection);
+        $eventMappingCollection = $this->emarsysMagentoEvents->create()->getCollection();
+        $storeId = (int)$this->getRequest()->getParam('store');
+        $eventMappingCollection->getSelect()->joinLeft(
+            ['emarsys_event_mapping' => $this->resourceConnection->getTableName('emarsys_event_mapping')],
+            'main_table.id = emarsys_event_mapping.magento_event_id AND store_id = ' . $storeId,
+            ['emarsys_event_id']
+        );
+        $eventMappingCollection->setOrder('main_table.id', 'ASC');
+
+        $this->setCollection($eventMappingCollection);
         return parent::_prepareCollection();
     }
 
@@ -136,15 +111,16 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
         parent::_construct();
         $storeId = $this->getRequest()->getParam('store');
         if (!isset($storeId)) {
-            $storeId = $this->EmarsysHelper->getFirstStoreId();
+            $storeId = $this->emarsysHelper->getFirstStoreId();
         }
         $this->session->setData('store', $storeId);
-        $this->session->setMappingGridData('');
-        $collection = $this->EmarsyseventmappingFactory->create()->getCollection()->addFieldToFilter("store_id", $storeId);
+        $this->session->setMappingGridData([]);
+        $collection = $this->emarsysEventsFactory->create()->getCollection()
+            ->addFieldToFilter('store_id', $storeId);
         $mappingGridArray = [];
         foreach ($collection as $col) {
-            $mappingGridArray[$col->getData("id")]['magento_event_id'] = $col->getData('magento_event_id');
-            $mappingGridArray[$col->getData("id")]['emarsys_event_id'] = $col->getData('emarsys_event_id');
+            $mappingGridArray[$col->getData('magento_event_id')]['magento_event_id'] = $col->getData('magento_event_id');
+            $mappingGridArray[$col->getData('magento_event_id')]['emarsys_event_id'] = $col->getData('emarsys_event_id');
         }
         $this->setDefaultSort('id');
         $this->setDefaultDir('ASC');
@@ -153,14 +129,11 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * @return $this
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @return Extended
+     * @throws \Exception
      */
     protected function _prepareColumns()
     {
-
-        $recommended = '';
-
         $this->addColumn(
             'emarsys_event',
             ['header' => __('Magento Event'), 'index' => 'magento_event']
@@ -179,7 +152,6 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
                 'header' => __('Emarsys Event'),
                 'renderer' => 'Emarsys\Emarsys\Block\Adminhtml\Mapping\Event\Renderer\EmarsysEvent',
                 'filter' => false
-
             ]);
         }
 
@@ -195,7 +167,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * @param \Magento\Catalog\Model\Product|\Magento\Framework\DataObject $row
+     * @param $row
      * @return string
      */
     public function getRowUrl($row)

@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Model;
 
@@ -58,7 +58,7 @@ class Template extends \Magento\Email\Model\Template
     }
 
     /**
-     * @return bool
+     * @return \Magento\Sales\Model\Order|null
      */
     public function checkOrder()
     {
@@ -67,7 +67,46 @@ class Template extends \Magento\Email\Model\Template
         if (isset($variables['order'])) {
             return $variables['order'];
         } else {
-            return false;
+            return null;
+        }
+    }
+
+    /**
+     * @return \Magento\Sales\Model\Order\Shipment|null
+     */
+    public function checkShipment()
+    {
+        $variables = $this->_getVars();
+        if (isset($variables['shipment'])) {
+            return $variables['shipment'];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @return \Magento\Sales\Model\Order\Invoice|null
+     */
+    public function checkInvoice()
+    {
+        $variables = $this->_getVars();
+        if (isset($variables['invoice'])) {
+            return $variables['invoice'];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @return \Magento\Rma\Model\Rma|null
+     */
+    public function checkRma()
+    {
+        $variables = $this->_getVars();
+        if (isset($variables['rma'])) {
+            return $variables['rma'];
+        } else {
+            return null;
         }
     }
 
@@ -84,11 +123,11 @@ class Template extends \Magento\Email\Model\Template
         }
 
         $variables = $this->_getVars();
-        if (isset($variables['subscriber'])) {
+        if (isset($variables['subscriber']) && is_object($variables['subscriber'])) {
             $storeId = $variables['subscriber']->getStoreId();
-        } elseif (isset($variables['customer'])) {
+        } elseif (isset($variables['customer']) && is_object($variables['customer'])) {
             $storeId = $variables['customer']->getStoreId();
-        } elseif (isset($variables['order'])) {
+        } elseif (isset($variables['order']) && is_object($variables['order'])) {
             $storeId = $variables['order']->getStoreId();
         }
 

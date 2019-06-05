@@ -25,7 +25,6 @@ use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use Emarsys\Emarsys\Model\ResourceModel\Customer;
 use Emarsys\Emarsys\Model\Api\Contact;
-use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
 use Emarsys\Emarsys\Model\Logs;
 
 /**
@@ -60,11 +59,6 @@ class FormPost extends \Magento\Customer\Controller\Address
     protected $contactModel;
 
     /**
-     * @var EmarsysHelper
-     */
-    protected $dataHelper;
-
-    /**
      * @var Logs
      */
     protected $emarsysLogs;
@@ -87,7 +81,6 @@ class FormPost extends \Magento\Customer\Controller\Address
      * @param StoreManagerInterface $storeManagerInterface
      * @param Customer $customerResourceModel
      * @param Contact $contactModel
-     * @param EmarsysHelper $dataHelper
      * @param Logs $emarsysLogs
      */
     public function __construct(
@@ -107,7 +100,6 @@ class FormPost extends \Magento\Customer\Controller\Address
         StoreManagerInterface $storeManagerInterface,
         Customer $customerResourceModel,
         Contact $contactModel,
-        EmarsysHelper $dataHelper,
         Logs $emarsysLogs
     ) {
         $this->regionFactory = $regionFactory;
@@ -115,7 +107,6 @@ class FormPost extends \Magento\Customer\Controller\Address
         $this->storeManager = $storeManagerInterface;
         $this->customerResourceModel = $customerResourceModel;
         $this->contactModel = $contactModel;
-        $this->dataHelper = $dataHelper;
         $this->emarsysLogs = $emarsysLogs;
         parent::__construct(
             $context,
@@ -267,22 +258,15 @@ class FormPost extends \Magento\Customer\Controller\Address
 
     /**
      * @param $customerId
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function syncContactData($customerId)
     {
         try {
             $storeId = $this->storeManager->getStore()->getStoreId();
             $websiteId = $this->storeManager->getStore()->getWebsiteId();
-            $realtimeStatus = $this->customerResourceModel->getDataFromCoreConfig(
-                'contacts_synchronization/emarsys_emarsys/realtime_sync',
-                \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
-                $websiteId
-            );
-            if ($realtimeStatus == 1) {
-                $this->contactModel->syncContact($customerId, $websiteId, $storeId);
-            } else {
-                $this->dataHelper->syncFail($customerId, $websiteId, $storeId, 0, 1);
-            }
+
+            $this->contactModel->syncContact($customerId, $websiteId, $storeId);
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
                 $e->getMessage(),

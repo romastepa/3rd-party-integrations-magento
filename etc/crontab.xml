@@ -7,13 +7,13 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
-    <group id="default">
+    <group id="emarsys">
         <!-- Customer Related Jobs -->
         <job name="emarsys_initial_db_load" instance="Emarsys\Emarsys\Cron\UploadInitialDb" method="execute">
             <schedule>0 0 30 2 3</schedule>
         </job>
         <job name="emarsys_customer_sync_queue" instance="Emarsys\Emarsys\Cron\CustomerSyncQueue" method="execute">
-            <config_path>crontab/default/jobs/emarsys_customer_sync_queue/schedule/cron_expr</config_path>
+            <config_path>emarsys_customer_sync_queue/schedule/cron_expr</config_path>
         </job>
         <job name="emarsys_customer_bulk_export_webdav" instance="Emarsys\Emarsys\Cron\CustomerBulkExportWebDav" method="execute">
             <schedule>0 0 30 2 3</schedule>
@@ -30,25 +30,25 @@
         </job>
         <!-- catalog Related Jobs -->
         <job name="emarsys_product_sync" instance="Emarsys\Emarsys\Cron\ProductSync" method="execute">
-            <config_path>crontab/default/jobs/emarsys_product_sync/schedule/cron_expr</config_path>
+            <config_path>emarsys_product_sync/schedule/cron_expr</config_path>
         </job>
         <job name="emarsys_catalog_bulk_export" instance="Emarsys\Emarsys\Cron\ProductBulkExport" method="execute">
             <schedule>0 0 30 2 3</schedule>
         </job>
         <!-- SI Related Jobs -->
         <job name="emarsys_smartinsight_sync_queue" instance="Emarsys\Emarsys\Cron\OrderSyncQueue" method="execute">
-            <config_path>crontab/default/jobs/emarsys_smartinsight_sync_queue/schedule/cron_expr</config_path>
+            <config_path>emarsys_smartinsight_sync_queue/schedule/cron_expr</config_path>
         </job>
         <job name="emarsys_smartinsight_bulk_export" instance="Emarsys\Emarsys\Cron\SmartInsightBulkExport" method="execute">
             <schedule>0 0 30 2 3</schedule>
         </job>
         <!-- Emarsys reoptin import Job -->
         <job name="emarsys_reoptin_import" instance="Emarsys\Emarsys\Cron\SyncContactsSubscriptionData" method="execute">
-            <schedule>10 0 * * *</schedule>
+            <schedule>10 */8 * * *</schedule>
         </job>
         <!-- Emarsys Schema check Job -->
         <job name="emarsys_schema_check" instance="Emarsys\Emarsys\Cron\EmarsysSchemaCheck" method="execute">
-            <config_path>crontab/default/jobs/emarsys_schema_check/schedule/cron_expr</config_path>
+            <config_path>emarsys_schema_check/schedule/cron_expr</config_path>
         </job>
         <!-- log tables cleaning Related Job -->
         <job name="emarsys_clean_log" instance="Emarsys\Emarsys\Cron\CleanLog" method="execute">

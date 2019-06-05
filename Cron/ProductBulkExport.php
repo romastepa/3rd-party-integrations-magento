@@ -8,7 +8,6 @@ namespace Emarsys\Emarsys\Cron;
 
 use Emarsys\Emarsys\Model\Product as EmarsysProductModel;
 use Emarsys\Emarsys\Helper\Cron as EmarsysCronHelper;
-use Magento\Framework\Json\Helper\Data as JsonHelper;
 use Emarsys\Emarsys\Model\Logs;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -22,11 +21,6 @@ class ProductBulkExport
      * @var EmarsysCronHelper
      */
     protected $cronHelper;
-
-    /**
-     * @var JsonHelper
-     */
-    protected $jsonHelper;
 
     /**
      * @var EmarsysProductModel
@@ -47,20 +41,17 @@ class ProductBulkExport
      * ProductBulkExport constructor.
      *
      * @param EmarsysCronHelper $cronHelper
-     * @param JsonHelper $jsonHelper
      * @param EmarsysProductModel $emarsysProductModel
      * @param Logs $emarsysLogs
      * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         EmarsysCronHelper $cronHelper,
-        JsonHelper $jsonHelper,
         EmarsysProductModel $emarsysProductModel,
         Logs $emarsysLogs,
         StoreManagerInterface $storeManager
     ) {
         $this->cronHelper = $cronHelper;
-        $this->jsonHelper = $jsonHelper;
         $this->emarsysProductModel =  $emarsysProductModel;
         $this->emarsysLogs = $emarsysLogs;
         $this->storeManager = $storeManager;
@@ -75,7 +66,7 @@ class ProductBulkExport
             );
 
             if ($currentCronInfo) {
-                $data = $this->jsonHelper->jsonDecode($currentCronInfo->getParams());
+                $data = \Zend_Json::decode($currentCronInfo->getParams());
                 $includeBundle = $data['includeBundle'];
                 $excludedCategories = $data['excludeCategories'];
 

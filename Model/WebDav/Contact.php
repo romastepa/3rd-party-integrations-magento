@@ -2,19 +2,23 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Model\WebDav;
 
-use Emarsys\Emarsys\Helper\Data;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Customer\Model\CustomerFactory;
-use Magento\Backend\App\Action\Context;
-use Magento\Store\Model\StoreManagerInterface;
-use Emarsys\Emarsys\Model\ResourceModel\Customer;
-use Emarsys\Emarsys\Helper\Logs;
-use Emarsys\Emarsys\Helper\Country as EmarsysCountryHelper;
-use Magento\Store\Model\ScopeInterface;
+use Magento\{
+    Store\Model\StoreManagerInterface,
+    Store\Model\ScopeInterface,
+    Framework\Stdlib\DateTime\DateTime,
+    Customer\Model\CustomerFactory,
+    Backend\App\Action\Context
+};
+use Emarsys\Emarsys\{
+    Model\ResourceModel\Customer,
+    Helper\Data as EmarsysHelper,
+    Helper\Logs,
+    Helper\Country as EmarsysCountryHelper
+};
 
 /**
  * Class Contact
@@ -23,7 +27,7 @@ use Magento\Store\Model\ScopeInterface;
 class Contact extends \Magento\Framework\DataObject
 {
     /**
-     * @var Data
+     * @var EmarsysHelper
      */
     protected $emarsysHelper;
 
@@ -61,10 +65,14 @@ class Contact extends \Magento\Framework\DataObject
      * @var WebDavExport
      */
     protected $webDavExport;
+    /**
+     * @var Context
+     */
+    private $context;
 
     /**
      * Contact constructor.
-     * @param Data $emarsysHelper
+     * @param EmarsysHelper $emarsysHelper
      * @param CustomerFactory $customer
      * @param Context $context
      * @param DateTime $date
@@ -73,9 +81,10 @@ class Contact extends \Magento\Framework\DataObject
      * @param Logs $logsHelper
      * @param EmarsysCountryHelper $emarsysCountryHelper
      * @param WebDavExport $webDavExport
+     * @param array $data
      */
     public function __construct(
-        Data $emarsysHelper,
+        EmarsysHelper $emarsysHelper,
         CustomerFactory $customer,
         Context $context,
         DateTime $date,
@@ -83,7 +92,8 @@ class Contact extends \Magento\Framework\DataObject
         Customer $customerResourceModel,
         Logs $logsHelper,
         EmarsysCountryHelper $emarsysCountryHelper,
-        WebDavExport $webDavExport
+        WebDavExport $webDavExport,
+        array $data = []
     ) {
         $this->emarsysHelper = $emarsysHelper;
         $this->customer = $customer;
@@ -93,12 +103,15 @@ class Contact extends \Magento\Framework\DataObject
         $this->date = $date;
         $this->emarsysCountryHelper = $emarsysCountryHelper;
         $this->webDavExport = $webDavExport;
+        $this->context = $context;
+        parent::__construct($data);
     }
 
     /**
      * @param $data
      * @param null $logId
      * @return bool
+     * @throws \Exception
      */
     public function exportCustomerDataWebDav($data, $logId = null)
     {
@@ -136,7 +149,6 @@ class Contact extends \Magento\Framework\DataObject
         //get customer collection for the store
         $customerCollection = $this->customerResourceModel->getCustomerCollection($data, $storeId);
         if ($customerCollection) {
-
             //webDav credentials from admin configurations
             $webDavCredentials = $this->emarsysHelper->collectWebDavCredentials($scope, $websiteId);
             if ($webDavCredentials && !empty($webDavCredentials)) {
@@ -157,23 +169,20 @@ class Contact extends \Magento\Framework\DataObject
                         $headerIndex = [];
                         $indexCount = 0;
                         foreach ($mappedAttributes as $att) {
-                            if ($att['emarsys_contact_field'] == NULL)
+                            if ($att['emarsys_contact_field'] == NULL) {
                                 continue;
-                            $emarsysField = $this->customerResourceModel->getEmarsysFieldNameContact($att, $storeId);
-                            $headers["$att[magento_custom_attribute_id]"] = $emarsysField['name'];
+                            }
+                            $headers[$att['magento_custom_attribute_id']] = $this->customerResourceModel->getEmarsysFieldNameContact($att, $storeId);
                             $headerIndex[$indexCount] = $att['magento_custom_attribute_id'];
                             $indexCount++;
                         }
 
-                        $headers['magento_customer_id'] = 'Magento Customer ID';
+                        $headers['magento_customer_id'] = EmarsysHelper::CUSTOMER_ID;
                         $headerIndex[$indexCount] = 'magento_customer_id';
-                        $headers['magento_customer_unique_id'] = 'Magento Customer Unique ID';
-                        $indexCount = $indexCount + 1;
-                        $headerIndex[$indexCount] = 'magento_customer_unique_id';
                         if (!in_array('Email', $headers)) {
-                            $headers['customer_email'] = 'Customer Email';
+                            $headers['email'] = EmarsysHelper::CUSTOMER_EMAIL;
                             $indexCount = $indexCount + 1;
-                            $headerIndex[$indexCount] = 'customer_email';
+                            $headerIndex[$indexCount] = 'email';
                         }
 
                         $outputFile = $this->emarsysHelper->getCustomerCsvFileName(
@@ -198,13 +207,10 @@ class Contact extends \Magento\Framework\DataObject
                                 $attributeCode = $this->customerResourceModel->getMagentoAttributeCode($key, $storeId);
 
                                 //code for the custom defined attributes in the array starts
-                                if ($value == "Magento Customer ID") {
+                                if ($value == EmarsysHelper::CUSTOMER_ID) {
                                     $index = array_search($key, $headerIndex);
                                     $customerValues[$index] = $customerLoad->getId();
-                                } elseif ($value == "Magento Customer Unique ID") {
-                                    $index = array_search($key, $headerIndex);
-                                    $customerValues[$index] = $customerLoad->getEmail() . "#" . $customerLoad->getWebsiteId() . "#" . $customerLoad->getStoreId();
-                                } elseif ($value == "Customer Email") {
+                                } elseif ($value == EmarsysHelper::CUSTOMER_EMAIL) {
                                     $index = array_search($key, $headerIndex);
                                     $customerValues[$index] = $customerLoad->getEmail();
                                 } elseif ($attributeCode['entity_type_id'] == 1) {
@@ -256,7 +262,9 @@ class Contact extends \Magento\Framework\DataObject
                         );
 
                         //remove csv file after export
-                        unlink($filePath);
+                        if (file_exists($filePath)) {
+                            unlink($filePath);
+                        }
 
                         if ($exportStatus['status']) {
                             //customer file uploaded to server successfully

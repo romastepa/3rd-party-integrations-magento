@@ -15,7 +15,7 @@ class CronConfigSchema extends \Magento\Framework\App\Config\Value
     /**
      * Cron string path
      */
-    const CRON_STRING_PATH = 'crontab/default/jobs/emarsys_schema_check/schedule/cron_expr';
+    const CRON_STRING_PATH = 'emarsys_schema_check/schedule/cron_expr';
 
     /**
      * @var \Magento\Framework\App\Config\ValueFactory

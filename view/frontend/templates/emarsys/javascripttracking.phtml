@@ -13,27 +13,22 @@
 <!-- This code will embeded on all pages -->
 <?php if ($customerBy == "customer_id" && $customerId = $block->getCustomerId()): ?>
     <script>ScarabQueue.push(["setCustomerId", "<?php echo $customerId; ?>"]);</script>
-<?php else: ?>
-    <?php if ($customerEmail = $block->getCustomerEmailAddress()): ?>
-        <script>ScarabQueue.push(["setEmail", "<?php echo $customerEmail; ?>"]);</script>
-    <?php endif; ?>
+<?php elseif ($customerEmail = $block->getCustomerEmailAddress()): ?>
+    <script>ScarabQueue.push(["setEmail", "<?php echo $customerEmail; ?>"]);</script>
 <?php endif; ?>
 
 <script>ScarabQueue.push(["cart", [<?php echo $block->getCartItemsJsonData() ?>]]);</script>
 
 <?php
-$triggerGoCommand = true;
 if ($orders = $block->getOrderData()) {
-    foreach ($orders as $orderincrementId => $orderData) {
+    foreach ($orders as $orderIncrementId => $orderData) {
         if (is_array($orderData)) {
             $orderPageData = implode($orderData, ',');
             if (isset($orderPageData)) {
                 echo '<script>ScarabQueue.push(["purchase", {
-                            orderId : "' . $orderincrementId . '",
+                            orderId : "' . $orderIncrementId . '",
                             items : [' . $orderPageData . ']
                         }]);</script>';
-                echo "<script>ScarabQueue.push(['go']);</script>";
-                $triggerGoCommand = false;
             }
         }
     }
@@ -41,7 +36,4 @@ if ($orders = $block->getOrderData()) {
 ?>
 
 <?php echo $this->getChildHtml('emarsys.recommendations'); ?>
-
-<?php if ($triggerGoCommand): ?>
-    <script>ScarabQueue.push(['go']);</script>
-<?php endif; ?>
+<script>ScarabQueue.push(['go']);</script>

@@ -52,6 +52,7 @@ class ControllerActionPredispatchObserver implements ObserverInterface
      * Handle controller_action_predispatch event
      *
      * @param \Magento\Framework\Event\Observer $observer
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
