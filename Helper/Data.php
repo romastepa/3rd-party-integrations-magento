@@ -159,15 +159,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const XPATH_WEBEXTEND_MODE = 'web_extend/javascript_tracking/testmode';
 
-    const XPATH_WEBEXTEND_IDENTITY = 'web_extend/javascript_tracking/identityregistered';
-
     const XPATH_WEBEXTEND_UNIQUE_ID = 'web_extend/javascript_tracking/uniqueidentifier';
 
     const XPATH_WEBEXTEND_USE_BASE_CURRENCY = 'web_extend/javascript_tracking/use_base_currency';
 
     const XPATH_WEBEXTEND_INCLUDE_TAX = 'web_extend/javascript_tracking/tax_included';
-
-    const XPATH_WEBEXTEND_AJAXUPDATE = 'web_extend/javascript_tracking/ajaxupdate';
 
     const ENTITY_EXPORT_MODE_AUTOMATIC = 'Automatic';
 
@@ -446,69 +442,33 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @return mixed
-     */
-    public function isTestModeEnabled()
-    {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_MODE,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getIdentityRegistered()
-    {
-        return $this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_IDENTITY,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getUniqueIdentifier()
-    {
-        return $this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_UNIQUE_ID,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-    }
-
-    /**
+     * @param null|int $storeId
      * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function isUseBaseCurrency()
+    public function getUniqueIdentifier($storeId = null)
     {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_USE_BASE_CURRENCY,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_UNIQUE_ID);
     }
 
     /**
+     * @param null|int $storeId
      * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function isIncludeTax()
+    public function isUseBaseCurrency($storeId = null)
     {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_INCLUDE_TAX,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_USE_BASE_CURRENCY);
     }
 
     /**
+     * @param null|int $storeId
      * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function isAjaxUpdateEnabled()
+    public function isIncludeTax($storeId = null)
     {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_AJAXUPDATE,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_INCLUDE_TAX);
     }
 
     /**

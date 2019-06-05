@@ -20,7 +20,6 @@ use Magento\{
     Store\Model\StoreManagerInterface,
     Framework\App\Config\ScopeConfigInterface
 };
-use Emarsys\Emarsys\Model\Logs as EmarsysModelLog;
 
 /**
  * Class Customer
@@ -49,11 +48,6 @@ class Customer extends AbstractDb
      * @var ScopeConfigInterface
      */
     protected $scopeConfigInterface;
-
-    /**
-     * @var Logs
-     */
-    protected $emarsysLogs;
 
     /**
      * @var \Magento\Customer\Model\Customer
@@ -89,7 +83,6 @@ class Customer extends AbstractDb
      * @param TimezoneInterface $timezoneInterface
      * @param CustomerFactory $customerModel
      * @param CustomerCollectionFactory $customerCollection
-     * @param EmarsysModelLog $emarsysLogs
      * @param StoreManagerInterface $storeManager
      * @param ScopeConfigInterface $scopeConfigInterface
      * @param DateTime|null $dateTime
@@ -102,7 +95,6 @@ class Customer extends AbstractDb
         TimezoneInterface $timezoneInterface,
         CustomerFactory $customerModel,
         CustomerCollectionFactory $customerCollection,
-        EmarsysModelLog $emarsysLogs,
         StoreManagerInterface $storeManager,
         ScopeConfigInterface $scopeConfigInterface,
         DateTime $dateTime = null,
@@ -112,7 +104,6 @@ class Customer extends AbstractDb
         $this->_timezoneInterface = $timezoneInterface;
         $this->attribute = $attribute;
         $this->scopeConfigInterface = $scopeConfigInterface;
-        $this->emarsysLogs = $emarsysLogs;
         $this->customerModel = $customerModel;
         $this->customerCollection = $customerCollection;
         $this->storeManager = $storeManager;
@@ -444,7 +435,7 @@ class Customer extends AbstractDb
             $fromDateUTC = gmdate("Y-m-d H:i:s", strtotime($data['fromDate']));
             date_default_timezone_set($this->_timezoneInterface->getDefaultTimezone());
 
-            $customers->addFieldToFilter('created_at', ['from' => $fromDateUTC]);
+            $customers->addFieldToFilter('updated_at', ['from' => $fromDateUTC]);
         }
 
         if (isset($data['toDate']) && !empty($data['toDate'])) {
@@ -452,7 +443,7 @@ class Customer extends AbstractDb
             $toDateUTC = gmdate("Y-m-d H:i:s", strtotime($data['toDate']));
             date_default_timezone_set($this->_timezoneInterface->getDefaultTimezone());
 
-            $customers->addFieldToFilter('created_at', ['to' => $toDateUTC]);
+            $customers->addFieldToFilter('updated_at', ['to' => $toDateUTC]);
         }
 
         if ($currentPageNumber) {
@@ -526,19 +517,6 @@ class Customer extends AbstractDb
     }
 
     /**
-     * @return array
-     */
-    public function getLogsData()
-    {
-        $select = $this->getConnection()
-            ->select()
-            ->from($this->getTable('emarsys_log_details'), ['created_at', 'description', 'message_type'])
-            ->order('id DESC');
-
-        return $this->getConnection()->fetchAll($select);
-    }
-
-    /**
      *
      * @param type $email
      * @param type $websiteId
@@ -578,69 +556,60 @@ class Customer extends AbstractDb
     public function insertCustomerMageAtts($attributesData, $storeId)
     {
         foreach ($attributesData as $attribute) {
-            try {
-                if ($attribute['frontend_label'] != '') {
-                    if ($attribute['entity_type_id'] == 1) {
-                        $select = $this->getConnection()
-                            ->select()
-                            ->from($this->getTable('emarsys_magento_customer_attributes'), 'id')
-                            ->where('attribute_code = ?', $attribute['attribute_code'])
-                            ->where('entity_type_id = ?', $attribute['entity_type_id'])
-                            ->where('store_id = ?', $storeId);
+            if ($attribute['frontend_label'] != '') {
+                if ($attribute['entity_type_id'] == 1) {
+                    $select = $this->getConnection()
+                        ->select()
+                        ->from($this->getTable('emarsys_magento_customer_attributes'), 'id')
+                        ->where('attribute_code = ?', $attribute['attribute_code'])
+                        ->where('entity_type_id = ?', $attribute['entity_type_id'])
+                        ->where('store_id = ?', $storeId);
 
-                        if (empty($this->getConnection()->fetchOne($select))) {
-                            $this->getConnection()->insert($this->getTable('emarsys_magento_customer_attributes'), [
-                                'attribute_code' => $attribute['attribute_code'],
-                                'attribute_code_custom' => $attribute['attribute_code'],
-                                'frontend_label' => $attribute['frontend_label'],
-                                'entity_type_id' => $attribute['entity_type_id'],
-                                'store_id' => $storeId
-                            ]);
-                        }
-                    } elseif ($attribute['entity_type_id'] == 2) {
-                        // if the attributes are of customer address
-                        $select = $this->getConnection()
-                            ->select()
-                            ->from($this->getTable('emarsys_magento_customer_attributes'), 'id')
-                            ->where('attribute_code_custom = ?', 'default_billing_' . $attribute['attribute_code'])
-                            ->where('entity_type_id = ?', $attribute['entity_type_id'])
-                            ->where('store_id = ?', $storeId);
+                    if (empty($this->getConnection()->fetchOne($select))) {
+                        $this->getConnection()->insert($this->getTable('emarsys_magento_customer_attributes'), [
+                            'attribute_code' => $attribute['attribute_code'],
+                            'attribute_code_custom' => $attribute['attribute_code'],
+                            'frontend_label' => $attribute['frontend_label'],
+                            'entity_type_id' => $attribute['entity_type_id'],
+                            'store_id' => $storeId
+                        ]);
+                    }
+                } elseif ($attribute['entity_type_id'] == 2) {
+                    // if the attributes are of customer address
+                    $select = $this->getConnection()
+                        ->select()
+                        ->from($this->getTable('emarsys_magento_customer_attributes'), 'id')
+                        ->where('attribute_code_custom = ?', 'default_billing_' . $attribute['attribute_code'])
+                        ->where('entity_type_id = ?', $attribute['entity_type_id'])
+                        ->where('store_id = ?', $storeId);
 
-                        if (empty($this->getConnection()->fetchOne($select))) {
-                            $this->getConnection()->insert($this->getTable('emarsys_magento_customer_attributes'), [
-                                'attribute_code' => $attribute['attribute_code'],
-                                'attribute_code_custom' => 'default_billing_' . $attribute['attribute_code'],
-                                'frontend_label' => 'Default Billing ' . $attribute['frontend_label'] . '(' . $attribute['attribute_code'] . ')',
-                                'entity_type_id' => $attribute['entity_type_id'],
-                                'store_id' => $storeId
-                            ]);
-                        }
+                    if (empty($this->getConnection()->fetchOne($select))) {
+                        $this->getConnection()->insert($this->getTable('emarsys_magento_customer_attributes'), [
+                            'attribute_code' => $attribute['attribute_code'],
+                            'attribute_code_custom' => 'default_billing_' . $attribute['attribute_code'],
+                            'frontend_label' => 'Default Billing ' . $attribute['frontend_label'] . '(' . $attribute['attribute_code'] . ')',
+                            'entity_type_id' => $attribute['entity_type_id'],
+                            'store_id' => $storeId
+                        ]);
+                    }
 
-                        $select = $this->getConnection()
-                            ->select()
-                            ->from($this->getTable('emarsys_magento_customer_attributes'), 'id')
-                            ->where('attribute_code_custom = ?', 'default_shipping_' . $attribute['attribute_code'])
-                            ->where('entity_type_id = ?', $attribute['entity_type_id'])
-                            ->where('store_id = ?', $storeId);
+                    $select = $this->getConnection()
+                        ->select()
+                        ->from($this->getTable('emarsys_magento_customer_attributes'), 'id')
+                        ->where('attribute_code_custom = ?', 'default_shipping_' . $attribute['attribute_code'])
+                        ->where('entity_type_id = ?', $attribute['entity_type_id'])
+                        ->where('store_id = ?', $storeId);
 
-                        if (empty($this->getConnection()->fetchOne($select))) {
-                            $this->getConnection()->insert($this->getTable('emarsys_magento_customer_attributes'), [
-                                'attribute_code' => $attribute['attribute_code'],
-                                'attribute_code_custom' => 'default_shipping_' . $attribute['attribute_code'],
-                                'frontend_label' => 'Default Shipping ' . $attribute['frontend_label'] . '(' . $attribute['attribute_code'] . ')',
-                                'entity_type_id' => $attribute['entity_type_id'],
-                                'store_id' => $storeId
-                            ]);
-                        }
+                    if (empty($this->getConnection()->fetchOne($select))) {
+                        $this->getConnection()->insert($this->getTable('emarsys_magento_customer_attributes'), [
+                            'attribute_code' => $attribute['attribute_code'],
+                            'attribute_code_custom' => 'default_shipping_' . $attribute['attribute_code'],
+                            'frontend_label' => 'Default Shipping ' . $attribute['frontend_label'] . '(' . $attribute['attribute_code'] . ')',
+                            'entity_type_id' => $attribute['entity_type_id'],
+                            'store_id' => $storeId
+                        ]);
                     }
                 }
-            } catch (\Exception $e) {
-                $this->emarsysLogs->addErrorLog(
-                    'insertCustomerMageAtts',
-                    $e->getMessage(),
-                    $storeId,
-                    'insertCustomerMageAtts(ResourceModel)'
-                );
             }
         }
     }

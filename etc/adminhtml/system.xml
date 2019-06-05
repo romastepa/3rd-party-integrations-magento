@@ -439,12 +439,6 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <depends><field id="enable_javascript_integration">1</field></depends>
                 </field>
-                <field id="identityregistered" translate="label comment" type="select" sortOrder="40" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Identify Registered Logged In Customer By</label>
-                    <source_model>Emarsys\Emarsys\Model\Config\Source\IdentityRegistered</source_model>
-                    <depends><field id="enable_javascript_integration">1</field></depends>
-                </field>
                 <field id="uniqueidentifier" translate="label comment" type="select" sortOrder="50" showInDefault="1"
                        showInWebsite="1" showInStore="1">
                     <label>Item Unique Identification</label>
@@ -463,13 +457,6 @@
                     <label>Track Prices with Taxes</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Applicable for only purchase command. Enable this parameter if you want to track price with taxes. Please do not change the option after the initial setup</comment>
-                    <depends><field id="enable_javascript_integration">1</field></depends>
-                </field>
-                <field id="ajaxupdate" translate="label comment" type="select" sortOrder="80" showInDefault="1"
-                       showInWebsite="1" showInStore="1">
-                    <label>Use Ajax Update</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Applicable for setEmail, setCustomerId, cart and purchase commands only. Enable Ajax if you have issues with cache.</comment>
                     <depends><field id="enable_javascript_integration">1</field></depends>
                 </field>
             </group>
