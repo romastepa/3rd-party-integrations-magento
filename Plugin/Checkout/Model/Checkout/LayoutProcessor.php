@@ -7,12 +7,15 @@
 
 namespace Emarsys\Emarsys\Plugin\Checkout\Model\Checkout;
 
-use Emarsys\Emarsys\Helper\Data;
+use Emarsys\Emarsys\{
+    Helper\Data,
+    Model\Subscriber
+};
 use Magento\{
     Framework\App\Config\ScopeConfigInterface,
+    Framework\Exception\NoSuchEntityException,
     Store\Model\StoreManagerInterface,
-    Customer\Model\Session,
-    Newsletter\Model\SubscriberFactory
+    Customer\Model\Session
 };
 
 /**
@@ -38,9 +41,9 @@ class LayoutProcessor
     protected $session;
 
     /**
-     * @var SubscriberFactory
+     * @var Subscriber
      */
-    protected $subscriberFactory;
+    protected $subscriber;
 
     /**
      * LayoutProcessor constructor.
@@ -48,27 +51,28 @@ class LayoutProcessor
      * @param ScopeConfigInterface $scopeConfigInterface
      * @param StoreManagerInterface $storeManagerInterface
      * @param Session $session
-     * @param SubscriberFactory $subscriberFactory
+     * @param Subscriber $subscriber
      */
     public function __construct(
         ScopeConfigInterface $scopeConfigInterface,
         StoreManagerInterface $storeManagerInterface,
         Session $session,
-        SubscriberFactory $subscriberFactory
+        Subscriber $subscriber
     ) {
         $this->scopeConfigInterface = $scopeConfigInterface;
         $this->storeManagerInterface = $storeManagerInterface;
         $this->session = $session;
-        $this->subscriberFactory = $subscriberFactory;
+        $this->subscriber = $subscriber;
     }
 
     /**
      * @param \Magento\Checkout\Block\Checkout\LayoutProcessor $processor
      * @param array $jsLayout
      * @return array
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
-    public function afterProcess(\Magento\Checkout\Block\Checkout\LayoutProcessor $processor, $jsLayout) {
+    public function afterProcess(\Magento\Checkout\Block\Checkout\LayoutProcessor $processor, $jsLayout)
+    {
         $store = $this->storeManagerInterface->getStore();
         $newsLetterConfValue = $store->getConfig(Data::XPATH_OPTIN_SUBSCRIPTION_CHECKOUT_PROCESS);
 
@@ -76,19 +80,17 @@ class LayoutProcessor
             return $jsLayout;
         }
 
-        $flag = 0;
+        $subscribed = false;
 
         if ($this->session->isLoggedIn()) {
             $customerEmail = $this->session->getCustomer()->getEmail();
-            $subColl = $this->subscriberFactory->create()->getCollection()
-                ->addFieldToFilter('subscriber_email', $customerEmail)
-                ->addFieldToFilter('subscriber_status', 1);
-            if (count($subColl->getData())) {
-                $flag++;
+            $subColl = $this->subscriber->loadByEmail($customerEmail);
+            if ($subColl->getId()) {
+                $subscribed = true;
             }
         }
 
-        if ((!$this->session->isLoggedIn() || $flag < 1)) {
+        if ((!$this->session->isLoggedIn() || $subscribed)) {
             if (isset($jsLayout['components']['checkout']['children']['steps']['children']['shipping-step']['children']
                 ['shippingAddress']['children']['shipping-address-fieldset']['children'])
             ) {

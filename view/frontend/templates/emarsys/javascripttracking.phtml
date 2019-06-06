@@ -7,33 +7,16 @@
 
 /** @var \Emarsys\Emarsys\Block\JavascriptTracking $block */
 ?>
-<?php $helper = $this->helper('Emarsys\Emarsys\Helper\Data'); ?>
-<?php $customerBy = $helper->getIdentityRegistered(); ?>
-
 <!-- This code will embeded on all pages -->
-<?php if ($customerBy == "customer_id" && $customerId = $block->getCustomerId()): ?>
-    <script>ScarabQueue.push(["setCustomerId", "<?php echo $customerId; ?>"]);</script>
-<?php elseif ($customerEmail = $block->getCustomerEmailAddress()): ?>
+<?php if ($customerEmail = $block->getCustomerEmailAddress()): ?>
     <script>ScarabQueue.push(["setEmail", "<?php echo $customerEmail; ?>"]);</script>
 <?php endif; ?>
 
 <script>ScarabQueue.push(["cart", [<?php echo $block->getCartItemsJsonData() ?>]]);</script>
 
-<?php
-if ($orders = $block->getOrderData()) {
-    foreach ($orders as $orderIncrementId => $orderData) {
-        if (is_array($orderData)) {
-            $orderPageData = implode($orderData, ',');
-            if (isset($orderPageData)) {
-                echo '<script>ScarabQueue.push(["purchase", {
-                            orderId : "' . $orderIncrementId . '",
-                            items : [' . $orderPageData . ']
-                        }]);</script>';
-            }
-        }
-    }
-}
-?>
+<?php if ($orders = $block->getOrderData()): ?>
+<script>ScarabQueue.push(['purchase', <?php echo $orders; ?>]);</script>
+<?php endif; ?>
 
 <?php echo $this->getChildHtml('emarsys.recommendations'); ?>
 <script>ScarabQueue.push(['go']);</script>

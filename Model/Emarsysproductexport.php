@@ -221,18 +221,17 @@ class Emarsysproductexport extends AbstractModel
      * @param int $websiteId
      * @param array $header
      * @param array $processedStores
-     * @param string $merchantId
      * @param array $logsArray
      * @return string
      * @throws \Exception
      */
-    public function saveToCsv($websiteId, $header, $processedStores, $merchantId, $logsArray)
+    public function saveToCsv($websiteId, $header, $processedStores, $logsArray)
     {
         $this->_mapHeader = $header;
         $this->_processedStores = $processedStores;
         $this->_preparedData = [];
 
-        $fileDirectory = $this->emarsysHelper->getEmarsysMediaDirectoryPath(ProductModel::ENTITY . '/' . $merchantId);
+        $fileDirectory = $this->emarsysHelper->getEmarsysMediaDirectoryPath(ProductModel::ENTITY . '/' . $websiteId);
         $this->emarsysHelper->checkAndCreateFolder($fileDirectory);
 
         $name = 'products_' . $websiteId . '.csv';

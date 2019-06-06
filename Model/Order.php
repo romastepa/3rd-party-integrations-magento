@@ -826,8 +826,8 @@ class Order extends AbstractModel
 
         $guestOrderExportStatus = $store->getConfig(EmarsysHelper::XPATH_SMARTINSIGHT_EXPORTGUEST_CHECKOUTORDERS);
         $emailAsIdentifierStatus = $store->getConfig(EmarsysHelper::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
-        $taxIncluded = $this->emarsysHelper->isIncludeTax();
-        $useBaseCurrency = $this->emarsysHelper->isUseBaseCurrency();
+        $taxIncluded = $this->emarsysHelper->isIncludeTax($storeId);
+        $useBaseCurrency = $this->emarsysHelper->isUseBaseCurrency($storeId);
 
         if ($sameFile && !$this->handle) {
             $this->handle = fopen($filePath, 'w');

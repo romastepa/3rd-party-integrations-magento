@@ -330,9 +330,10 @@ class Contact
 
     /**
      * Fetch Customer's Mapped Address attributes values
+     *
      * @param $customer
-     * @param $storeId
-     * @param null $customerAddress
+     * @param int $storeId
+     * @param null|\Magento\Customer\Model\Address $customerAddress
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Zend_Json_Exception

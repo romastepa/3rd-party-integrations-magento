@@ -6,17 +6,17 @@
  */
 namespace Emarsys\Emarsys\Block;
 
-use Magento\Framework\View\Element\Template\Context;
-use Emarsys\Emarsys\Model\ResourceModel\Customer;
-use Magento\Checkout\Model\CartFactory;
-use Magento\Sales\Model\OrderFactory;
-use Magento\Framework\App\Request\Http;
-use Magento\Catalog\Model\CategoryFactory;
-use Magento\Catalog\Model\ProductFactory;
-use Magento\Customer\Model\Session as CustomerSession;
 use Emarsys\Emarsys\Helper\Data;
 use Emarsys\Emarsys\Model\Logs;
+use Emarsys\Emarsys\Model\ResourceModel\Customer;
+use Magento\Catalog\Model\CategoryFactory;
+use Magento\Catalog\Model\ProductFactory;
+use Magento\Checkout\Model\CartFactory;
+use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\Registry;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Sales\Model\OrderFactory;
 use Magento\Sales\Model\ResourceModel\Order\Item\CollectionFactory as OrderItemCollectionFactory;
 use Magento\Store\Model\ScopeInterface;
 
@@ -196,7 +196,7 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
         try {
             $product = $this->coreRegistry->registry('current_product');
             if (isset($product) && $product != '') {
-                $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier();
+                $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier($this->storeManager->getStore()->getId());
 
                 if ($uniqueIdentifier == "product_id") {
                     $productIdentifier = $product->getId();
@@ -304,28 +304,31 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
      * Get Merchant Id from DB
      *
      * @return array
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getMerchantId()
     {
-        return $this->customerResourceModel->getDataFromCoreConfig(
-            Data::XPATH_WEBEXTEND_MERCHANT_ID,
-            ScopeInterface::SCOPE_STORE,
-            $this->storeManager->getStore()->getId()
-        );
+        return $this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_MERCHANT_ID);
     }
 
     /**
      * Get Status of Web Extended Javascript integration from DB
      *
-     * @return array
+     * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getJsEnableStatusForAllPages()
     {
-        return (bool)$this->customerResourceModel->getDataFromCoreConfig(
-            Data::XPATH_WEBEXTEND_JS_TRACKING_ENABLED,
-            ScopeInterface::SCOPE_STORE,
-            $this->storeManager->getStore()->getId()
-        );
+        return (bool)$this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_JS_TRACKING_ENABLED);
+    }
+
+    /**
+     * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function isTestModeEnabled()
+    {
+        return (bool)$this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_MODE);
     }
 
     /**
@@ -385,32 +388,40 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
                             $bundleDiscount += $collPrice['discount_amount'];
                         }
                         if ($taxIncluded) {
-                            $price = $useBaseCurrency? ($item->getBaseRowTotal() + $item->getBaseTaxAmount()) - ($bundleBaseDiscount) : ($item->getRowTotal() + $item->getTaxAmount()) - ($bundleDiscount);
+                            $price = $useBaseCurrency ? ($item->getBaseRowTotal() + $item->getBaseTaxAmount()) - ($bundleBaseDiscount) : ($item->getRowTotal() + $item->getTaxAmount()) - ($bundleDiscount);
                         } else {
-                            $price = $useBaseCurrency? $item->getBaseRowTotal() - $bundleBaseDiscount : $item->getRowTotal() - $bundleDiscount;
+                            $price = $useBaseCurrency ? $item->getBaseRowTotal() - $bundleBaseDiscount : $item->getRowTotal() - $bundleDiscount;
                         }
                     } else {
                         if ($taxIncluded) {
-                            $price = $useBaseCurrency? ($item->getBaseRowTotal()  + $item->getBaseTaxAmount()) - $item->getBaseDiscountAmount() : ($item->getRowTotal() + $item->getTaxAmount()) - $item->getDiscountAmount();
+                            $price = $useBaseCurrency ? ($item->getBaseRowTotal()  + $item->getBaseTaxAmount()) - $item->getBaseDiscountAmount() : ($item->getRowTotal() + $item->getTaxAmount()) - $item->getDiscountAmount();
                         } else {
-                            $price = $useBaseCurrency? $item->getBaseRowTotal() - $item->getBaseDiscountAmount() : $item->getRowTotal() - $item->getDiscountAmount();
+                            $price = $useBaseCurrency ? $item->getBaseRowTotal() - $item->getBaseDiscountAmount() : $item->getRowTotal() - $item->getDiscountAmount();
                         }
                     }
 
-                    $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier();
+                    $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier($this->storeManager->getStore()->getId());
                     if ($uniqueIdentifier == "product_id") {
                         $sku = $item->getProductId();
                     } else {
                         $sku = addslashes($item->getSku());
                     }
-                    $orderData[] = "{item: '" . addslashes($sku) . "', price: $price, quantity: $qty}";
+                    $orderData[] = [
+                        'item' => addslashes($sku),
+                        'price' => $price,
+                        'quantity' => $qty
+                    ];
                 }
-                $result[$order->getIncrementId()] = $orderData;
+                $result[] = [
+                    'orderId' => $order->getIncrementId(),
+                    'items' => $orderData,
+                    'email' => $order->getCustomerEmail(),
+                ];
             }
 
-            if (count($result) > 0) {
+            if (!empty($result)) {
                 $this->customerSession->setWebExtendNewOrderIds([]);
-                return $result;
+                return \Zend_Json::encode($result);
             }
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
@@ -452,8 +463,8 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
                         continue;
                     }
                     $productSku = $this->getLoadProduct($item->getProductId())->getSku();
-                    $price = $useBaseCurrency? $item->getBaseRowTotal() : $item->getRowTotal();
-                    $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier();
+                    $price = $useBaseCurrency ? $item->getBaseRowTotal() : $item->getRowTotal();
+                    $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier($this->storeManager->getStore()->getId());
 
                     if ($uniqueIdentifier == "product_id") {
                         $sku = $item->getProductId();
@@ -516,24 +527,10 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
     public function getLoggedInCustomerEmail()
     {
         $loggedInCustomerEmail = false;
-        try {
-            $customerBy = $this->emarsysHelper->getIdentityRegistered();
 
-            if ($this->customerSession->isLoggedIn()) {
-                $customer = $this->customerSession->getCustomer();
-
-                if ($customerBy == "customer_id") {
-                    $loggedInCustomerEmail = $customer->getEntityId();
-                } else {
-                    $loggedInCustomerEmail = addslashes($customer->getEmail());
-                }
-            }
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
-                $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'getLoggedInCustomerEmail()'
-            );
+        if ($this->customerSession->isLoggedIn()) {
+            $customer = $this->customerSession->getCustomer();
+            $loggedInCustomerEmail = addslashes($customer->getEmail());
         }
 
         return $loggedInCustomerEmail;
@@ -547,9 +544,7 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
     public function getCustomerEmailAddress()
     {
         $customerEmail = false;
-        if ($this->emarsysHelper->getIdentityRegistered() != 'email_address') {
-            return $customerEmail;
-        }
+
         try {
             $sessionEmail = $this->customerSession->getWebExtendCustomerEmail();
 
@@ -574,5 +569,14 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
         }
 
         return $customerEmail;
+    }
+
+    /**
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getStoreSlug()
+    {
+        return $this->storeManager->getStore()->getCode();
     }
 }

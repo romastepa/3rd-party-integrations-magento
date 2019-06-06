@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Helper;
 
@@ -158,8 +158,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XPATH_WEBEXTEND_MERCHANT_ID = 'web_extend/javascript_tracking/merchant_id';
 
     const XPATH_WEBEXTEND_MODE = 'web_extend/javascript_tracking/testmode';
-
-    const XPATH_WEBEXTEND_IDENTITY = 'web_extend/javascript_tracking/identityregistered';
 
     const XPATH_WEBEXTEND_UNIQUE_ID = 'web_extend/javascript_tracking/uniqueidentifier';
 
@@ -457,47 +455,33 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @return mixed
-     */
-    public function getIdentityRegistered()
-    {
-        return $this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_IDENTITY,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getUniqueIdentifier()
-    {
-        return $this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_UNIQUE_ID,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
-    }
-
-    /**
+     * @param null|int $storeId
      * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function isUseBaseCurrency()
+    public function getUniqueIdentifier($storeId = null)
     {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_USE_BASE_CURRENCY,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_UNIQUE_ID);
     }
 
     /**
+     * @param null|int $storeId
      * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function isIncludeTax()
+    public function isUseBaseCurrency($storeId = null)
     {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_INCLUDE_TAX,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_USE_BASE_CURRENCY);
+    }
+
+    /**
+     * @param null|int $storeId
+     * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function isIncludeTax($storeId = null)
+    {
+        return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_INCLUDE_TAX);
     }
 
     /**
