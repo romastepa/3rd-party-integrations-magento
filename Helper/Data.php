@@ -38,7 +38,8 @@ use Emarsys\Emarsys\{
     Model\ResourceModel\Event as ModelResourceModelEvent,
     Model\EmarsyseventsFactory,
     Model\Api\Api as EmarsysApiApi,
-    Model\Logs as EmarsysModelLogs};
+    Model\Logs as EmarsysModelLogs
+};
 
 /**
  * Class Data
@@ -213,7 +214,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $productMetadataInterface;
 
     /**
-     * @var Logs
+     * @var EmarsysHelperLogs
      */
     protected $logHelper;
 
@@ -353,7 +354,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param Context $context
      * @param DateTime $date
      * @param Timezone $timezone
-     * @param Logs $logHelper
+     * @param EmarsysHelperLogs $logHelper
      * @param StoreManagerInterface $storeManager
      * @param ModelResourceModelCustomer $customerResourceModel
      * @param Queue $queueModel
@@ -2359,17 +2360,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     );
 
                     $apiCall = sprintf('export/%s/data/offset=%s&limit=%s', $exportId, $offset, $limit);
-                    $message = 'Request ' . $apiCall . ' ';
                     $this->api->setWebsiteId($websiteId);
                     $response = $this->api->sendRequest('GET', $apiCall);
-                    $message .= "\nResponse: " . (\Zend_Json::encode($response));
+                    $message = 'Request ' . $apiCall . ' ' . "\nResponse: " . (\Zend_Json::encode($response));
                     $logsArray['messages'] = $message;
                     $this->logHelper->logs($logsArray);
                     $offset += $limit;
                     if (!isset($response['body']) || empty($response['body'])) {
                         break;
                     }
-                } while ($this->_processSubscriptionUpdates($response['body'], $isTimeBased));
+                } while ($this->_processSubscriptionUpdates($response['body'], $logsArray, $isTimeBased));
             }
         } catch (\Exception $e) {
             $this->addErrorLog(
@@ -2382,23 +2382,24 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @param $contents
+     * @param array $logsArray
      * @param bool $isTimeBased
      * @return bool
      */
-    protected function _processSubscriptionUpdates($contents, $isTimeBased = false)
+    protected function _processSubscriptionUpdates($contents, $logsArray, $isTimeBased = false)
     {
-        if ($contents) {
+        if (is_string($contents) && !empty($contents)) {
             $lines = explode(PHP_EOL, $contents);
             $changedOptinArray = [];
             foreach ($lines as $line) {
                 $changedOptinArray[] = str_getcsv($line);
             }
 
-            if (!isset($changedOptinArray) || count($changedOptinArray) <= 1) {
-                return false;
-            }
-
-            if (count($changedOptinArray) == 2 && (!isset($changedOptinArray[1][0]) || empty($changedOptinArray[1][0]))) {
+            if ((!isset($changedOptinArray) || count($changedOptinArray) <= 1)
+                || (count($changedOptinArray) == 2 && (!isset($changedOptinArray[1][0]) || empty($changedOptinArray[1][0]))
+            )) {
+                $logsArray['messages'] = 'No opt-in updates';
+                $this->logHelper->logs($logsArray);
                 return false;
             }
 
@@ -2414,6 +2415,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             return true;
+        } else {
+            $logsArray['messages'] = \Zend_Json::encode($contents);
+            $this->logHelper->logs($logsArray);
         }
 
         return false;
