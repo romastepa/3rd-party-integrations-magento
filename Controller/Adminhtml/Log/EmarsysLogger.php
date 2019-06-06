@@ -29,7 +29,7 @@ class EmarsysLogger extends Action
      */
     public function __construct(
         Context $context,
-        Customer $logsResourceModel
+        Logs $logsResourceModel
     ) {
         parent::__construct($context);
         $this->logsResourceModel = $logsResourceModel;
