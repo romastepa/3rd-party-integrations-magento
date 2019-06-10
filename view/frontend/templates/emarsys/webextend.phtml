@@ -81,6 +81,7 @@
                 }
 
                 if (firstOnData) {
+                    var processed = 0;
                     if (data.product) {
                         ScarabQueue.push(['view', data.product.sku]);
                     }
@@ -93,18 +94,22 @@
                         ScarabQueue.push(['searchTerm', data.search.term]);
                     }
 
-                    if (data.order) {
-                        if (data.order.email) {
-                            ScarabQueue.push(['setEmail', data.order.email]);
-                            delete data.order.email;
-                        }
-                        ScarabQueue.push(['purchase', data.order]);
-                    }
-
                     if (data.slug) {
                         ScarabQueue.push(['availabilityZone', data.slug]);
                         ScarabQueue.push(['displayCurrency', data.displayCurrency]);
                         ScarabQueue.push(['language', data.slug]);
+                    }
+
+                    if (data.order) {
+                        jQuery.each(data.order, function() {
+                            if (this.email) {
+                                ScarabQueue.push(['setEmail', this.email]);
+                                delete this.email;
+                            }
+                            ScarabQueue.push(['purchase', this]);
+                            ScarabQueue.push(['go']);
+                            processed = 1;
+                        });
                     }
                 }
 
@@ -121,7 +126,9 @@
                     ]);
                 }
 
-                ScarabQueue.push(['go']);
+                if (!processed) {
+                    ScarabQueue.push(['go']);
+                }
                 firstOnData = false;
             };
 

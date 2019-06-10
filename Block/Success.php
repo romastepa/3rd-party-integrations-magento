@@ -139,7 +139,7 @@ class Success extends Template
             $items[] = [
                 'item' => addslashes($sku),
                 'price' => $price,
-                'quantity' => $qty
+                'quantity' => (int)$qty
             ];
         }
 
