@@ -108,9 +108,11 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
                 ->setBody($body)
                 ->setSubject(html_entity_decode($template->getSubject(), ENT_QUOTES))
                 ->setEmarsysData([
-                    "emarsysPlaceholders" => '',
-                    "emarsysEventId" => '',
-                    "store_id" => $storeId,
+                    'emarsysPlaceholders' => '',
+                    'emarsysEventId' => '',
+                    'templateId' => $templateIdentifier,
+                    'magentoEventId' => '',
+                    'store_id' => $storeId,
                 ]);
             return $this;
         }
@@ -121,9 +123,11 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
                 ->setBody($body)
                 ->setSubject(html_entity_decode($template->getSubject(), ENT_QUOTES))
                 ->setEmarsysData([
-                    "emarsysPlaceholders" => '',
-                    "emarsysEventId" => '',
-                    "store_id" => $storeId,
+                    'emarsysPlaceholders' => '',
+                    'emarsysEventId' => '',
+                    'templateId' => $templateIdentifier,
+                    'magentoEventId' => $magentoEventID,
+                    'store_id' => $storeId,
                 ]);
             return $this;
         }
@@ -230,9 +234,11 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             ->setBody($body)
             ->setSubject(html_entity_decode($template->getSubject(), ENT_QUOTES))
             ->setEmarsysData([
-                "emarsysPlaceholders" => $processedVariables,
-                "emarsysEventId" => $emarsysEventApiID,
-                "store_id" => $storeId,
+                'emarsysPlaceholders' => $processedVariables,
+                'emarsysEventId' => $emarsysEventApiID,
+                'templateId' => $templateIdentifier,
+                'magentoEventId' => $magentoEventID,
+                'store_id' => $storeId,
             ]);
 
         return $this;
