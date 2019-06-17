@@ -11,9 +11,7 @@ use Magento\{
     Framework\App\Helper\Context,
     Cron\Model\Schedule,
     Cron\Model\ScheduleFactory,
-    Framework\App\ObjectManager,
-    Framework\Stdlib\DateTime\DateTime as MagentoDateTime,
-    Framework\Stdlib\DateTime\TimezoneInterface
+    Framework\Stdlib\DateTime\DateTime as MagentoDateTime
 };
 use Emarsys\Emarsys\{
     Model\EmarsysCronDetailsFactory,
@@ -68,11 +66,6 @@ class Cron extends AbstractHelper
     protected $dateTime;
 
     /**
-     * @var TimezoneInterface
-     */
-    private $timezoneConverter;
-
-    /**
      * Cron constructor.
      *
      * @param Context $context
@@ -80,22 +73,19 @@ class Cron extends AbstractHelper
      * @param EmarsysCronDetailsFactory $emarsysCronDetails
      * @param Emarsyslogs $emarsysLogs
      * @param MagentoDateTime $dateTime
-     * @param TimezoneInterface $timezoneConverter
      */
     public function __construct(
         Context $context,
         ScheduleFactory $scheduleFactory,
         EmarsysCronDetailsFactory $emarsysCronDetails,
         Emarsyslogs $emarsysLogs,
-        MagentoDateTime $dateTime,
-        TimezoneInterface $timezoneConverter = null
+        MagentoDateTime $dateTime
     ) {
         parent::__construct($context);
         $this->scheduleFactory = $scheduleFactory;
         $this->emarsysCronDetails = $emarsysCronDetails;
         $this->emarsysLogs = $emarsysLogs;
         $this->dateTime = $dateTime;
-        $this->timezoneConverter = $timezoneConverter ?: ObjectManager::getInstance()->get(TimezoneInterface::class);
     }
 
     /**
@@ -219,15 +209,12 @@ class Cron extends AbstractHelper
             $cron = $this->scheduleFactory->create();
         }
 
-        $time = $this->timezoneConverter->date($this->dateTime->gmtTimestamp())->format('Y-m-d H:i');
-        $time = strtotime($time);
-
         /** @var ScheduleFactory $cron */
         $result = $cron->setJobCode($jobCode)
             ->setCronExpr('* * * * *')
             ->setStatus(Schedule::STATUS_PENDING)
-            ->setCreatedAt(strftime('%Y-%m-%d %H:%M:%S', $time))
-            ->setScheduledAt(strftime('%Y-%m-%d %H:%M', $time + 60));
+            ->setCreatedAt(strftime('%Y-%m-%d %H:%M:%S', time()))
+            ->setScheduledAt(strftime('%Y-%m-%d %H:%M', time() + 60));
 
         $valid = $cron->trySchedule();
 

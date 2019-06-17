@@ -68,9 +68,8 @@ class ProductBulkExport
             if ($currentCronInfo) {
                 $data = \Zend_Json::decode($currentCronInfo->getParams());
                 $includeBundle = $data['includeBundle'];
-                $excludedCategories = $data['excludeCategories'];
 
-                $this->emarsysProductModel->consolidatedCatalogExport(\Emarsys\Emarsys\Helper\Data::ENTITY_EXPORT_MODE_MANUAL, $includeBundle, $excludedCategories);
+                $this->emarsysProductModel->consolidatedCatalogExport(\Emarsys\Emarsys\Helper\Data::ENTITY_EXPORT_MODE_MANUAL, $includeBundle);
             }
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
