@@ -95,13 +95,8 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
 
         $storeId = $template->getEmailStoreId();
         $templateIdentifier = $this->templateIdentifier;
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
 
-        list($magentoEventID, $configPath) = $this->emarsysHelper->getMagentoEventIdAndPath(
-            $templateIdentifier,
-            $storeScope,
-            $storeId
-        );
+        $magentoEventID = $this->emarsysHelper->getMagentoEventId($templateIdentifier, $storeId);
 
         if (!$magentoEventID) {
             $this->message->setMessageType($types[$template->getType()])
@@ -138,22 +133,22 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             $emarsysPlaceholders = $this->emarsysHelper->getPlaceHolders($magentoEventID, $storeId);
         }
 
-        $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($magentoEventID, $storeId);
+        $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($storeId);
         if (!$emarsysHeaderPlaceholders) {
             $this->emarsysHelper->insertFirstTimeHeaderMappingPlaceholders(
                 $magentoEventID,
                 $storeId
             );
-            $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($magentoEventID, $storeId);
+            $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($storeId);
         }
 
-        $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($magentoEventID, $storeId);
+        $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($storeId);
         if (!$emarsysFooterPlaceholders) {
             $this->emarsysHelper->insertFirstTimeFooterMappingPlaceholders(
                 $magentoEventID,
                 $storeId
             );
-            $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($magentoEventID, $storeId);
+            $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($storeId);
         }
 
         $processedVariables = [];
@@ -170,7 +165,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
         /** @var \Magento\Sales\Model\Order\Shipment $shipment */
         if (method_exists($template, 'checkShipment') && ($shipment = $template->checkShipment())) {
             $shipmentData = [];
-            /** @var \Magento\Sales\Model\Order $rmaOrder */
+            /** @var \Magento\Sales\Model\Order $shipmentOrder */
             $shipmentOrder = $shipment->getOrder();
             /** @var \Magento\Sales\Model\Order\Shipment\Item $item */
             foreach ($shipment->getItems() as $item) {

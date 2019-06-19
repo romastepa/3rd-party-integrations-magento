@@ -13,16 +13,17 @@ $storeId = $this->getRequest()->getParam("store");
 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 $emarsysEventmappingCollection = $objectManager->create('\Emarsys\Emarsys\Model\ResourceModel\Emarsyseventmapping\Collection');
 $eventMapping = $emarsysEventmappingCollection
-    ->addFieldToFilter("magento_event_id", $mappingId)
-    ->addFieldToFilter("store_id", $storeId)
+    ->addFieldToFilter('magento_event_id', $mappingId)
+    ->addFieldToFilter('store_id', $storeId)
     ->getFirstItem();
 
 if ($eventMapping->getId()) {
     $emarsysEvent = $objectManager->create('\Emarsys\Emarsys\Model\ResourceModel\Emarsysevents\Collection')
-        ->addFieldToFilter("id", $eventMapping->getEmarsysEventId())
+        ->addFieldToFilter('id', $eventMapping->getEmarsysEventId())
         ->getFirstItem()->getEmarsysEvent();
 }
-$result = $objectManager->create('\Emarsys\Emarsys\Model\ResourceModel\Emarsysmagentoevents\Collection')->addFieldToFilter("id", $mappingId)
+$result = $objectManager->create('\Emarsys\Emarsys\Model\ResourceModel\Emarsysmagentoevents\Collection')
+    ->addFieldToFilter('id', $mappingId)
     ->getFirstItem();
 if ($result && $result->getId()) {
     $magentoEvent = $result->getMagentoEvent();

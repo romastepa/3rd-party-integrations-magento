@@ -163,6 +163,15 @@ class JavascriptTracking extends Template
     }
 
     /**
+     * @return bool
+     * @throws NoSuchEntityException
+     */
+    public function useBaseCurrency()
+    {
+        return (bool)$this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_USE_BASE_CURRENCY);
+    }
+
+    /**
      * Get Tracking Data
      *
      * @return mixed
@@ -280,9 +289,13 @@ class JavascriptTracking extends Template
      */
     public function getExchangeRate()
     {
-        $currentCurrency = $this->storeManager->getStore()->getCurrentCurrency()->getCode();
-        $baseCurrency = $this->storeManager->getStore()->getBaseCurrency()->getCode();
-        return (float)$this->currencyFactory->create()->load($baseCurrency)->getAnyRate($currentCurrency);
+        if ($this->useBaseCurrency()) {
+            return 1;
+        } else {
+            $currentCurrency = $this->storeManager->getStore()->getCurrentCurrency()->getCode();
+            $baseCurrency = $this->storeManager->getStore()->getBaseCurrency()->getCode();
+            return (float)$this->currencyFactory->create()->load($baseCurrency)->getAnyRate($currentCurrency);
+        }
     }
 
     /**
@@ -291,7 +304,11 @@ class JavascriptTracking extends Template
      */
     public function getDisplayCurrency()
     {
-        return $this->storeManager->getStore()->getCurrentCurrency()->getCode();
+        if ($this->useBaseCurrency()) {
+            return $this->storeManager->getStore()->getBaseCurrency()->getCode();
+        } else {
+            return $this->storeManager->getStore()->getCurrentCurrency()->getCode();
+        }
     }
 
     /**

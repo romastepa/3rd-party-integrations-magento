@@ -119,8 +119,8 @@
                         data.cart.items.map(product => {
                             return {
                                 item: product.product_sku,
-                                price: product.product_price_value / data.exchangeRate,
-                                quantity: product.qty
+                                price: (parseFloat(product.product_price_value) / parseFloat(data.exchangeRate)),
+                                quantity: parseInt(product.qty)
                             };
                         })
                     ]);
