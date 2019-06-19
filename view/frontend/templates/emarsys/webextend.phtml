@@ -51,13 +51,13 @@
     <script type="text/javascript">
         window.Emarsys = window.Emarsys || {};
         window.Emarsys.Magento2 = window.Emarsys.Magento2 || {};
-        var data = <?php echo $block->getTrackingData(); ?>;
+        var dataEmarsys = <?php echo $block->getTrackingData(); ?>;
         require([
             'jquery',
             'Magento_Customer/js/customer-data'
         ], function (jQuery, customerData) {
-            data.order = window.Emarsys.Magento2.orderData;
-            data.exchangeRate = data.exchangeRate || 1;
+            dataEmarsys.order = window.Emarsys.Magento2.orderData;
+            dataEmarsys.exchangeRate = dataEmarsys.exchangeRate || 1;
             let firstOnData = true;
             let timeout;
 
@@ -76,32 +76,32 @@
                     timeout = undefined;
                 }
 
-                if (data.customer && data.customer.email) {
-                    ScarabQueue.push(['setEmail', data.customer.email]);
+                if (dataEmarsys.customer && dataEmarsys.customer.email) {
+                    ScarabQueue.push(['setEmail', dataEmarsys.customer.email]);
                 }
 
                 if (firstOnData) {
                     var processed = 0;
-                    if (data.product) {
-                        ScarabQueue.push(['view', data.product.sku]);
+                    if (dataEmarsys.product) {
+                        ScarabQueue.push(['view', dataEmarsys.product.sku]);
                     }
 
-                    if (!data.product && data.category) {
-                        ScarabQueue.push(['category', data.category.names.join(' > ')]);
+                    if (!dataEmarsys.product && dataEmarsys.category) {
+                        ScarabQueue.push(['category', dataEmarsys.category.names.join(' > ')]);
                     }
 
-                    if (data.search) {
-                        ScarabQueue.push(['searchTerm', data.search.term]);
+                    if (dataEmarsys.search) {
+                        ScarabQueue.push(['searchTerm', dataEmarsys.search.term]);
                     }
 
-                    if (data.slug) {
-                        ScarabQueue.push(['availabilityZone', data.slug]);
-                        ScarabQueue.push(['displayCurrency', data.displayCurrency]);
-                        ScarabQueue.push(['language', data.slug]);
+                    if (dataEmarsys.slug) {
+                        ScarabQueue.push(['availabilityZone', dataEmarsys.slug]);
+                        ScarabQueue.push(['displayCurrency', dataEmarsys.displayCurrency]);
+                        ScarabQueue.push(['language', dataEmarsys.slug]);
                     }
 
-                    if (data.order) {
-                        jQuery.each(data.order, function() {
+                    if (dataEmarsys.order) {
+                        jQuery.each(dataEmarsys.order, function() {
                             if (this.email) {
                                 ScarabQueue.push(['setEmail', this.email]);
                                 delete this.email;
@@ -113,13 +113,13 @@
                     }
                 }
 
-                if (data.cart) {
+                if (dataEmarsys.cart) {
                     ScarabQueue.push([
                         'cart',
-                        data.cart.items.map(product => {
+                        dataEmarsys.cart.items.map(product => {
                             return {
                                 item: product.product_sku,
-                                price: (parseFloat(product.product_price_value) / parseFloat(data.exchangeRate)),
+                                price: parseFloat(parseFloat(product.product_price_value / dataEmarsys.exchangeRate).toFixed(2)),
                                 quantity: parseInt(product.qty)
                             };
                         })
@@ -134,12 +134,12 @@
 
 
             customerData.get('customer').subscribe(function (customer) {
-                data.customer = customer;
+                dataEmarsys.customer = customer;
                 if (!timeout) timeout = setTimeout(onData, 0);
             });
 
             customerData.get('cart').subscribe(function (cart) {
-                data.cart = cart;
+                dataEmarsys.cart = cart;
                 if (!timeout) timeout = setTimeout(onData, 0);
             });
 
