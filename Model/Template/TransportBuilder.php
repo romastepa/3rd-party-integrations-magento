@@ -258,7 +258,7 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
     }
 
     /**
-     * @param $item
+     * @param \Magento\Sales\Model\Order\Item $item
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -292,41 +292,43 @@ class TransportBuilder extends \Magento\Framework\Mail\Template\TransportBuilder
             $order['price_line_total'] = $this->_formatPrice($order['qty_ordered'] * $order['price']);
 
             $_product = $item->getProduct();
-            $_product->setStoreId($item->getStoreId());
+            if (is_object($_product)) {
+                $_product->setStoreId($item->getStoreId());
 
-            $base_url = $this->storeManager->getStore($item->getStoreId())->getBaseUrl();
-            $base_url = trim($base_url, '/');
+                $base_url = $this->storeManager->getStore($item->getStoreId())->getBaseUrl();
+                $base_url = trim($base_url, '/');
 
-            /** @var \Magento\Catalog\Helper\Image $helper */
-            try {
-                $url = $this->imageHelper
-                    ->init($_product, 'product_base_image')
-                    ->setImageFile($_product->getImage())
-                    ->getUrl();
-            } catch (\Exception $e) {
-                $url = '';
-            }
+                /** @var \Magento\Catalog\Helper\Image $helper */
+                try {
+                    $url = $this->imageHelper
+                        ->init($_product, 'product_base_image')
+                        ->setImageFile($_product->getImage())
+                        ->getUrl();
+                } catch (\Exception $e) {
+                    $url = '';
+                }
 
-            $order['_external_image_url'] = $url;
+                $order['_external_image_url'] = $url;
 
-            $order['_url'] = $base_url . "/" . $_product->getUrlPath();
-            $order['_url_name'] = $order['product_name'];
-            $order['product_description'] = $_product->getData('description');
-            $order['short_description'] = $_product->getData('short_description');
+                $order['_url'] = $base_url . "/" . $_product->getUrlPath();
+                $order['_url_name'] = $order['product_name'];
+                $order['product_description'] = $_product->getData('description');
+                $order['short_description'] = $_product->getData('short_description');
 
-            $attributes = $_product->getAttributes();
-            $prodData = $_product->getData();
-            foreach ($attributes as $attribute) {
-                if ($attribute->getFrontendInput() != "gallery" && $attribute->getFrontendInput() != 'price') {
-                    if (isset($prodData[$attribute->getAttributeCode()])) {
-                        if (!is_array($prodData[$attribute->getAttributeCode()])
-                            && ($attributeText = $_product->getAttributeText($attribute->getAttributeCode()))
-                        ) {
-                            $text = is_object($attributeText) ? $attributeText->getText() : $attributeText;
-                        } else {
-                            $text = $prodData[$attribute->getAttributeCode()];
+                $attributes = $_product->getAttributes();
+                $prodData = $_product->getData();
+                foreach ($attributes as $attribute) {
+                    if ($attribute->getFrontendInput() != "gallery" && $attribute->getFrontendInput() != 'price') {
+                        if (isset($prodData[$attribute->getAttributeCode()])) {
+                            if (!is_array($prodData[$attribute->getAttributeCode()])
+                                && ($attributeText = $_product->getAttributeText($attribute->getAttributeCode()))
+                            ) {
+                                $text = is_object($attributeText) ? $attributeText->getText() : $attributeText;
+                            } else {
+                                $text = $prodData[$attribute->getAttributeCode()];
+                            }
+                            $order['attribute_' . $attribute->getAttributeCode()] = $text;
                         }
-                        $order['attribute_' . $attribute->getAttributeCode()] = $text;
                     }
                 }
             }
