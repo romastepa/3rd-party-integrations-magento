@@ -1106,7 +1106,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     'status' => true
                 ]
             ],
-            'real_tome_sync' => [
+            'real_time_sync' => [
                 'title' => 'Realtime Synchronization',
                 'condition' => [
                     'sign' => '',
@@ -1606,7 +1606,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $store_id
      * @return string
      */
-    public function insertFirstTimeHeaderMappingPlaceholders($mapping_id, $storeId)
+    public function insertFirstTimeHeaderMappingPlaceholders($storeId)
     {
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create()
@@ -1634,7 +1634,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param $store_id
      * @return string
      */
-    public function insertFirstTimeFooterMappingPlaceholders($mapping_id, $storeId)
+    public function insertFirstTimeFooterMappingPlaceholders($storeId)
     {
         try {
             $magentoEventsCollection = $this->magentoEventsCollection->create()
@@ -2131,6 +2131,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @param $emarsysTime
      * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function convertToUtc($emarsysTime)
     {
@@ -2247,10 +2248,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @param int $websiteId
-     * @param bool $isTimeBased
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function importSubscriptionUpdates($websiteId, $isTimeBased = false)
+    public function importSubscriptionUpdates($websiteId)
     {
         try {
             $logsArray['job_code'] = 'Sync contact Export';
@@ -2288,7 +2288,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     if (!isset($response['body']) || empty($response['body'])) {
                         break;
                     }
-                } while ($this->_processSubscriptionUpdates($response['body'], $isTimeBased));
+                } while ($this->_processSubscriptionUpdates($response['body'], $logsArray));
             }
         } catch (\Exception $e) {
             $this->addErrorLog(
@@ -2300,24 +2300,24 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param $contents
-     * @param bool $isTimeBased
+     * @param string $contents
+     * @param array $logsArray
      * @return bool
      */
-    protected function _processSubscriptionUpdates($contents, $isTimeBased = false)
+    protected function _processSubscriptionUpdates($contents, $logsArray)
     {
-        if ($contents) {
+        if (is_string($contents) && !empty($contents)) {
             $lines = explode(PHP_EOL, $contents);
             $changedOptinArray = [];
             foreach ($lines as $line) {
                 $changedOptinArray[] = str_getcsv($line);
             }
 
-            if (!isset($changedOptinArray) || count($changedOptinArray) <= 1) {
-                return false;
-            }
-
-            if (count($changedOptinArray) == 2 && (!isset($changedOptinArray[1][0]) || empty($changedOptinArray[1][0]))) {
+            if ((!isset($changedOptinArray) || count($changedOptinArray) <= 1)
+                || (count($changedOptinArray) == 2 && (!isset($changedOptinArray[1][0]) || empty($changedOptinArray[1][0]))
+            )) {
+                $logsArray['messages'] = 'No opt-in updates';
+                $this->logHelper->logs($logsArray);
                 return false;
             }
 
@@ -2333,6 +2333,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             return true;
+        } else {
+            $logsArray['messages'] = \Zend_Json::encode($contents);
+            $this->logHelper->logs($logsArray);
         }
 
         return false;
@@ -2340,6 +2343,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @return mixed
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getBaseUrl()
     {
@@ -2424,6 +2428,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @param mixed $store
      * @return bool
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function checkFtpConnectionByStore($store)
     {
@@ -2503,6 +2508,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @param $folderName
      * @return bool
+     * @throws \Exception
      */
     public function checkAndCreateFolder($folderName)
     {
@@ -2518,6 +2524,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @param $folderName
      * @return string
+     * @throws \Magento\Framework\Exception\FileSystemException
      */
     public function getEmarsysMediaDirectoryPath($folderName)
     {
