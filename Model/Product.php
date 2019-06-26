@@ -253,7 +253,7 @@ class Product extends AbstractModel
      * @return bool
      * @throws \Exception
      */
-    public function consolidatedCatalogExport($mode = EmarsysHelper::ENTITY_EXPORT_MODE_AUTOMATIC, $includeBundle = null, $excludedCategories = null)
+    public function consolidatedCatalogExport($mode = EmarsysHelper::ENTITY_EXPORT_MODE_AUTOMATIC, $includeBundle = null)
     {
         set_time_limit(0);
 
@@ -306,10 +306,9 @@ class Product extends AbstractModel
                         $defaultStoreID = $store['store']->getWebsite()->getDefaultStore()->getId();
                     }
 
-                    if (is_null($excludedCategories)) {
-                        $excludedCategories = $store['store']->getConfig(EmarsysHelper::XPATH_PREDICT_EXCLUDED_CATEGORIES);
-                    }
-                    if ($excludedCategories) {
+                    $excludedCategories = $store['store']->getConfig(EmarsysHelper::XPATH_PREDICT_EXCLUDED_CATEGORIES);
+
+                    if (!empty($excludedCategories)) {
                         $excludedCategories = explode(',', str_replace(' ', '', $excludedCategories));
                     }
 
