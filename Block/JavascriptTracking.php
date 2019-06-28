@@ -517,16 +517,9 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
     {
         $loggedInCustomerEmail = false;
         try {
-            $customerBy = $this->emarsysHelper->getIdentityRegistered();
-
             if ($this->customerSession->isLoggedIn()) {
                 $customer = $this->customerSession->getCustomer();
-
-                if ($customerBy == "customer_id") {
-                    $loggedInCustomerEmail = $customer->getEntityId();
-                } else {
-                    $loggedInCustomerEmail = addslashes($customer->getEmail());
-                }
+                $loggedInCustomerEmail = addslashes($customer->getEmail());
             }
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog(
@@ -547,9 +540,6 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
     public function getCustomerEmailAddress()
     {
         $customerEmail = false;
-        if ($this->emarsysHelper->getIdentityRegistered() != 'email_address') {
-            return $customerEmail;
-        }
         try {
             $sessionEmail = $this->customerSession->getWebExtendCustomerEmail();
 

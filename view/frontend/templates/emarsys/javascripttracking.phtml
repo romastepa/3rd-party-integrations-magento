@@ -8,12 +8,9 @@
 /** @var \Emarsys\Emarsys\Block\JavascriptTracking $block */
 ?>
 <?php $helper = $this->helper('Emarsys\Emarsys\Helper\Data'); ?>
-<?php $customerBy = $helper->getIdentityRegistered(); ?>
 
 <!-- This code will embeded on all pages -->
-<?php if ($customerBy == "customer_id" && $customerId = $block->getCustomerId()): ?>
-    <script>ScarabQueue.push(["setCustomerId", "<?php echo $customerId; ?>"]);</script>
-<?php elseif ($customerEmail = $block->getCustomerEmailAddress()): ?>
+<?php if ($customerEmail = $block->getCustomerEmailAddress()): ?>
     <script>ScarabQueue.push(["setEmail", "<?php echo $customerEmail; ?>"]);</script>
 <?php endif; ?>
 
