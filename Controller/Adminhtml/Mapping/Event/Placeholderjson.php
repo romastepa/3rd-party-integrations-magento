@@ -45,7 +45,7 @@ class Placeholderjson extends Action
      * @param PlaceholdersFactory $emarsysEventPlaceholderMappingFactory
      * @param EmarsysmagentoeventsFactory $emarsysMagentoEventsFactory
      * @param EmarsyseventmappingFactory $emarsysEventMappingFactory
-     * @param Data $EmarsysHelper
+     * @param Data $emarsysHelper
      * @param PageFactory $resultPageFactory
      */
     public function __construct(
@@ -55,7 +55,7 @@ class Placeholderjson extends Action
         PlaceholdersFactory $emarsysEventPlaceholderMappingFactory,
         EmarsysmagentoeventsFactory $emarsysMagentoEventsFactory,
         EmarsyseventmappingFactory $emarsysEventMappingFactory,
-        Data $EmarsysHelper,
+        Data $emarsysHelper,
         PageFactory $resultPageFactory
     ) {
         parent::__construct($context);
@@ -66,45 +66,54 @@ class Placeholderjson extends Action
         $this->emarsysEventPlaceholderMappingFactory = $emarsysEventPlaceholderMappingFactory;
         $this->emarsysMagentoEventsFactory = $emarsysMagentoEventsFactory;
         $this->emarsysEventMappingFactory = $emarsysEventMappingFactory;
-        $this->EmarsysHelper = $EmarsysHelper;
+        $this->emarsysHelper = $emarsysHelper;
     }
 
     /**
-     * @return $this|\Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface
+     * @return void
+     * @throws \Magento\Framework\Exception\MailException
      */
     public function execute()
     {
-        $mappingID = $this->getRequest()->getParam('mapping_id');
+        $mappingId = $this->getRequest()->getParam('mapping_id');
         $storeId = $this->getRequest()->getParam('store_id');
 
-        $emarsysEventPlaceholderMappingColl = $this->emarsysEventPlaceholderMappingFactory->create()->getCollection();
-        $emarsysEventPlaceholderMappingColl->addFieldToFilter('event_mapping_id', $mappingID);
-        $emarsysEventPlaceholderMappingColl->addFieldToFilter('store_id', $storeId);
+        $emarsysEventPlaceholderMappingColl = $this->emarsysEventPlaceholderMappingFactory->create()
+            ->getCollection()
+            ->addFieldToFilter('event_mapping_id', $mappingId)
+            ->addFieldToFilter('store_id', $storeId);
 
-        $emarsysEventMappingColl = $this->emarsysEventMappingFactory->create()->getCollection()->addFieldToFilter('id', $mappingID)->getData();
-        $magentoEventId = $emarsysEventMappingColl[0]['magento_event_id'];
+        $magentoEventId = $this->emarsysEventMappingFactory->create()
+            ->getCollection()
+            ->addFieldToFilter('id', $mappingId)
+            ->getFirstItem()
+            ->getMagentoEventId();
 
-        $emarsysMagentoEventsColl = $this->emarsysMagentoEventsFactory->create()->getCollection()->addFieldToFilter('id', $magentoEventId)->getData();
-        $magentoEventName = $emarsysMagentoEventsColl[0]['magento_event'];
+        $magentoEventName = $this->emarsysMagentoEventsFactory->create()
+            ->getCollection()
+            ->addFieldToFilter('id', $magentoEventId)
+            ->getFirstItem()
+            ->getMagentoEvent();
 
         if (!$emarsysEventPlaceholderMappingColl->getSize()) {
-            $this->EmarsysHelper->insertFirstTimeMappingPlaceholders($mappingID, $storeId);
+            $this->emarsysHelper->insertFirstTimeMappingPlaceholders($mappingId, $storeId);
         }
-        $emarsysEventPlaceholderMappingColl = $this->emarsysEventPlaceholderMappingFactory->create()->getCollection();
-        $emarsysEventPlaceholderMappingColl->addFieldToFilter('event_mapping_id', $mappingID);
-        $emarsysEventPlaceholderMappingColl->addFieldToFilter('store_id', $storeId);
+        $emarsysEventPlaceholderMappingColl = $this->emarsysEventPlaceholderMappingFactory->create()
+            ->getCollection()
+            ->addFieldToFilter('event_mapping_id', $mappingId)
+            ->addFieldToFilter('store_id', $storeId);
 
         if ($emarsysEventPlaceholderMappingColl->getSize()) {
             $dataArray = [];
-            $emarsysHeaderPlaceholders = $this->EmarsysHelper->emarsysHeaderPlaceholders($mappingID, $storeId);
-            $emarsysFooterPlaceholders = $this->EmarsysHelper->emarsysFooterPlaceholders($mappingID, $storeId);
-            foreach ($emarsysEventPlaceholderMappingColl->getData() as $_data) {
-                $dataGlobalArray[$_data['emarsys_placeholder_name']] = $_data['magento_placeholder_name'];
+            $emarsysHeaderPlaceholders = $this->emarsysHelper->emarsysHeaderPlaceholders($storeId);
+            $emarsysFooterPlaceholders = $this->emarsysHelper->emarsysFooterPlaceholders($storeId);
+            foreach ($emarsysEventPlaceholderMappingColl as $data) {
+                $dataGlobalArray[$data->getEmarsysPlaceholderName()] = $data->getMagentoPlaceholderName();
             }
 
             $dataArray['global'] = array_merge($emarsysHeaderPlaceholders, $dataGlobalArray, $emarsysFooterPlaceholders);
             if (strstr($magentoEventName, "Order") || strstr($magentoEventName, "Shipment") || strstr($magentoEventName, "Invoice") || strstr($magentoEventName, "Credit Memo") || strstr($magentoEventName, "RMA")) {
-                $emarsysDefaultPlaceholders = $this->EmarsysHelper->emarsysDefaultPlaceholders();
+                $emarsysDefaultPlaceholders = $this->emarsysHelper->emarsysDefaultPlaceholders();
                 foreach ($emarsysDefaultPlaceholders['product_purchases'] as $key => $value) {
                     $dataProductPurchasesArray[$key] = $value;
                 }

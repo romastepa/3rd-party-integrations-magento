@@ -44,6 +44,14 @@ class UpgradeData implements UpgradeDataInterface
                 $connection->quoteInto('path = ?', 'contacts_synchronization/emarsys_emarsys/realtime_sync')
             );
         }
+
+        if (version_compare($context->getVersion(), "1.0.15", "<")) {
+            $tableName = $setup->getTable('emarsys_magento_events');
+            $setup->getConnection()->delete(
+                $tableName,
+                ['config_path = ?' => 'admin/emails/forgot_email_template']
+            );
+        }
         $setup->endSetup();
     }
 }

@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Model\Api;
 
@@ -21,7 +21,8 @@ use Emarsys\Emarsys\{
     Helper\Cron as EmarsysCronHelper,
     Helper\Country as EmarsysCountryHelper,
     Model\QueueFactory,
-    Model\ResourceModel\Customer as customerResourceModel,
+    Model\ResourceModel\Customer as CustomerResourceModel,
+    Model\ResourceModel\CustomerFactory as CustomerResourceModelFactory,
     Logger\Logger as EmarsysLogger
 };
 
@@ -49,9 +50,14 @@ class Contact
     protected $customerFactory;
 
     /**
-     * @var
+     * @var CustomerResourceModel
      */
     protected $customerResourceModel;
+
+    /**
+     * @var CustomerResourceModelFactory
+     */
+    protected $customerResourceModelFactory;
 
     /**
      * @var DateTime
@@ -114,12 +120,28 @@ class Contact
     protected $mappedCustomerAttribute = [];
 
     /**
+     * @var int
+     */
+    protected $storeId;
+
+    /**
+     * @var int
+     */
+    protected $websiteId;
+
+    /**
+     * @var string
+     */
+    protected $exportMode;
+
+    /**
      * Contact constructor.
      *
      * @param Api $api
      * @param Customer $customer
      * @param CustomerFactory $customerFactory
-     * @param customerResourceModel $customerResourceModel
+     * @param CustomerResourceModel $customerResourceModel
+     * @param CustomerResourceModelFactory $customerResourceModelFactory
      * @param DateTime $date
      * @param Logs $logsHelper
      * @param EmarsysHelperData $emarsysHelper
@@ -136,7 +158,8 @@ class Contact
         Api $api,
         Customer $customer,
         CustomerFactory $customerFactory,
-        customerResourceModel $customerResourceModel,
+        CustomerResourceModel $customerResourceModel,
+        CustomerResourceModelFactory $customerResourceModelFactory,
         DateTime $date,
         Logs $logsHelper,
         EmarsysHelperData $emarsysHelper,
@@ -153,6 +176,7 @@ class Contact
         $this->customer = $customer;
         $this->customerFactory = $customerFactory;
         $this->customerResourceModel = $customerResourceModel;
+        $this->customerResourceModelFactory = $customerResourceModelFactory;
         $this->date = $date;
         $this->logsHelper = $logsHelper;
         $this->emarsysHelper = $emarsysHelper;
@@ -312,6 +336,7 @@ class Contact
      * @param null|\Magento\Customer\Model\Address $customerAddress
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Zend_Json_Exception
      */
     public function getMappedCustomersAddressAttributes($customer, $storeId, $customerAddress = null)
     {
@@ -453,13 +478,17 @@ class Contact
             $storeId = $this->emarsysHelper->getFirstStoreIdOfWebsite($websiteId);
         }
 
+        $this->exportMode = $exportMode;
+        $this->storeId = $storeId;
+        $this->websiteId = $websiteId;
+
         $params = [
             'website' => $websiteId,
             'storeId' => $storeId,
             'fromDate' => $data['fromDate'],
             'toDate' => $data['toDate']
         ];
-        $errorStatus = true;
+        $success = false;
         $jobDetails = $this->cronHelper->getJobDetail($exportMode);
 
         //initial logs for customer export
@@ -474,7 +503,6 @@ class Contact
         if (!$logId) {
             $logId = $this->logsHelper->manualLogs($logsArray, 1);
         }
-
         $logsArray['id'] = $logId;
         $logsArray['executed_at'] = $this->date->date('Y-m-d H:i:s', time());
         $logsArray['log_action'] = 'sync';
@@ -507,113 +535,46 @@ class Contact
                         $customerIdKey
                     );
                 }
+
+                $this->processBatch($allCustomersPayload, $emailKey, $logsArray);
             } else {
-                $customerCollection = $this->customerResourceModel->getCustomerCollection($params, $storeId);
+                $firstPageNumber = $currentPageNumber = isset($data['page']) ? $data['page'] : 1;
+
+                $customerCollection = $this->customerResourceModelFactory->create()->getCustomerCollection(
+                    $params,
+                    $storeId,
+                    $currentPageNumber
+                );
+                $lastPageNumber = $customerCollection->getLastPageNumber();
 
                 //Prepare Customers Payload Array
-                foreach ($customerCollection as $customerData) {
-                    $allCustomersPayload[] = $this->getCustomerPayload(
-                        $customerData,
-                        $storeId,
-                        $emailKey,
-                        $customerIdKey
-                    );
-                }
-            }
-            if (!empty($allCustomersPayload)) {
-                //customers data present
-
-                $customerChunks = array_chunk($allCustomersPayload, EmarsysHelperData::BATCH_SIZE);
-                foreach ($customerChunks as $customerChunk) {
-                    //prepare customers payload
-                    $buildRequest = $this->prepareCustomerPayload($customerChunk, $emailKey);
-                    if (count($buildRequest) > 0) {
-                        $logsArray['emarsys_info'] = 'Send customers to Emarsys';
-                        $logsArray['action'] = 'Magento to Emarsys';
-                        $logsArray['message_type'] = 'Success';
-                        $logsArray['description'] = 'PUT ' . " contact/?create_if_not_exists=1 " . json_encode($buildRequest, JSON_PRETTY_PRINT);
-                        $this->logsHelper->logs($logsArray);
-                        $this->emarsysLogger->info($logsArray['description']);
-
-                        //Send request to Emarsys with Customer's Data
-                        $this->api->setWebsiteId($websiteId);
-                        $result = $this->api->createContactInEmarsys($buildRequest);
-
-                        $logsArray['emarsys_info'] = 'Create customers in Emarsys';
-                        $logsArray['action'] = 'Synced to Emarsys';
-                        $res = 'PUT ' . " contact/?create_if_not_exists=1 " . json_encode($result, JSON_PRETTY_PRINT);
-
-                        if ($result['status'] == '200') {
-                            $errorStatus = false;
-                            $logsArray['message_type'] = 'Success';
-                            $logsArray['emarsys_info'] = __('Created customers in Emarsys succcessfully');
-                            $logsArray['description'] = "Created customers in Emarsys succcessfully " . $res;
-
-                            if ($exportMode == EmarsysCronHelper::CRON_JOB_CUSTOMER_SYNC_QUEUE) {
-                                $custEmailIds = [];
-                                foreach ($customerChunk as $cust) {
-                                    if (isset($cust[$emailKey])) {
-                                        $custEmailIds[] = $cust[$emailKey];
-                                    }
-                                }
-                                $customerCollFail = $this->custColl;
-                                $customerCollSuccess = $this->custColl;
-                                $errIds = [];
-
-                                if (isset($result['body']['data']['errors'])) {
-                                    $errIds = array_keys($result['body']['data']['errors']);
-                                    if (count($result['body']['data']['errors'])) {
-                                        $dataDataColl = $customerCollFail->addAttributeToFilter('email', ["in" => $errIds]);
-                                        $custData = $dataDataColl->getData();
-                                        foreach ($custData as $custIndividualData) {
-                                            $this->emarsysHelper->syncFail(
-                                                $custIndividualData['entity_id'],
-                                                $custIndividualData['website_id'],
-                                                $custIndividualData['store_id'],
-                                                1,
-                                                1
-                                            );
-                                        }
-                                    }
-                                }
-
-                                if (count($result['body']['data']['ids'])) {
-                                    $successIds = array_diff($custEmailIds, $errIds);
-                                    $dataDataColl = $customerCollSuccess->addAttributeToFilter('email', ["in" => $successIds]);
-                                    $custData = $dataDataColl->getData();
-                                    foreach ($custData as $custIndividualData) {
-                                        $this->emarsysHelper->syncSuccess(
-                                            $custIndividualData['entity_id'],
-                                            $custIndividualData['website_id'],
-                                            $custIndividualData['store_id'],
-                                            1
-                                        );
-                                    }
-                                }
-                            }
-                        } else {
-                            //error response from emarsys
-                            $logsArray['emarsys_info'] = __('Error while customer export.');
-                            $logsArray['message_type'] = 'Error';
-                            $logsArray['description'] = $result['body']['replyText'] . $res;
-                            $this->messageManager->addErrorMessage(
-                                __('Customers export have an error. Please check emarsys logs for more details!!')
-                            );
-                        }
-                        $this->logsHelper->logs($logsArray);
-                        $this->emarsysLogger->info($logsArray['description']);
+                while ($currentPageNumber <= $lastPageNumber) {
+                    if ($currentPageNumber != $firstPageNumber) {
+                        $customerCollection = $this->customerResourceModelFactory->create()->getCustomerCollection(
+                            $params,
+                            $storeId,
+                            $currentPageNumber
+                        );
                     }
+                    foreach ($customerCollection as $customerData) {
+                        $allCustomersPayload[] = $this->getCustomerPayload(
+                            $customerData,
+                            $storeId,
+                            $emailKey,
+                            $customerIdKey
+                        );
+                    }
+
+                    $success = $this->processBatch($allCustomersPayload, $logsArray);
+
+                    $logsArray['emarsys_info'] = __('Processing data for store %1', $storeId);
+                    $logsArray['description'] = __('%1 of %2', $currentPageNumber, $lastPageNumber);
+                    $logsArray['message_type'] = $success ? 'Success' : 'False';
+                    $this->logsHelper->logs($logsArray);
+                    $currentPageNumber++;
+                    unset($customerCollection);
+                    unset($allCustomersPayload);
                 }
-            } else {
-                //no Customers data found
-                $logsArray['emarsys_info'] = 'No Customers Found.';
-                $logsArray['action'] = 'Magento to Emarsys';
-                $logsArray['message_type'] = 'Error';
-                $logsArray['description'] = __('No Customers for the store with store id %1.', $storeId);
-                $this->logsHelper->logs($logsArray);
-                $this->messageManager->addErrorMessage(
-                    __('No Customers found for the store with store id %1.', $storeId)
-                );
             }
         } else {
             $logsArray['emarsys_info'] = 'Attributes are not mapped';
@@ -624,17 +585,115 @@ class Contact
             $this->messageManager->addErrorMessage("Attributes are not mapped for this store view !!!");
         }
 
-        if ($errorStatus) {
-            $logsArray['status'] = 'error';
-            $logsArray['messages'] = 'Customer export have an error. Please check';
-        } else {
+        if ($success) {
             $logsArray['status'] = 'success';
             $logsArray['messages'] = 'Customer export completed';
+        } else {
+            $logsArray['status'] = 'error';
+            $logsArray['messages'] = 'Customer export have an error. Please check';
         }
         $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
         $this->logsHelper->manualLogsUpdate($logsArray);
 
-        return $errorStatus ? false : true;
+        return $success;
+    }
+
+    public function processBatch($allCustomersPayload, $logsArray)
+    {
+         if (empty($allCustomersPayload)) {
+            //no Customers data found
+            $logsArray['emarsys_info'] = 'No Customers Found.';
+            $logsArray['action'] = 'Magento to Emarsys';
+            $logsArray['message_type'] = 'Error';
+            $logsArray['description'] = __('No Customers for the store with store id %1.', $this->storeId);
+            $this->logsHelper->logs($logsArray);
+            $this->messageManager->addErrorMessage(__('No Customers found for the store with store id %1.', $this->storeId));
+            return false;
+        }
+
+        $emailKey = $this->customerResourceModel->getKeyId(EmarsysHelperData::CUSTOMER_EMAIL, $this->storeId);
+
+        $buildRequest = $this->prepareCustomerPayload($allCustomersPayload, $emailKey);
+        if (count($buildRequest) > 0) {
+            $logsArray['emarsys_info'] = 'Send customers to Emarsys';
+            $logsArray['action'] = 'Magento to Emarsys';
+            $logsArray['message_type'] = 'Success';
+            $logsArray['description'] = 'PUT ' . " contact/?create_if_not_exists=1 " . json_encode($buildRequest, JSON_PRETTY_PRINT);
+            $this->logsHelper->logs($logsArray);
+            $this->emarsysLogger->info($logsArray['description']);
+
+            //Send request to Emarsys with Customer's Data
+            $this->api->setWebsiteId($this->websiteId);
+            $result = $this->api->createContactInEmarsys($buildRequest);
+
+            $logsArray['emarsys_info'] = 'Create customers in Emarsys';
+            $logsArray['action'] = 'Synced to Emarsys';
+            $res = 'PUT ' . " contact/?create_if_not_exists=1 " . json_encode($result, JSON_PRETTY_PRINT);
+
+            if ($result['status'] == '200') {
+                $logsArray['message_type'] = 'Success';
+                $logsArray['emarsys_info'] = __('Created customers in Emarsys succcessfully');
+                $logsArray['description'] = "Created customers in Emarsys succcessfully " . $res;
+
+                if ($this->exportMode == EmarsysCronHelper::CRON_JOB_CUSTOMER_SYNC_QUEUE) {
+                    $custEmailIds = [];
+                    foreach ($allCustomersPayload as $cust) {
+                        if (isset($cust[$emailKey])) {
+                            $custEmailIds[] = $cust[$emailKey];
+                        }
+                    }
+                    $customerCollFail = $this->custColl;
+                    $customerCollSuccess = $this->custColl;
+                    $errIds = [];
+
+                    if (isset($result['body']['data']['errors'])) {
+                        $errIds = array_keys($result['body']['data']['errors']);
+                        if (count($result['body']['data']['errors'])) {
+                            $dataDataColl = $customerCollFail->addAttributeToFilter('email', ["in" => $errIds]);
+                            $custData = $dataDataColl->getData();
+                            foreach ($custData as $custIndividualData) {
+                                $this->emarsysHelper->syncFail(
+                                    $custIndividualData['entity_id'],
+                                    $custIndividualData['website_id'],
+                                    $custIndividualData['store_id'],
+                                    1,
+                                    1
+                                );
+                            }
+                        }
+                    }
+
+                    if (count($result['body']['data']['ids'])) {
+                        $successIds = array_diff($custEmailIds, $errIds);
+                        $dataDataColl = $customerCollSuccess->addAttributeToFilter('email', ["in" => $successIds]);
+                        $custData = $dataDataColl->getData();
+                        foreach ($custData as $custIndividualData) {
+                            $this->emarsysHelper->syncSuccess(
+                                $custIndividualData['entity_id'],
+                                $custIndividualData['website_id'],
+                                $custIndividualData['store_id'],
+                                1
+                            );
+                        }
+                    }
+                }
+                $this->logsHelper->logs($logsArray);
+                $this->emarsysLogger->info($logsArray['description']);
+            } else {
+                //error response from emarsys
+                $logsArray['emarsys_info'] = __('Error while customer export.');
+                $logsArray['message_type'] = 'Error';
+                $logsArray['description'] = $res;
+                $this->messageManager->addErrorMessage(
+                    __('Customers export have an error. Please check emarsys logs for more details!!')
+                );
+                $this->logsHelper->logs($logsArray);
+                $this->emarsysLogger->info($logsArray['description']);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -659,14 +718,17 @@ class Contact
         } else {
             $storeId = $this->emarsysHelper->getFirstStoreIdOfWebsite($websiteId);
         }
+
         $fromDate = (isset($data['fromDate']) && !empty($data['fromDate'])) ? $data['fromDate'] : '';
         $toDate = (isset($data['toDate']) && !empty($data['toDate'])) ? $data['toDate'] : $this->date->date('Y-m-d') . ' 23:59:59';
+        $page = (isset($data['page']) && !empty($data['page'])) ? $data['page'] : 1;
 
         $params = [
             'website' => $websiteId,
             'storeId' => $storeId,
             'fromDate' => $fromDate,
-            'toDate' => $toDate
+            'toDate' => $toDate,
+            'page' => $page,
         ];
         $errorStatus = true;
 
@@ -708,7 +770,7 @@ class Contact
         $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
         $this->logsHelper->manualLogsUpdate($logsArray);
 
-        return;
+        return $errorStatus;
     }
 
     public function exportDataToApi($exportMode, $data, $logId)

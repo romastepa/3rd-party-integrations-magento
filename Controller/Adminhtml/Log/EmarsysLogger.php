@@ -2,12 +2,12 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Controller\Adminhtml\Log;
 
 use Magento\Backend\App\Action;
-use Emarsys\Emarsys\Model\ResourceModel\Customer;
+use Emarsys\Emarsys\Model\ResourceModel\Logs;
 use Magento\Backend\App\Action\Context;
 
 /**
@@ -17,32 +17,31 @@ use Magento\Backend\App\Action\Context;
 class EmarsysLogger extends Action
 {
     /**
-     * @var Customer
+     * @var Logs
      */
-    protected $customerResourceModel;
+    protected $logsResourceModel;
 
     /**
      * EmarsysLogger constructor.
+     *
      * @param Context $context
-     * @param Customer $customerResourceModel
+     * @param Customer $logsResourceModel
      */
     public function __construct(
         Context $context,
-        Customer $customerResourceModel
+        Logs $logsResourceModel
     ) {
         parent::__construct($context);
-        $this->customerResourceModel = $customerResourceModel;
+        $this->logsResourceModel = $logsResourceModel;
     }
 
     /**
-     * Index action
-     *
-     * @return \Magento\Backend\Model\View\Result\Page
+     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\Result\Redirect|\Magento\Framework\Controller\ResultInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-
     public function execute()
     {
-        $logData = $this->customerResourceModel->getLogsData();
+        $logData = $this->logsResourceModel->getLogsData();
         $filePath = BP . "/var/log/emarsys.log";
         if (file_exists($filePath)) {
             unlink($filePath);

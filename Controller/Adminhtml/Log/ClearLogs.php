@@ -8,7 +8,7 @@ namespace Emarsys\Emarsys\Controller\Adminhtml\Log;
 
 use Magento\Backend\App\Action\Context;
 use Emarsys\Emarsys\Model\Logs;
-use Emarsys\Emarsys\Model\LogSchedule;
+use Emarsys\Emarsys\Model\ResourceModel\LogSchedule;
 use Magento\Backend\App\Action;
 use Emarsys\Emarsys\Helper\Data;
 
@@ -63,13 +63,9 @@ class ClearLogs extends Action
         $storeId = $this->emarsysHelper->getFirstStoreId();
 
         try {
-            $connection = $this->logSchedule->getResource()->getConnection();
-            $tableName = $this->logSchedule->getResource()->getMainTable();
-            $connection->truncateTable($tableName);
-
-            $logsConnection = $this->logs->getResource()->getConnection();
-            $logsTableName = $this->logs->getResource()->getMainTable();
-            $logsConnection->truncateTable($logsTableName);
+            $connection = $this->logSchedule->getConnection();
+            $tableName = $this->logSchedule->getMainTable();
+            $connection->delete($tableName);
 
             $this->messageManager->addSuccessMessage(__('Log tables have been truncated successfully.'));
         } catch (\Exception $e) {

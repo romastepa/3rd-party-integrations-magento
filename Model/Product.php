@@ -398,11 +398,10 @@ class Product extends AbstractModel
                         $websiteId,
                         $this->_mapHeader,
                         $this->_processedStores,
-                        $store['merchant_id'],
                         $logsArray
                     );
 
-                    $uploaded = $this->moveFile($store['store'], $csvFilePath, $logsArray, $mode, $store['merchant_id']);
+                    $uploaded = $this->moveFile($store['store'], $csvFilePath, $logsArray, $mode);
                     if ($uploaded) {
                         $logsArray['emarsys_info'] = __('Data for was uploaded');
                         $logsArray['description'] = __('Data for was uploaded');
@@ -497,7 +496,6 @@ class Product extends AbstractModel
      * @param array $logsArray
      * @param string $mode
      * @return bool
-     * @throws \Magento\Framework\Exception\FileSystemException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Zend_Http_Client_Exception
      */
@@ -508,7 +506,8 @@ class Product extends AbstractModel
 
         $isBig = (filesize($csvFilePath) / pow(1024, 2)) > 100;
         $merchantId = $store->getConfig(EmarsysHelper::XPATH_PREDICT_MERCHANT_ID);
-        $url = $this->emarsysHelper->getEmarsysMediaUrlPath(ProductModel::ENTITY . '/' . $merchantId, $csvFilePath);
+        $websiteId = $store->getWebsiteId();
+        $url = $this->emarsysHelper->getEmarsysMediaUrlPath(ProductModel::ENTITY . '/' . $websiteId, $csvFilePath);
         if ($apiExportEnabled && !$isBig) {
             //get token from admin configuration
             $token = $store->getConfig(EmarsysHelper::XPATH_PREDICT_TOKEN);
@@ -581,7 +580,7 @@ class Product extends AbstractModel
             }
         }
 
-        $this->emarsysHelper->removeFilesInFolder($this->emarsysHelper->getEmarsysMediaDirectoryPath(ProductModel::ENTITY . '/' . $merchantId));
+        $this->emarsysHelper->removeFilesInFolder($this->emarsysHelper->getEmarsysMediaDirectoryPath(ProductModel::ENTITY . '/' . $websiteId));
 
         return $result;
     }
