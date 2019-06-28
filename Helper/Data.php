@@ -462,7 +462,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getUniqueIdentifier($storeId = null)
     {
-        return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_UNIQUE_ID);
+        return $this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_UNIQUE_ID);
     }
 
     /**
