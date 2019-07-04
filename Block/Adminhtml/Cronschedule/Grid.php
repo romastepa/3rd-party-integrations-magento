@@ -168,6 +168,30 @@ class Grid extends Extended
             ]
         );
 
+        $this->addColumn(
+            'action',
+            [
+                'header' => __('Action'),
+                'type' => 'action',
+                'getter' => 'getId',
+                'actions' => [
+                    [
+                        'caption' => __('Delete'),
+                        'url' => [
+                            'base' => 'emarsys_emarsys/cronschedule/delete',
+                            'params' => [
+                                'id' => $this->getId(),
+                            ],
+                        ],
+                        'field' => 'id',
+                        'confirm' => __('Are you sure?')
+                    ],
+                ],
+                'filter' => false,
+                'sortable' => false
+            ]
+        );
+
         return parent::_prepareColumns();
     }
 
