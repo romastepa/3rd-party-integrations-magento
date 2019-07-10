@@ -52,6 +52,7 @@
         window.Emarsys = window.Emarsys || {};
         window.Emarsys.Magento2 = window.Emarsys.Magento2 || {};
         var dataEmarsys = <?php echo $block->getTrackingData(); ?>;
+        var uniqueIdentifier = '<?php echo $block->getUniqueIdentifier(); ?>';
         require([
             'jquery',
             'Magento_Customer/js/customer-data'
@@ -83,7 +84,7 @@
                 if (firstOnData) {
                     var processed = 0;
                     if (dataEmarsys.product) {
-                        ScarabQueue.push(['view', dataEmarsys.product.sku]);
+                        ScarabQueue.push(['view', (uniqueIdentifier == 'product_id') ? dataEmarsys.product.id : dataEmarsys.product.sku]);
                     }
 
                     if (!dataEmarsys.product && dataEmarsys.category) {
@@ -118,7 +119,7 @@
                         'cart',
                         dataEmarsys.cart.items.map(product => {
                             return {
-                                item: product.product_sku,
+                                item: (uniqueIdentifier == 'product_id') ? product.product_id : product.product_sku,
                                 price: parseFloat(parseFloat(product.product_price_value / dataEmarsys.exchangeRate).toFixed(2)),
                                 quantity: parseInt(product.qty)
                             };

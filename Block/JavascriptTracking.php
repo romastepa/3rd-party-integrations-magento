@@ -18,8 +18,6 @@ use Magento\{
     Framework\App\Request\Http,
     Framework\Registry,
     Directory\Model\CurrencyFactory,
-    Framework\EntityManager\MetadataPool,
-    Catalog\Api\Data\CategoryInterface,
     Store\Model\StoreManagerInterface
 };
 use Emarsys\Emarsys\Helper\Data;
@@ -56,11 +54,6 @@ class JavascriptTracking extends Template
     protected $categoryCollectionFactory;
 
     /**
-     * @var MetadataPool
-     */
-    protected $metadataPool;
-
-    /**
      * JavascriptTracking constructor.
      *
      * @param Context                   $context
@@ -69,7 +62,6 @@ class JavascriptTracking extends Template
      * @param Registry                  $registry
      * @param CurrencyFactory           $currencyFactory
      * @param CategoryCollectionFactory $categoryCollectionFactory
-     * @param MetadataPool              $metadataPool
      * @param array                     $data
      */
     public function __construct(
@@ -79,7 +71,6 @@ class JavascriptTracking extends Template
         Registry $registry,
         CurrencyFactory $currencyFactory,
         CategoryCollectionFactory $categoryCollectionFactory,
-        MetadataPool $metadataPool,
         array $data = []
     ) {
         $this->storeManager = $context->getStoreManager();
@@ -88,7 +79,6 @@ class JavascriptTracking extends Template
         $this->coreRegistry = $registry;
         $this->currencyFactory = $currencyFactory;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
-        $this->metadataPool = $metadataPool;
         parent::__construct($context, $data);
     }
 
@@ -172,6 +162,15 @@ class JavascriptTracking extends Template
     }
 
     /**
+     * @return mixed
+     * @throws NoSuchEntityException
+     */
+    public function getUniqueIdentifier()
+    {
+        return $this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_UNIQUE_ID);
+    }
+
+    /**
      * Get Tracking Data
      *
      * @return mixed
@@ -223,13 +222,11 @@ class JavascriptTracking extends Template
 
             $categoryIds = $this->removeDefaultCategories($category->getPathIds());
 
-            $linkField = $this->metadataPool->getMetadata(CategoryInterface::class)->getLinkField();
-
             /** @var Collection $categoryCollection */
             $categoryCollection = $this->categoryCollectionFactory->create()
+                ->addIdFilter($categoryIds)
                 ->setStore($this->storeManager->getStore())
-                ->addAttributeToSelect('name')
-                ->addFieldToFilter($linkField, ['in' => $categoryIds]);
+                ->addAttributeToSelect('name');
 
             /** @var Category $category */
             foreach ($categoryCollection as $categoryItem) {
