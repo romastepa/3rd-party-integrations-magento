@@ -130,7 +130,7 @@ class SubscriberExport extends Action
                     implode(',', $websiteStoreIds),
                     false
                 );
-                if ($subscriberCollection->getSize()) {
+                if (count($subscriberCollection)) {
                     $cronJobScheduled = false;
                     $cronJobName = '';
 

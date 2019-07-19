@@ -2,22 +2,26 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Controller\Adminhtml\Customerexport;
 
-use Magento\Backend\App\Action;
-use Magento\Framework\Stdlib\DateTime\DateTime;
-use Emarsys\Emarsys\Helper\Data as EmarsysHelperData;
-use Magento\Backend\App\Action\Context;
-use Magento\Store\Model\StoreManagerInterface;
-use Emarsys\Emarsys\Model\ResourceModel\Customer;
-use Magento\Framework\Stdlib\DateTime\Timezone;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-use Magento\Framework\App\Request\Http;
-use Emarsys\Emarsys\Model\EmarsysCronDetails;
-use Emarsys\Emarsys\Helper\Cron as EmarsysCronHelper;
-use Emarsys\Emarsys\Model\Logs;
+use Emarsys\Emarsys\{
+    Helper\Data as EmarsysHelper,
+    Model\ResourceModel\Customer,
+    Model\EmarsysCronDetails,
+    Helper\Cron as EmarsysCronHelper,
+    Model\Logs
+};
+use Magento\{
+    Backend\App\Action,
+    Framework\Stdlib\DateTime\DateTime,
+    Backend\App\Action\Context,
+    Store\Model\StoreManagerInterface,
+    Framework\Stdlib\DateTime\Timezone,
+    Framework\Stdlib\DateTime\TimezoneInterface,
+    Framework\App\Request\Http
+};
 
 /**
  * Class CustomerExport
@@ -58,14 +62,19 @@ class CustomerExport extends Action
     protected $timezoneInterface;
 
     /**
-     * @var EmarsysHelperData
+     * @var EmarsysHelper
      */
-    protected $emarsysDataHelper;
+    protected $emarsysHelper;
 
     /**
-     * @var
+     * @var EmarsysCronDetails
      */
-    protected $messageManager;
+    protected $emarsysCronDetails;
+
+    /**
+     * @var EmarsysCronHelper
+     */
+    protected $cronHelper;
 
     /**
      * @var Logs
@@ -81,7 +90,7 @@ class CustomerExport extends Action
      * @param Timezone $timezone
      * @param TimezoneInterface $timezoneInterface
      * @param Http $request
-     * @param EmarsysHelperData $emarsysHelper
+     * @param EmarsysHelper $emarsysHelper
      * @param EmarsysCronDetails $emarsysCronDetails
      * @param EmarsysCronHelper $cronHelper
      * @param Logs $emarsysLogs
@@ -94,7 +103,7 @@ class CustomerExport extends Action
         Timezone $timezone,
         TimezoneInterface $timezoneInterface,
         Http $request,
-        EmarsysHelperData $emarsysHelper,
+        EmarsysHelper $emarsysHelper,
         EmarsysCronDetails $emarsysCronDetails,
         EmarsysCronHelper $cronHelper,
         Logs $emarsysLogs
@@ -105,7 +114,7 @@ class CustomerExport extends Action
         $this->request = $request;
         $this->timezone = $timezone;
         $this->timezoneInterface = $timezoneInterface;
-        $this->emarsysDataHelper = $emarsysHelper;
+        $this->emarsysHelper = $emarsysHelper;
         $this->emarsysCronDetails = $emarsysCronDetails;
         $this->cronHelper = $cronHelper;
         $this->emarsysLogs = $emarsysLogs;
@@ -113,27 +122,28 @@ class CustomerExport extends Action
     }
 
     /**
-     * @return \Magento\Framework\App\ResponseInterface
+     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\Result\Redirect|\Magento\Framework\Controller\ResultInterface
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute()
     {
-        try {
-            $data = $this->request->getParams();
-            $storeId = $data['storeId'];
-            $store = $this->storeManager->getStore($storeId);
-            $websiteId = $store->getWebsiteId();
-            $data['website'] = $websiteId;
-            $resultRedirect = $this->resultRedirectFactory->create();
-            $returnUrl = $this->getUrl("emarsys_emarsys/customerexport/index", ["store" => $storeId]);
+        $data = $this->request->getParams();
+        $storeId = $data['storeId'];
+        $store = $this->storeManager->getStore($storeId);
+        $websiteId = $store->getWebsiteId();
+        $data['website'] = $websiteId;
+        $resultRedirect = $this->resultRedirectFactory->create();
+        $returnUrl = $this->getUrl("emarsys_emarsys/customerexport/index", ["store" => $storeId]);
 
+        try {
             //check emarsys enable for website
-            if ($this->emarsysDataHelper->getEmarsysConnectionSetting($websiteId)) {
+            if ($this->emarsysHelper->getEmarsysConnectionSetting($websiteId)) {
                 //calculate time difference
                 if (isset($data['fromDate']) && $data['fromDate'] != '') {
-                    $data['fromDate'] = $this->date->date('Y-m-d H:i:s', strtotime($data['fromDate']));
+                    $data['fromDate'] = $this->date->date('Y-m-d', strtotime($data['fromDate'])) . ' 00:00:01';
                 }
                 if (isset($data['toDate']) && $data['toDate'] != '') {
-                    $data['toDate'] = $this->date->date('Y-m-d H:i:s', strtotime($data['toDate']));
+                    $data['toDate'] = $this->date->date('Y-m-d', strtotime($data['toDate'])) . ' 23:59:59';
                 }
 
                 /** @var Customer $customerCollection */
