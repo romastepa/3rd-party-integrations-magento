@@ -144,11 +144,7 @@ class CustomerExport extends Action
                     if (!$isCronjobScheduled) {
                         //no cron job scheduled yet, schedule a new cron job
                         $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API, $storeId);
-                        $cronJobScheduled = true;
-                        $cronJobName = EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API;
-                    }
 
-                    if ($cronJobScheduled) {
                         //format and encode data in json to be saved in the table
                         $params = $this->cronHelper->getFormattedParams($data);
 
@@ -157,7 +153,7 @@ class CustomerExport extends Action
 
                         $this->messageManager->addSuccessMessage(__(
                             'A cron named "%1" have been scheduled for customers export for the store %2.',
-                            $cronJobName,
+                            EmarsysCronHelper::CRON_JOB_CUSTOMER_BULK_EXPORT_API,
                             $store->getName()
                         ));
                     } else {
