@@ -7,7 +7,7 @@
 
 namespace Emarsys\Emarsys\Model;
 
-use Emarsys\Emarsys\Helper\Data as EmarsysHelper;
+use Emarsys\Emarsys\Helper\Data\Proxy as EmarsysHelper;
 use Magento\{
     Customer\Api\AccountManagementInterface,
     Customer\Api\CustomerRepositoryInterface,

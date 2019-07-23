@@ -2378,11 +2378,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $changedOptinArray[] = str_getcsv($line);
             }
 
-            if (!isset($changedOptinArray) || count($changedOptinArray) <= 1) {
-                return false;
-            }
-
-            if (count($changedOptinArray) == 2 && (!isset($changedOptinArray[1][0]) || empty($changedOptinArray[1][0]))) {
+            if ((!isset($changedOptinArray) || count($changedOptinArray) <= 1)
+                || (count($changedOptinArray) == 2 && (!isset($changedOptinArray[1][0]) || empty($changedOptinArray[1][0]))
+            )) {
                 return false;
             }
 

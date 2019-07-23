@@ -161,14 +161,12 @@ class Subscriber
     /**
      * @param $subscribeId
      * @param $storeId
-     * @param null $frontendFlag
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function syncSubscriber(
         $subscribeId,
-        $storeId,
-        $frontendFlag = null
+        $storeId
     ) {
         $store = $this->storeManager->getStore($storeId);
         $websiteId = $store->getWebsiteId();
@@ -206,23 +204,14 @@ class Subscriber
 
         // Query to get opt-in Id in emarsys from magento table
         $optInEmarsysId = $this->customerResourceModel->getKeyId(EmarsysHelper::OPT_IN, $storeId);
-        $subscriberStatus = $objSubscriber->getSubscriberStatus();
 
         //return single / double opt-in
         $optInType = $store->getConfig(EmarsysHelper::XPATH_OPTIN_EVERYPAGE_STRATEGY);
 
-        if ($optInType == 'singleOptIn' && !$subscriberStatus) {
+        if ($optInType == 'singleOptIn') {
             $buildRequest[$optInEmarsysId] = 1;
-        } elseif ($optInType == 'doubleOptIn' && !$subscriberStatus) {
+        } elseif ($optInType == 'doubleOptIn') {
             $buildRequest[$optInEmarsysId] = '';
-        } else {
-            if (in_array($subscriberStatus, [\Magento\Newsletter\Model\Subscriber::STATUS_NOT_ACTIVE, \Magento\Newsletter\Model\Subscriber::STATUS_UNCONFIRMED])) {
-                $buildRequest[$optInEmarsysId] = '';
-            } elseif ($subscriberStatus == \Magento\Newsletter\Model\Subscriber::STATUS_SUBSCRIBED) {
-                $buildRequest[$optInEmarsysId] = 1;
-            } else {
-                $buildRequest[$optInEmarsysId] = 2;
-            }
         }
 
         $errorMsg = 0;
@@ -240,7 +229,7 @@ class Subscriber
             $logsArray['id'] = $logId;
             $logsArray['emarsys_info'] = 'Create subscriber in Emarsys';
             $logsArray['action'] = 'Synced to Emarsys';
-            $res = ' [PUT] ' . " contact/?create_if_not_exists=1 " . json_encode($optInResult, JSON_PRETTY_PRINT)
+            $res = ' [PUT] ' . " contact/?create_if_not_exists=1 " . \Zend_Json::encode($optInResult)
                 . ' [confirmation url] ' . $this->newsletterHelperData->getConfirmationUrl($objSubscriber)
                 . ' [unsubscribe url] ' . $this->newsletterHelperData->getUnsubscribeUrl($objSubscriber)
             ;
@@ -272,12 +261,7 @@ class Subscriber
         }
         $this->logsHelper->manualLogsUpdate($logsArray);
 
-        if ($frontendFlag != '') {
-            $responseData = [
-                'apiResponseStatus' => $optInResult['status']
-            ];
-            return $responseData;
-        }
+        return ($optInResult['status'] == 200) ? true : false;
     }
 
     /**
