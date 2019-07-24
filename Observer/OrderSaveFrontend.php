@@ -98,8 +98,15 @@ class OrderSaveFrontend implements ObserverInterface
         }
 
         foreach ($orderIds as $orderId) {
-            $orderQueue = $this->orderQueueFactory->create()
-                ->load($orderId, 'entity_id');
+            $orderQueue = $this->orderQueueFactory->create();
+
+            $orderQueueData = $orderQueue->getCollection()
+                ->addFieldToFilter('entity_id', $orderId)
+                ->addFieldToFilter('entity_type_id', 1);
+
+            if ($orderQueueData->getSize()) {
+                $orderQueue = $orderQueueData->getFirstItem();
+            }
 
             $orderQueue->setEntityId($orderId);
             $orderQueue->setEntityTypeId(1);
@@ -131,4 +138,3 @@ class OrderSaveFrontend implements ObserverInterface
         return true;
     }
 }
-
