@@ -103,22 +103,24 @@ class RealTimeSubscriber implements ObserverInterface
         }
 
         $this->customerSession->setWebExtendCustomerEmail($subscriber->getSubscriberEmail());
-
         try {
-            $this->emarsysHelper->realtimeTimeBasedOptinSync($subscriber);
-            $result = $this->subscriberModel->syncSubscriber($subscriberId, $storeId);
+            $createSubscriber = $this->emarsysHelper->realtimeTimeBasedOptinSync($subscriber);
 
-            if ($result['apiResponseStatus'] == '200') {
-                return true;
+            if ($createSubscriber) {
+                $result = $this->subscriberModel->syncSubscriber($subscriberId, $storeId);
+                $subscriber->setEmarsysNoExport(true);
+                return $result;
             }
+
+            return true;
         } catch (\Exception $e) {
+            $this->emarsysHelper->syncFail($subscriberId, $websiteId, $storeId, 0, 2);
             $this->emarsysHelper->addErrorLog(
                 $e->getMessage(),
                 $storeId,
                 'RealTimeSubscriber::execute'
             );
         }
-        $this->emarsysHelper->syncFail($subscriberId, $websiteId, $storeId, 0, 2);
         return false;
     }
 }
