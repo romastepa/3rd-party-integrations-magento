@@ -456,12 +456,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @param null|int $storeId
-     * @return bool
+     * @return string
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getUniqueIdentifier($storeId = null)
     {
-        return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_UNIQUE_ID);
+        return $this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_UNIQUE_ID);
     }
 
     /**
