@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+/**
+* @category   Emarsys
+* @package    Emarsys_Emarsys
+* @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
+*/
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="content">
+            <block class="Emarsys\Emarsys\Block\Success" name="emarsys.success" template="Emarsys_Emarsys::emarsys/success.phtml" before="-" cacheable="false"/>
+        </referenceContainer>
+    </body>
+</page>
