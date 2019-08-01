@@ -166,8 +166,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const XPATH_WEBEXTEND_INCLUDE_TAX = 'web_extend/javascript_tracking/tax_included';
 
-    const XPATH_WEBEXTEND_AJAXUPDATE = 'web_extend/javascript_tracking/ajaxupdate';
-
     const ENTITY_EXPORT_MODE_AUTOMATIC = 'Automatic';
 
     const ENTITY_EXPORT_MODE_MANUAL = 'Manual';
@@ -483,17 +481,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function isIncludeTax($storeId = null)
     {
         return (bool)$this->storeManager->getStore($storeId)->getConfig(self::XPATH_WEBEXTEND_INCLUDE_TAX);
-    }
-
-    /**
-     * @return bool
-     */
-    public function isAjaxUpdateEnabled()
-    {
-        return (bool)$this->scopeConfig->getValue(
-            self::XPATH_WEBEXTEND_AJAXUPDATE,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
     }
 
     /**
