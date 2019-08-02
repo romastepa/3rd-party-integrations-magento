@@ -3,7 +3,7 @@
 /**
 * @category   Emarsys
 * @package    Emarsys_Emarsys
-* @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+* @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
 */
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-1column"
@@ -11,13 +11,8 @@
     <body>
         <referenceContainer name="content.bottom">
             <container name="emarsys.wrapper" htmlTag="div" htmlClass="emarsys-wrapper" after="-" >
-                <block class="Emarsys\Emarsys\Block\JavascriptTracking" template="Emarsys_Emarsys::emarsys/webextend.phtml" name="webextend" after="-">
-                    <block class="Emarsys\Emarsys\Block\JavascriptTracking" template="Emarsys_Emarsys::emarsys/javascripttracking.phtml" name="emarsys.javascripttracking" >
-                        <block class="Emarsys\Emarsys\Block\JavascriptTracking" template="Emarsys_Emarsys::emarsys/recommendations.phtml" name="emarsys.recommendations" />
-                    </block>
-                </block>
+                <block class="Emarsys\Emarsys\Block\JavascriptTracking" template="Emarsys_Emarsys::emarsys/webextend.phtml" name="webextend" after="-" />
             </container>
         </referenceContainer>
-        <!--<move element="emarsys.wrapper" destination="page.bottom.container" after="-" />-->
     </body>
 </page>

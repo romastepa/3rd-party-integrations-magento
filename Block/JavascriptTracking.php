@@ -2,49 +2,36 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Block;
 
+use Magento\{
+    Catalog\Model\Category,
+    Catalog\Model\Product,
+    Framework\Exception\LocalizedException,
+    Framework\Exception\NoSuchEntityException,
+    Framework\View\Element\Template,
+    Framework\View\Element\Template\Context,
+    Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory,
+    Catalog\Model\CategoryFactory,
+    Framework\App\Request\Http,
+    Framework\Registry,
+    Directory\Model\CurrencyFactory,
+    Store\Model\StoreManagerInterface
+};
 use Emarsys\Emarsys\Helper\Data;
-use Emarsys\Emarsys\Model\Logs;
-use Emarsys\Emarsys\Model\ResourceModel\Customer;
-use Magento\Catalog\Model\CategoryFactory;
-use Magento\Catalog\Model\ProductFactory;
-use Magento\Checkout\Model\CartFactory;
-use Magento\Customer\Model\Session as CustomerSession;
-use Magento\Framework\App\Request\Http;
-use Magento\Framework\Registry;
-use Magento\Framework\View\Element\Template\Context;
-use Magento\Sales\Model\OrderFactory;
-use Magento\Sales\Model\ResourceModel\Order\Item\CollectionFactory as OrderItemCollectionFactory;
-use Magento\Store\Model\ScopeInterface;
 
 /**
  * Class JavascriptTracking
  * @package Emarsys\Emarsys\Block
  */
-class JavascriptTracking extends \Magento\Framework\View\Element\Template
+class JavascriptTracking extends Template
 {
     /**
-     * @var CartFactory
+     * @var StoreManagerInterface
      */
-    protected $cartFactory;
-
-    /**
-     * @var OrderFactory
-     */
-    protected $orderFactory;
-
-    /**
-     * @var Success
-     */
-    protected $orderSuccess;
-
-    /**
-     * @var Customer
-     */
-    protected $customerResourceModel;
+    protected $storeManager;
 
     /**
      * @var CategoryFactory
@@ -52,184 +39,57 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
     protected $categoryFactory;
 
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $storeManager;
-
-    /**
-     * @var ProductFactory
-     */
-    protected $productFactory;
-
-    /**
-     * @var CustomerSession
-     */
-    protected $customerSession;
-
-    /**
-     * @var Data
-     */
-    protected $emarsysHelper;
-
-    /**
-     * @var Logs
-     */
-    protected $emarsysLogs;
-
-    /**
      * @var Registry
      */
     protected $coreRegistry;
 
     /**
-     * @var OrderItemCollectionFactory
+     * @var CurrencyFactory
      */
-    protected $orderItemCollectionFactory;
+    protected $currencyFactory;
+
+    /**
+     * @var CategoryCollectionFactory
+     */
+    protected $categoryCollectionFactory;
 
     /**
      * JavascriptTracking constructor.
      *
-     * @param Context $context
-     * @param Customer $customerResourceModel
-     * @param CartFactory $cartFactory
-     * @param OrderFactory $orderFactory
-     * @param Http $request
-     * @param CategoryFactory $categoryFactory
-     * @param ProductFactory $productFactory
-     * @param CustomerSession $customerSession
-     * @param Data $emarsysHelper
-     * @param Logs $emarsysLogs
-     * @param Registry $registry
-     * @param array $data
+     * @param Context                   $context
+     * @param CategoryFactory           $categoryFactory
+     * @param Http                      $request
+     * @param Registry                  $registry
+     * @param CurrencyFactory           $currencyFactory
+     * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param array                     $data
      */
     public function __construct(
         Context $context,
-        Customer $customerResourceModel,
-        CartFactory $cartFactory,
-        OrderFactory $orderFactory,
-        Http $request,
         CategoryFactory $categoryFactory,
-        ProductFactory $productFactory,
-        CustomerSession $customerSession,
-        Data $emarsysHelper,
-        Logs $emarsysLogs,
+        Http $request,
         Registry $registry,
-        OrderItemCollectionFactory $orderItemCollectionFactory,
+        CurrencyFactory $currencyFactory,
+        CategoryCollectionFactory $categoryCollectionFactory,
         array $data = []
     ) {
         $this->storeManager = $context->getStoreManager();
-        $this->cartFactory = $cartFactory;
-        $this->orderFactory = $orderFactory;
-        $this->_request = $request;
-        $this->customerResourceModel = $customerResourceModel;
         $this->categoryFactory = $categoryFactory;
-        $this->productFactory = $productFactory;
-        $this->customerSession = $customerSession;
-        $this->emarsysHelper = $emarsysHelper;
-        $this->emarsysLogs = $emarsysLogs;
+        $this->_request = $request;
         $this->coreRegistry = $registry;
-        $this->orderItemCollectionFactory = $orderItemCollectionFactory;
+        $this->currencyFactory = $currencyFactory;
+        $this->categoryCollectionFactory = $categoryCollectionFactory;
         parent::__construct($context, $data);
     }
 
     /**
-     * Get Page Handle
-     *
-     * @return string
-     */
-    public function getPageHandle()
-    {
-        return $handle = $this->_request->getFullActionName();
-    }
-
-    /**
-     * Get Current Category
-     *
-     * @return string
-     */
-    public function getCurrentCategory()
-    {
-        $result = false;
-        try {
-            $category = $this->coreRegistry->registry('current_category');
-
-            if (isset($category) && $category != '') {
-                $categoryName = '';
-                $categoryPath = $category->getPath();
-                $categoryPathIds = explode('/', $categoryPath);
-                $childCats = [];
-                if (count($categoryPathIds) > 2) {
-                    $pathIndex = 0;
-                    foreach ($categoryPathIds as $categoryPathId) {
-                        if ($pathIndex <= 1) {
-                            $pathIndex++;
-
-                            continue;
-                        }
-                        $childCat = $this->categoryFactory->create()->setStoreId($this->storeManager->getDefaultStoreView()->getId())->load($categoryPathId);
-                        $childCats[] = $childCat->getName();
-                    }
-                    $categoryName = implode(" > ", $childCats);
-                }
-
-                $result = addcslashes($categoryName, "'");
-            }
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
-                $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'getCurrentCategory()'
-            );
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get Current Product Sku
-     *
-     * @return string
-     */
-    public function getCurrentProductSku()
-    {
-        $result = false;
-        try {
-            $product = $this->coreRegistry->registry('current_product');
-            if (isset($product) && $product != '') {
-                $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier($this->storeManager->getStore()->getId());
-
-                if ($uniqueIdentifier == "product_id") {
-                    $productIdentifier = $product->getId();
-                } else {
-                    $productIdentifier = addslashes($product->getSku());
-                }
-
-                $result =  $productIdentifier;
-            }
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
-                $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'getCurrentProductSku()'
-            );
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get Page Handle From Db
-     *
      * @return array
+     * @throws NoSuchEntityException
      */
     public function getPageHandleStatus()
     {
-        $websiteId = $this->getWebsiteId();
-        $scope = ScopeInterface::SCOPE_WEBSITES;
-        $handle = $this->_request->getParam('full_action_name');
-        if (!$handle) {
-            $handle = $this->getPageHandle();
-        }
+        $handle = $this->_request->getFullActionName();
+
         $pageResult = [];
 
         $pageHandles = [
@@ -245,66 +105,26 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
             $jsStatus = $this->getJsEnableStatusForAllPages();
             if ($jsStatus == 1) {
                 $path = $pageHandles[$handle];
-                $pageValue = $this->customerResourceModel->getDataFromCoreConfig($path, $scope, $websiteId);
-                if ($pageValue == '' && $websiteId == 1) {
-                    $pageValue = $this->customerResourceModel->getDataFromCoreConfig($path);
-                }
+                $pageValue = $this->storeManager->getStore()->getConfig($path);
                 $pageData = explode('||', $pageValue);
                 $pageResult['logic'] = $pageData[0];
                 $pageResult['templateId'] = $pageData[1];
-                $pageResult['status'] = 'Valid';
+                $pageResult['status'] = true;
             } else {
-                $pageResult['status'] = 'Invalid';
+                $pageResult['status'] = false;
             }
         } else {
-            $pageResult['status'] = 'Invalid';
+            $pageResult['status'] = true;
         }
 
         return $pageResult;
     }
 
     /**
-     * Get Search Param
-     *
-     * @return bool|mixed
-     */
-    public function getSearchResult()
-    {
-        $result = false;
-        try {
-            $q = $this->_request->getParam('q');
-            if ($q != '') {
-                $result =  $q;
-            }
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
-                $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'getSearchResult()'
-            );
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get Ajax Update Url
-     *
-     * @return string
-     */
-    public function getAjaxUpdateUrl()
-    {
-        return $this->getUrl(
-            'emarsys/index/ajaxupdate',
-            ['_secure' => true]
-        );
-    }
-
-    /**
      * Get Merchant Id from DB
      *
      * @return array
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function getMerchantId()
     {
@@ -315,7 +135,7 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
      * Get Status of Web Extended Javascript integration from DB
      *
      * @return bool
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function getJsEnableStatusForAllPages()
     {
@@ -324,7 +144,7 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
 
     /**
      * @return bool
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function isTestModeEnabled()
     {
@@ -332,251 +152,181 @@ class JavascriptTracking extends \Magento\Framework\View\Element\Template
     }
 
     /**
-     * Get All Items of the Cart
+     * @return bool
+     * @throws NoSuchEntityException
+     */
+    public function useBaseCurrency()
+    {
+        return (bool)$this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_USE_BASE_CURRENCY);
+    }
+
+    /**
+     * Get Tracking Data
      *
      * @return mixed
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
      */
-    public function getAllCartItems()
+    public function getTrackingData()
     {
-        return $this->cartFactory->create()->getQuote()->getAllItems();
+        return \Zend_Json::encode([
+            'product' => $this->getCurrentProduct(),
+            'category' => $this->getCategory(),
+            'search' => $this->getSearchData(),
+            'exchangeRate' => $this->getExchangeRate(),
+            'slug' => $this->getStoreSlug(),
+            'displayCurrency' => $this->getDisplayCurrency(),
+        ]);
     }
 
     /**
-     * Load Product By ID
+     * Get Current Product
      *
-     * @param $id
-     * @return $this
+     * @return bool|mixed
      */
-    public function getLoadProduct($id)
+    public function getCurrentProduct()
     {
-        return $this->productFactory->create()->load($id);
-    }
-
-    /**
-     * Get Order Information
-     *
-     * @return array|bool
-     */
-    public function getOrderData()
-    {
-        try {
-            $orderIds = $this->customerSession->getWebExtendNewOrderIds();
-
-            if (empty($orderIds) || !is_array($orderIds)) {
-                return false;
-            }
-
-            $taxIncluded = $this->emarsysHelper->isIncludeTax();
-            $useBaseCurrency = $this->emarsysHelper->isUseBaseCurrency();
-            $result = [];
-
-            foreach ($orderIds as $_orderId) {
-                $order = $this->orderFactory->create()->load($_orderId);
-                $orderData = [];
-                foreach ($order->getAllVisibleItems() as $item) {
-                    $qty = $item->getQtyOrdered();
-                    $product = $this->getLoadProduct($item->getProductId());
-
-                    if (($item->getProductType() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) && (!$product->getPriceType())) {
-                        $collection = $this->orderItemCollectionFactory->create()
-                            ->addAttributeToFilter('parent_item_id', ['eq' => $item['item_id']])
-                            ->load();
-                        $bundleBaseDiscount = 0;
-                        $bundleDiscount = 0;
-                        foreach ($collection as $collPrice) {
-                            $bundleBaseDiscount += $collPrice['base_discount_amount'];
-                            $bundleDiscount += $collPrice['discount_amount'];
-                        }
-                        if ($taxIncluded) {
-                            $price = $useBaseCurrency ? ($item->getBaseRowTotal() + $item->getBaseTaxAmount()) - ($bundleBaseDiscount) : ($item->getRowTotal() + $item->getTaxAmount()) - ($bundleDiscount);
-                        } else {
-                            $price = $useBaseCurrency ? $item->getBaseRowTotal() - $bundleBaseDiscount : $item->getRowTotal() - $bundleDiscount;
-                        }
-                    } else {
-                        if ($taxIncluded) {
-                            $price = $useBaseCurrency ? ($item->getBaseRowTotal()  + $item->getBaseTaxAmount()) - $item->getBaseDiscountAmount() : ($item->getRowTotal() + $item->getTaxAmount()) - $item->getDiscountAmount();
-                        } else {
-                            $price = $useBaseCurrency ? $item->getBaseRowTotal() - $item->getBaseDiscountAmount() : $item->getRowTotal() - $item->getDiscountAmount();
-                        }
-                    }
-
-                    $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier($this->storeManager->getStore()->getId());
-                    if ($uniqueIdentifier == "product_id") {
-                        $sku = $item->getProductId();
-                    } else {
-                        $sku = addslashes($item->getSku());
-                    }
-                    $orderData[] = [
-                        'item' => addslashes($sku),
-                        'price' => $price,
-                        'quantity' => $qty
-                    ];
-                }
-                $result[] = [
-                    'orderId' => $order->getIncrementId(),
-                    'items' => $orderData,
-                    'email' => $order->getCustomerEmail(),
-                ];
-            }
-
-            if (!empty($result)) {
-                $this->customerSession->setWebExtendNewOrderIds([]);
-                return \Zend_Json::encode($result);
-            }
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
-                $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'getOrderData()'
-            );
+        $product = $this->coreRegistry->registry('current_product');
+        if ($product instanceof Product) {
+            return [
+                'sku' => $product->getSku(),
+                'id'  => $product->getId(),
+            ];
         }
 
         return false;
     }
 
     /**
-     * Get Website Id
+     * Get Category
      *
-     * @return int
+     * @return mixed
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
      */
-    public function getWebsiteId()
+    public function getCategory()
     {
-        return $this->storeManager->getStore()->getWebsiteId();
-    }
+        $category = $this->coreRegistry->registry('current_category');
+        if ($category instanceof Category) {
+            $categoryList = [];
 
-    /**
-     * Get Cart Items Data in Json Format
-     *
-     * @return bool|string
-     */
-    public function getCartItemsJsonData()
-    {
-        $returnData = false;
-        try {
-            $allItems = $this->getAllCartItems();
-            $useBaseCurrency = $this->emarsysHelper->isUseBaseCurrency();
+            $categoryIds = $this->removeDefaultCategories($category->getPathIds());
 
-            if ($allItems != "") {
-                $jsData = [];
-                foreach ($allItems as $item) {
-                    if ($item->getParentItemId()) {
-                        continue;
-                    }
-                    $productSku = $this->getLoadProduct($item->getProductId())->getSku();
-                    $price = $useBaseCurrency ? $item->getBaseRowTotal() : $item->getRowTotal();
-                    $uniqueIdentifier = $this->emarsysHelper->getUniqueIdentifier($this->storeManager->getStore()->getId());
+            /** @var Collection $categoryCollection */
+            $categoryCollection = $this->categoryCollectionFactory->create()
+                ->addIdFilter($categoryIds)
+                ->setStore($this->storeManager->getStore())
+                ->addAttributeToSelect('name');
 
-                    if ($uniqueIdentifier == "product_id") {
-                        $sku = $item->getProductId();
-                    } else {
-                        $sku = addslashes($item->getSku());
-                    }
-                    $qty = $item->getQty();
-                    $jsData[] = "{item: '" . addslashes($sku) . "', price: $price, quantity: $qty}";
-                }
-
-                $returnData = implode($jsData, ',');
+            /** @var Category $category */
+            foreach ($categoryCollection as $categoryItem) {
+                $categoryList[] = addcslashes($categoryItem->getName(), "'");
             }
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
-                $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'getCartItemsJsonData()'
-            );
+
+            return [
+                'names' => $categoryList,
+                'ids'   => $categoryIds,
+            ];
         }
-
-        return $returnData;
-    }
-
-    /**
-     * Get Customer Id
-     *
-     * @return bool|string
-     */
-    public function getCustomerId()
-    {
-        try {
-            if ($this->customerSession->isLoggedIn()) {
-                return $this->getLoggedInCustomerEmail();
-            } else {
-                $customerId = $this->customerSession->getWebExtendCustomerId();
-
-                if (!empty($customerId)) {
-                    $this->customerSession->setWebExtendCustomerId('');
-                    $this->customerSession->setWebExtendCustomerEmail('');
-
-                    return $customerId;
-                }
-            }
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
-                $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'getCustomerId'
-            );
-        }
-
         return false;
     }
 
     /**
-     * Get logged in customer email
+     * @param array $categoryIds
      *
-     * @return bool|string
+     * @return array
+     * @throws NoSuchEntityException
      */
-    public function getLoggedInCustomerEmail()
+    protected function removeDefaultCategories($categoryIds)
     {
-        $loggedInCustomerEmail = false;
-
-        if ($this->customerSession->isLoggedIn()) {
-            $customer = $this->customerSession->getCustomer();
-            $loggedInCustomerEmail = addslashes($customer->getEmail());
-        }
-
-        return $loggedInCustomerEmail;
-    }
-
-    /**
-     * Get customer email
-     *
-     * @return string
-     */
-    public function getCustomerEmailAddress()
-    {
-        $customerEmail = false;
-
-        try {
-            $sessionEmail = $this->customerSession->getWebExtendCustomerEmail();
-
-            if ($this->customerSession->isLoggedIn()) {
-                $loggedInCustomerEmail = $this->getLoggedInCustomerEmail();
-                if (\Zend_Validate::is($loggedInCustomerEmail, 'EmailAddress')) {
-                    $customerEmail = $loggedInCustomerEmail;
-                }
-            } elseif (isset($sessionEmail)) {
-                if (!empty($sessionEmail) && \Zend_Validate::is($sessionEmail, 'EmailAddress')) {
-                    $customerEmail = $sessionEmail;
-                }
+        $returnArray = [];
+        $basicCategoryIds = [
+            1,
+            $this->storeManager->getStore()->getRootCategoryId(),
+        ];
+        foreach ($categoryIds as $categoryId) {
+            if (!in_array($categoryId, $basicCategoryIds)) {
+                $returnArray[] = $categoryId;
             }
-            $this->customerSession->setWebExtendCustomerEmail('');
-            $this->customerSession->setWebExtendCustomerId('');
-        } catch (\Exception $e) {
-            $this->emarsysLogs->addErrorLog(
-                $e->getMessage(),
-                $this->storeManager->getStore()->getId(),
-                'getCustomerEmailAddress()'
-            );
         }
 
-        return $customerEmail;
+        return $returnArray;
+    }
+
+    /**
+     * Get Search Data
+     *
+     * @return bool|mixed
+     * @throws Exception
+     */
+    public function getSearchData()
+    {
+        $q = $this->_request->getParam('q');
+        if ($q != '') {
+            return [
+                'term' => $this->escapeJs($q),
+            ];
+        }
+        return false;
+    }
+
+    /**
+     * @return float
+     * @throws NoSuchEntityException
+     */
+    public function getExchangeRate()
+    {
+        if ($this->useBaseCurrency()) {
+            return 1;
+        } else {
+            $currentCurrency = $this->storeManager->getStore()->getCurrentCurrencyCode();
+            $baseCurrency = $this->storeManager->getStore()->getBaseCurrencyCode();
+            return (float)$this->currencyFactory->create()->load($baseCurrency)->getAnyRate($currentCurrency);
+        }
+    }
+
+    /**
+     * @return mixed
+     * @throws NoSuchEntityException
+     */
+    public function getDisplayCurrency()
+    {
+        if ($this->useBaseCurrency()) {
+            return $this->storeManager->getStore()->getBaseCurrencyCode();
+        } else {
+            return $this->storeManager->getStore()->getCurrentCurrencyCode();
+        }
     }
 
     /**
      * @return string
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function getStoreSlug()
     {
+        if ($this->isDefault($this->storeManager->getStore())) {
+            return '';
+        }
         return $this->storeManager->getStore()->getCode();
+    }
+
+    /**
+     * @param $store
+     * @return bool
+     */
+    public function isDefault($store)
+    {
+        if (!$store->getId() && $store->getWebsite() && $store->getWebsite()->getStoresCount() == 0) {
+            return true;
+        }
+        return $store->getGroup()->getDefaultStoreId() == $store->getId();
+    }
+
+    public function getAjaxUrl()
+    {
+        return $this->getUrl(
+            'emarsys/index/ajax',
+            ['_secure' => true]
+        );
     }
 }

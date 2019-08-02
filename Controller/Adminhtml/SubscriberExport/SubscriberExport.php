@@ -124,45 +124,33 @@ class SubscriberExport extends Action
                     $data['attributevalue'] = $subscribedStatus;
                 }
 
-                //get subscribers collection
-                $subscriberCollection = $this->customerResourceModel->getSubscribedCustomerCollection(
-                    $data,
-                    implode(',', $websiteStoreIds),
-                    false
-                );
-                if (count($subscriberCollection)) {
-                    $cronJobScheduled = false;
-                    $cronJobName = '';
+                $cronJobScheduled = false;
+                $cronJobName = '';
 
-                    //export subscribers through API
-                    $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API, $storeId);
-                    if (!$isCronjobScheduled) {
-                        //no cron job scheduled yet, schedule a new cron job
-                        $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API, $storeId);
-                        $cronJobScheduled = true;
-                        $cronJobName = EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API;
-                    }
+                //export subscribers through API
+                $isCronjobScheduled = $this->cronHelper->checkCronjobScheduled(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API, $storeId);
+                if (!$isCronjobScheduled) {
+                    //no cron job scheduled yet, schedule a new cron job
+                    $cron = $this->cronHelper->scheduleCronjob(EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API, $storeId);
+                    $cronJobScheduled = true;
+                    $cronJobName = EmarsysCronHelper::CRON_JOB_SUBSCRIBERS_BULK_EXPORT_API;
+                }
 
-                    if ($cronJobScheduled) {
-                        //format and encode data in json to be saved in the table
-                        $params = $this->cronHelper->getFormattedParams($data);
+                if ($cronJobScheduled) {
+                    //format and encode data in json to be saved in the table
+                    $params = $this->cronHelper->getFormattedParams($data);
 
-                        //save details in cron details table
-                        $this->emarsysCronDetails->addEmarsysCronDetails($cron->getScheduleId(), $params);
+                    //save details in cron details table
+                    $this->emarsysCronDetails->addEmarsysCronDetails($cron->getScheduleId(), $params);
 
-                        $this->messageManager->addSuccessMessage(
-                            __(
-                                'A cron named "%1" have been scheduled for subscribers export for the store %2.',
-                                $cronJobName,
-                                $store->getName()
-                            ));
-                    } else {
-                        //cron job already scheduled
-                        $this->messageManager->addErrorMessage(__('A cron is already scheduled to export subscribers for the store %1 ', $store->getName()));
-                    }
+                    $this->messageManager->addSuccessMessage(__(
+                        'A cron named "%1" have been scheduled for subscribers export for the store %2.',
+                        $cronJobName,
+                        $store->getName()
+                    ));
                 } else {
-                    //no subscribers found for the store
-                    $this->messageManager->addErrorMessage(__('No Subscribers Found for the Store %1.', $store->getName()));
+                    //cron job already scheduled
+                    $this->messageManager->addErrorMessage(__('A cron is already scheduled to export subscribers for the store %1 ', $store->getName()));
                 }
             } else {
                 //emarsys is disabled for this website
