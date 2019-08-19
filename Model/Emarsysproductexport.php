@@ -221,7 +221,6 @@ class Emarsysproductexport extends AbstractModel
      * @param int $websiteId
      * @param array $header
      * @param array $processedStores
-     * @param string $merchantId
      * @param array $logsArray
      * @return string
      * @throws \Exception

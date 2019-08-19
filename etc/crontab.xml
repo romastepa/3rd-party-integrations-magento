@@ -13,13 +13,9 @@
             <config_path>emarsys_schema_check/schedule/cron_expr</config_path>
         </job>
 
-        <!-- Customer Related Jobs -->
-        <job name="emarsys_customer_sync_queue" instance="Emarsys\Emarsys\Cron\CustomerSyncQueue" method="execute">
-            <config_path>emarsys_customer_sync_queue/schedule/cron_expr</config_path>
-        </job>
         <!-- Emarsys reoptin import Job -->
         <job name="emarsys_reoptin_import" instance="Emarsys\Emarsys\Cron\SyncContactsSubscriptionData" method="execute">
-            <schedule>57 */2 * * *</schedule>
+            <schedule>57 */8 * * *</schedule>
         </job>
 
         <!-- catalog Related Jobs -->

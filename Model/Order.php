@@ -93,16 +93,6 @@ class Order extends AbstractModel
     protected $orderQueueFactory;
 
     /**
-     * @var CreditmemoExportStatusFactory
-     */
-    protected $creditmemoExportStatusFactory;
-
-    /**
-     * @var OrderExportStatusFactory
-     */
-    protected $orderExportStatusFactory;
-
-    /**
      * @var TimeZone
      */
     protected $timezone;
@@ -170,8 +160,6 @@ class Order extends AbstractModel
      * @param CreditmemoItemCollectionFactory $creditmemoItemCollectionFactory
      * @param SnapshotFactory $snapshotFactory
      * @param OrderQueueFactory $orderQueueFactory
-     * @param CreditmemoExportStatusFactory $creditmemoExportStatusFactory
-     * @param OrderExportStatusFactory $orderExportStatusFactory
      * @param TimeZone $timezone
      * @param ApiExport $apiExport
      * @param DirectoryList $directoryList
@@ -196,8 +184,6 @@ class Order extends AbstractModel
         CreditmemoItemCollectionFactory $creditmemoItemCollectionFactory,
         SnapshotFactory $snapshotFactory,
         OrderQueueFactory $orderQueueFactory,
-        CreditmemoExportStatusFactory $creditmemoExportStatusFactory,
-        OrderExportStatusFactory $orderExportStatusFactory,
         TimeZone $timezone,
         ApiExport $apiExport,
         DirectoryList $directoryList,
@@ -219,8 +205,6 @@ class Order extends AbstractModel
         $this->creditmemoItemCollectionFactory = $creditmemoItemCollectionFactory;
         $this->snapshotFactory = $snapshotFactory;
         $this->orderQueueFactory = $orderQueueFactory;
-        $this->creditmemoExportStatusFactory = $creditmemoExportStatusFactory;
-        $this->orderExportStatusFactory = $orderExportStatusFactory;
         $this->timezone = $timezone;
         $this->apiExport = $apiExport;
         $this->directoryList = $directoryList;
@@ -1199,16 +1183,6 @@ class Order extends AbstractModel
             $orderIdsArrays = array_chunk($allOrderIds, 100);
 
             foreach ($orderIdsArrays as $orderIds) {
-                $orderExportStatusCollection = $this->orderExportStatusFactory->create()
-                    ->getCollection()
-                    ->addFieldToFilter('order_id', ['in' => $orderIds]);
-
-                foreach ($orderExportStatusCollection as $orderExportStat) {
-                    $eachOrderStat = $this->orderExportStatusFactory->create()->load($orderExportStat['id']);
-                    $eachOrderStat->setExported(1);
-                    $eachOrderStat->save();
-                }
-
                 $orderQueueCollection = $this->orderQueueFactory->create()
                     ->getCollection()
                     ->addFieldToFilter('entity_id', ['in' => $orderIds])
@@ -1222,16 +1196,6 @@ class Order extends AbstractModel
             $allCreditmemoOrderIds = $creditMemoCollection->getAllIds();
             $creditmemoIdsArrays = array_chunk($allCreditmemoOrderIds, 100);
             foreach ($creditmemoIdsArrays as $creditmemoIds) {
-                $creditmemoExportStatusCollection = $this->creditmemoExportStatusFactory->create()
-                    ->getCollection()
-                    ->addFieldToFilter('order_id', ['in' => $creditmemoIds]);
-
-                foreach ($creditmemoExportStatusCollection as $orderExportStat) {
-                    $eachOrderStat = $this->creditmemoExportStatusFactory->create()->load($orderExportStat['id']);
-                    $eachOrderStat->setExported(1);
-                    $eachOrderStat->save();
-                }
-
                 $creditMemoQueueCollection = $this->orderQueueFactory->create()
                     ->getCollection()
                     ->addFieldToFilter('entity_id', ['in' => $creditmemoIds])
