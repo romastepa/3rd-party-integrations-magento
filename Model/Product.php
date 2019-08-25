@@ -419,22 +419,15 @@ class Product extends AbstractModel
             $this->logsHelper->manualLogsUpdate($logsArray);
             $result = true;
         } catch (\Exception $e) {
-            $msg = $e->getMessage();
             $logsArray['messages'] = __('consolidatedCatalogExport Exception');
             $logsArray['status'] = 'error';
             $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
             $this->logsHelper->manualLogsUpdate($logsArray);
 
             $logsArray['emarsys_info'] = __('consolidatedCatalogExport Exception');
-            $logsArray['description'] = __("Exception %1", $e->getMessage());
+            $logsArray['description'] = __("Exception %1", $e->getMessage() . ' trace: ' . $e->getTraceAsString());
             $logsArray['message_type'] = 'Error';
             $this->logsHelper->logs($logsArray);
-
-            if ($mode == EmarsysHelper::ENTITY_EXPORT_MODE_MANUAL) {
-                $this->messageManager->addErrorMessage(
-                    __("Exception " . $msg)
-                );
-            }
         }
 
         return $result;

@@ -108,24 +108,28 @@ class RealTimeCustomer implements ObserverInterface
             return;
         }
 
+        $result = false;
         try {
             if ($store->getConfig(EmarsysHelperData::XPATH_EMARSYS_REALTIME_SYNC) == 1) {
                 $customerVar = 'create_customer_variable_' . $customerId;
                 if ($this->registry->registry($customerVar) == 'created') {
-                    return;
+                    return true;
                 }
-                $this->contactModel->syncContact($customer, $websiteId, $storeId);
+                $result = $this->contactModel->syncContact($customer, $websiteId, $storeId);
                 $this->registry->register($customerVar, 'created');
-            } else {
-                $this->emarsysHelper->syncFail($customerId, $websiteId, $storeId, 0, 1);
             }
         } catch (\Exception $e) {
-            $this->emarsysHelper->syncFail($customerId, $websiteId, $storeId, 0, 1);
             $this->emarsysHelper->addErrorLog(
                 $e->getMessage(),
                 $this->storeManager->getStore()->getId(),
                 'RealTimeCustomer::execute()'
             );
         }
+        if (!$result) {
+            $this->emarsysHelper->syncFail($customerId, $websiteId, $storeId, 0, 1);
+            return false;
+        }
+
+        return true;
     }
 }

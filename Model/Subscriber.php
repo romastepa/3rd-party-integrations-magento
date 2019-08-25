@@ -35,6 +35,16 @@ use Magento\{
 class Subscriber extends \Magento\Newsletter\Model\Subscriber
 {
     /**
+     * @var EmarsysHelper
+     */
+    protected $emarsysHelper;
+
+    /**
+     * @var ProductMetadataInterface
+     */
+    protected $productMetadata;
+
+    /**
      * Subscriber constructor.
      *
      * @param EmarsysHelper $emarsysHelper
@@ -118,16 +128,6 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
             );
         }
     }
-
-    /**
-     * @var EmarsysHelper
-     */
-    protected $emarsysHelper;
-
-    /**
-     * @var ProductMetadataInterface
-     */
-    protected $productMetadata;
 
     /**
      * @param string $email
