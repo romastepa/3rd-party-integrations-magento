@@ -82,7 +82,6 @@ class JavascriptTracking extends Template
         parent::__construct($context, $data);
     }
 
-
     /**
      * @return array
      * @throws NoSuchEntityException
@@ -110,12 +109,12 @@ class JavascriptTracking extends Template
                 $pageData = explode('||', $pageValue);
                 $pageResult['logic'] = $pageData[0];
                 $pageResult['templateId'] = $pageData[1];
-                $pageResult['status'] = 'Valid';
+                $pageResult['status'] = true;
             } else {
-                $pageResult['status'] = 'Invalid';
+                $pageResult['status'] = false;
             }
         } else {
-            $pageResult['status'] = 'Invalid';
+            $pageResult['status'] = true;
         }
 
         return $pageResult;
@@ -159,15 +158,6 @@ class JavascriptTracking extends Template
     public function useBaseCurrency()
     {
         return (bool)$this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_USE_BASE_CURRENCY);
-    }
-
-    /**
-     * @return mixed
-     * @throws NoSuchEntityException
-     */
-    public function getUniqueIdentifier()
-    {
-        return $this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_UNIQUE_ID);
     }
 
     /**
@@ -314,6 +304,21 @@ class JavascriptTracking extends Template
      */
     public function getStoreSlug()
     {
+        if ($this->isDefault($this->storeManager->getStore())) {
+            return '';
+        }
         return $this->storeManager->getStore()->getCode();
+    }
+
+    /**
+     * @param $store
+     * @return bool
+     */
+    public function isDefault($store)
+    {
+        if (!$store->getId() && $store->getWebsite() && $store->getWebsite()->getStoresCount() == 0) {
+            return true;
+        }
+        return $store->getGroup()->getDefaultStoreId() == $store->getId();
     }
 }

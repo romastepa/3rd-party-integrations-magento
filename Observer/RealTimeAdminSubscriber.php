@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
  */
 
 namespace Emarsys\Emarsys\Observer;
@@ -80,8 +80,7 @@ class RealTimeAdminSubscriber implements ObserverInterface
 
         $realtimeStatus = $store->getConfig(Data::XPATH_EMARSYS_REALTIME_SYNC);
         if ($realtimeStatus == 1) {
-            $frontendFlag = '';
-            $this->subscriberModel->syncSubscriber($subscriberId, $storeId, $frontendFlag);
+            $this->subscriberModel->syncSubscriber($subscriberId, $storeId);
         } else {
             $this->emarsysHelper->syncFail($subscriberId, $store->getWebsiteId(), $storeId, 0, 2);
         }

@@ -115,21 +115,6 @@ class Form extends Generic
             'style' => 'width:350px'
         ]);
 
-        $fieldset->addType(
-            'text',
-            '\Emarsys\Emarsys\Block\Adminhtml\Customformfield\Edit\Renderer\CustomRenderer'
-        );
-
-        $fieldset->addField(
-            'text',
-            'text',
-            [
-                'name' => 'text',
-                'label' => __('Exclude Categories'),
-                'title' => __('Exclude Categories'),
-            ]
-        );
-
         return parent::_prepareForm();
     }
 }

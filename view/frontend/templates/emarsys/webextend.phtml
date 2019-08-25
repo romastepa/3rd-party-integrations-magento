@@ -12,6 +12,7 @@
 <?php $webExtendStatus = $block->getJsEnableStatusForAllPages(); ?>
 
 <?php if ($webExtendStatus && !empty($merchantId)): ?>
+    <?php $pageHandleData = $block->getPageHandleStatus(); ?>
     <script type="text/javascript">
         var ScarabQueue = ScarabQueue || [];
         (function(id) {
@@ -25,34 +26,12 @@
         <?php if ($block->isTestModeEnabled()):?>
         ScarabQueue.push(['testMode']);
         <?php endif;?>
-    </script>
-    <?php $pageHandleData = $block->getPageHandleStatus(); ?>
-    <?php if ($pageHandleData['status'] == 'Valid' && $pageHandleData['logic'] != ''): ?>
-        <script type="text/html" id="<?php echo (string)$pageHandleData['templateId']; ?>">
-            <![CDATA[
-            {{ if (SC.page.products.length) { }}
-            <div class="scarab-itemlist">
-                <div class="scarab-prev">◀</div>
-                {{ for (var i=0; i < SC.page.products.length; i++) { }}
-                {{ var p = SC.page.products[i]; }}
-                <span data-scarabitem="{{=p.id}}" class="scarab-item">
-                    <a href="{{=p.link}}"><img src="{{=p.image}}">{{=p.title}}</a>
-                </span>
-                {{ } }}
-                <div class="scarab-next">▶</div>
-            </div>
-            {{ } }}
-            ]]>
-        </script>
-        <div id="recommended-product-container">
-            <div id="recommended-product"></div>
-        </div>
-    <?php endif; ?>
-    <script type="text/javascript">
+
         window.Emarsys = window.Emarsys || {};
         window.Emarsys.Magento2 = window.Emarsys.Magento2 || {};
+
         var dataEmarsys = <?php echo $block->getTrackingData(); ?>;
-        var uniqueIdentifier = '<?php echo $block->getUniqueIdentifier(); ?>';
+
         require([
             'jquery',
             'Magento_Customer/js/customer-data'
@@ -61,15 +40,6 @@
             dataEmarsys.exchangeRate = dataEmarsys.exchangeRate || 1;
             let firstOnData = true;
             let timeout;
-
-            <?php if ($pageHandleData['status'] == 'Valid' && $pageHandleData['logic'] != ''): ?>
-                ScarabQueue.push(['recommend', {
-                    logic: '<?php echo (string)$pageHandleData["logic"]; ?>',
-                    containerId: 'recommended-product',
-                    templateId: '<?php echo (string)$pageHandleData['templateId']; ?>',
-                    limit: 10
-                }]);
-            <?php endif; ?>
 
             const onData = function () {
                 if (timeout) {
@@ -84,7 +54,7 @@
                 if (firstOnData) {
                     var processed = 0;
                     if (dataEmarsys.product) {
-                        ScarabQueue.push(['view', (uniqueIdentifier == 'product_id') ? dataEmarsys.product.id : dataEmarsys.product.sku]);
+                        ScarabQueue.push(['view', dataEmarsys.product.sku]);
                     }
 
                     if (!dataEmarsys.product && dataEmarsys.category) {
@@ -96,9 +66,15 @@
                     }
 
                     if (dataEmarsys.slug) {
-                        ScarabQueue.push(['availabilityZone', dataEmarsys.slug]);
-                        ScarabQueue.push(['displayCurrency', dataEmarsys.displayCurrency]);
-                        ScarabQueue.push(['language', dataEmarsys.slug]);
+                        if (dataEmarsys.slug) {
+                            ScarabQueue.push(['availabilityZone', dataEmarsys.slug]);
+                        }
+                        if (dataEmarsys.displayCurrency) {
+                            ScarabQueue.push(['displayCurrency', dataEmarsys.displayCurrency]);
+                        }
+                        if (dataEmarsys.slug) {
+                            ScarabQueue.push(['language', dataEmarsys.slug]);
+                        }
                     }
 
                     if (dataEmarsys.order) {
@@ -119,7 +95,7 @@
                         'cart',
                         dataEmarsys.cart.items.map(product => {
                             return {
-                                item: (uniqueIdentifier == 'product_id') ? product.product_id : product.product_sku,
+                                item: product.product_sku,
                                 price: parseFloat(parseFloat(product.product_price_value / dataEmarsys.exchangeRate).toFixed(2)),
                                 quantity: parseInt(product.qty)
                             };
@@ -128,11 +104,54 @@
                 }
 
                 if (!processed) {
+                    if (firstOnData) {
+                        <?php if ($pageHandleData['status'] && $pageHandleData['logic'] != ''): ?>
+                            <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
+                                <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
+                                    for (var i = 1; i < 11; i++) {
+                                        ScarabQueue.push(['recommend', {
+                                            logic: 'DEPARTMENT_' + i,
+                                            limit: 6,
+                                            containerId: 'dept' + i,
+                                            templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                                            success: function (SC, render) {
+                                                if (SC.topicLocalized) {
+                                                    SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                                                    render(SC);
+                                                }
+                                            }
+                                        }]);
+                                    }
+                                <?php else: ?>
+                                    ScarabQueue.push(['recommend', {
+                                        logic: '<?php echo $pageHandleData["logic"]; ?>',
+                                        containerId: 'recommended-product',
+                                        templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                                        limit: 6
+                                    }]);
+                                <?php endif; ?>
+                            <?php else: ?>
+                                for (var i = 1; i < 11; i++) {
+                                    ScarabQueue.push(['recommend', {
+                                        logic: '<?php echo $pageHandleData['logic'] ?>' + i,
+                                        limit: 6,
+                                        containerId: 'home' + i,
+                                        templateId: '<?php echo $pageHandleData['templateId'] ?>',
+                                        success: function (SC, render) {
+                                            if (SC.topicLocalized) {
+                                                SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                                                render(SC);
+                                            }
+                                        }
+                                    }]);
+                                }
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    }
                     ScarabQueue.push(['go']);
                 }
                 firstOnData = false;
             };
-
 
             customerData.get('customer').subscribe(function (customer) {
                 dataEmarsys.customer = customer;
@@ -149,23 +168,88 @@
             }
         });
     </script>
-    <?php if ($pageHandleData['status'] == 'Valid' && $pageHandleData['logic'] != ''): ?>
+    <?php if ($pageHandleData['status'] && $pageHandleData['logic'] != ''): ?>
+        <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
+            <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
+                <div id="dept1"></div>
+                <div id="dept2"></div>
+                <div id="dept3"></div>
+                <div id="dept4"></div>
+                <div id="dept5"></div>
+                <div id="dept6"></div>
+                <div id="dept7"></div>
+                <div id="dept8"></div>
+                <div id="dept9"></div>
+                <div id="dept10"></div>
+                <script type="text/html" id="<?php echo $pageHandleData['templateId']; ?>">
+                    <![CDATA[
+                    <h4>{{= SC.title }}</h4>
+                    {{ for (var i = 0; i < SC.page.products.length; i++) { }}
+                    {{ var p = SC.page.products[i]; }}
+                    <span data-scarabitem="{{= p.id }}" style="display: inline-block" class="rec-item">
+                            <a href="{{= p.link }}" target="_blank"><img src="{{= p.image }}" class="rec-image" title="{{= p.title }}"></a>
+                        </span>
+                    {{ } }}
+                    ]]>
+                </script>
+            <?php else: ?>
+                <div id="recommended-product"></div>
+                <script type="text/html" id="<?php echo $pageHandleData['templateId']; ?>">
+                    <![CDATA[
+                    {{ if (SC.page.products.length) { }}
+                    <div class="scarab-itemlist">
+                        <div class="scarab-prev">◀</div>
+                        {{ for (var i = 0; i < SC.page.products.length; i++) { }}
+                        {{ var p = SC.page.products[i]; }}
+                        <span data-scarabitem="{{= p.id }}" class="scarab-item">
+                                <a href="{{= p.link }}">
+                                    <img src="{{= p.image }}" title="{{= p.title }}">
+                                    {{= p.title }}
+                                </a>
+                            </span>
+                        {{ } }}
+                        <div class="scarab-next">▶</div>
+                    </div>
+                    {{ } }}
+                    ]]>
+                </script>
+            <?php endif; ?>
+        <?php else: ?>
+            <div id="home1"></div>
+            <div id="home2"></div>
+            <div id="home3"></div>
+            <div id="home4"></div>
+            <div id="home5"></div>
+            <div id="home6"></div>
+            <div id="home7"></div>
+            <div id="home8"></div>
+            <div id="home9"></div>
+            <div id="home10"></div>
+            <script type="text/html" id="<?php echo $pageHandleData['templateId']; ?>">
+                <![CDATA[
+                <h4>{{= SC.title }}</h4>
+                {{ for (var i = 0; i < SC.page.products.length; i++) { }}
+                {{ var p = SC.page.products[i]; }}
+                <span data-scarabitem="{{= p.id }}" style="display: inline-block" class="rec-item">
+                        <a href="{{=p.link}}" target="_blank"><img src="{{= p.image }}" class="rec-image" title="{{= p.title }}"></a>
+                    </span>
+                {{ } }}
+                ]]>
+            </script>
+        <?php endif; ?>
         <style>
             .rec-item {
                 text-align: center;
             }
-
             .rec-image {
                 max-width: 80px;
                 max-height: 80px;
             }
-
             .scarab-itemlist {
                 padding: 0px 20px;
                 position: relative;
                 border: 1px solid #C5D7EF;
             }
-
             .scarab-item {
                 display: inline-block;
                 width: 120px;
@@ -175,7 +259,6 @@
                 font-family: Arial, sans-serif;
                 text-align: center;
             }
-
             .scarab-item img {
                 max-width: 100px;
                 max-height: 100px;
@@ -183,7 +266,6 @@
                 margin: 0px auto;
                 border: 0px;
             }
-
             .scarab-prev, .scarab-next {
                 position: absolute;
                 width: 20px;
@@ -196,18 +278,12 @@
                 font-size: 16px;
                 color: #C5D7EF;
             }
-
             .scarab-prev {
                 left: 0px;
             }
-
             .scarab-next {
                 right: 0px;
             }
         </style>
     <?php endif; ?>
 <?php endif; ?>
-
-
-
-

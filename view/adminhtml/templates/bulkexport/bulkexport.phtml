@@ -83,18 +83,7 @@
     function bulkProductExportData(url) {
         var entityType = document.getElementById("entitytype").value;
         var includeBundle = document.getElementById("include_bundle").value;
-        var TotalCheckBoxes = document.getElementsByName("checkbox");
-        var checkboxesChecked = [];
-        for (var i = 0; i < TotalCheckBoxes.length; i++) {
-            // And stick the checked ones onto an array...
-            if (TotalCheckBoxes[i].checked) {
-                // alert(TotalCheckBoxes[i].value);
-                checkboxesChecked.push(TotalCheckBoxes[i].value);
-            }
-        }
-        var excludeCategories = '';
-        excludeCategories = checkboxesChecked.toString();
-        var url = url + '?entityType=' + entityType + '&includeBundle=' + includeBundle + '&excludeCategories=' + excludeCategories;
+        var url = url + '?entityType=' + entityType + '&includeBundle=' + includeBundle;
         location.href = url;
     }
 
