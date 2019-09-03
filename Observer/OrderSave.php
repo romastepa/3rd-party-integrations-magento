@@ -44,6 +44,10 @@ class OrderSave implements ObserverInterface
             $orderQueue = $orderQueueData->getFirstItem();
         }
 
+        if ($observer->getEvent()->getOrder()->getState() == \Magento\Sales\Model\Order::STATE_CLOSED) {
+            return true;
+        }
+
         $orderQueue->setEntityId($observer->getEvent()->getOrder()->getId());
         $orderQueue->setEntityTypeId(1);
         $orderQueue->setWebsiteId($observer->getEvent()->getOrder()->getStore()->getWebsiteId());

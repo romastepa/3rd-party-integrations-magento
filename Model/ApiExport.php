@@ -395,7 +395,7 @@ class ApiExport extends ZendClient
             //get sales mapped attributes
             $emptyFileHeader = $this->orderResourceModel->getSalesMappedAttrs($storeId);
             if (empty($emptyFileHeader)) {
-                $emptyFileHeader = $this->emarsysHelper->getSalesOrderCsvDefaultHeader($storeId);
+                $emptyFileHeader = $this->emarsysHelper->getSalesOrderCsvDefaultHeader();
             }
             $sampleData = $this->sampleDataSmartInsightExport($storeId, $emptyFileHeader);
         }
