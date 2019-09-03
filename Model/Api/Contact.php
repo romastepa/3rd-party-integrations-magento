@@ -543,7 +543,7 @@ class Contact
                     );
                 }
 
-                $this->processBatch($allCustomersPayload, $emailKey, $logsArray);
+                $this->processBatch($allCustomersPayload, $logsArray);
             } else {
                 $firstPageNumber = $currentPageNumber = isset($data['page']) ? $data['page'] : 1;
 
