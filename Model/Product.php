@@ -777,6 +777,7 @@ class Product extends AbstractModel
                         } else {
                             $attributeData[] = 'FALSE';
                         }
+
                         break;
                     case 'category_ids':
                         $attributeData[] = implode('|', $categoryNames);

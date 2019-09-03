@@ -59,10 +59,17 @@ class EmarsysOrderExport extends Command
                 InputOption::VALUE_OPTIONAL,
                 '--to="Y-m-d" [2017-12-31]'
             ),
+            new InputOption(
+                'queue',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                '--queue="true"',
+                false
+            ),
         ];
 
         $this->setName('emarsys:export:order')
-            ->setDescription('Order bulk export (--from=\'Y-m-d\' --to=\'Y-m-d\')')
+            ->setDescription('Order bulk export (--from=\'Y-m-d\' --to=\'Y-m-d\' --queue=\'true\')')
             ->setDefinition($options);
         parent::configure();
     }
@@ -82,10 +89,11 @@ class EmarsysOrderExport extends Command
 
                 $fromDate = $input->getOption('from');
                 $toDate = $input->getOption('to');
+                $queue = $input->getOption('queue');
                 try {
                     \Magento\Framework\App\ObjectManager::getInstance()->get(\Emarsys\Emarsys\Model\Order::class)->syncOrders(
                         $storeId,
-                        \Emarsys\Emarsys\Helper\Data::ENTITY_EXPORT_MODE_MANUAL,
+                        ($queue ? \Emarsys\Emarsys\Helper\Data::ENTITY_EXPORT_MODE_AUTOMATIC : \Emarsys\Emarsys\Helper\Data::ENTITY_EXPORT_MODE_MANUAL),
                         $fromDate,
                         $toDate
                     );

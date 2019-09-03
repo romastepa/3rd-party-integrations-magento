@@ -313,6 +313,9 @@ class Order extends AbstractModel
         $merchantId = $store->getConfig(EmarsysHelper::XPATH_EMARSYS_SIEXPORT_MERCHANT_ID);
         $token = $store->getConfig(EmarsysHelper::XPATH_EMARSYS_SIEXPORT_TOKEN);
 
+        $orderCollectionClone = null;
+        $creditMemoCollectionClone = null;
+
         if ($merchantId != '' && $token != '') {
             //test connection using merchant id and token
             $this->apiExport->assignApiCredentials($merchantId, $token);
@@ -341,9 +344,6 @@ class Order extends AbstractModel
                     $exportFromDate,
                     $exportTillDate
                 );
-
-                $orderCollectionClone = null;
-                $creditMemoCollectionClone = null;
 
                 if ($orderCollection && (is_object($orderCollection)) && ($orderCollection->getSize())) {
                     $orderCollectionClone = clone $orderCollection;
@@ -495,8 +495,12 @@ class Order extends AbstractModel
     {
         $store = $this->storeManager->getStore($storeId);
         $errorCount = true;
+        $moveFile = false;
 
         $bulkDir = $store->getConfig(EmarsysHelper::XPATH_EMARSYS_FTP_BULK_EXPORT_DIR);
+
+        $orderCollectionClone = null;
+        $creditMemoCollectionClone = null;
 
         if ($this->emarsysHelper->checkFtpConnectionByStore($store)) {
             try {
@@ -519,7 +523,6 @@ class Order extends AbstractModel
                     $exportFromDate,
                     $exportTillDate
                 );
-                $orderCollectionClone = false;
 
                 //Generate Sales CSV
                 if ($orderCollection && (is_object($orderCollection)) && ($orderCollection->getSize())) {
@@ -544,6 +547,7 @@ class Order extends AbstractModel
                 $logsArray['description'] = __($e->getMessage());
                 $logsArray['message_type'] = 'Error';
                 $this->logsHelper->logs($logsArray);
+                $moveFile = false;
             }
 
             try {
@@ -555,7 +559,6 @@ class Order extends AbstractModel
                     $exportFromDate,
                     $exportTillDate
                 );
-                $creditMemoCollectionClone = false;
 
                 if ($creditMemoCollection && (is_object($creditMemoCollection)) && ($creditMemoCollection->getSize())) {
                     $moveFile = true;
@@ -579,6 +582,7 @@ class Order extends AbstractModel
                 $logsArray['description'] = __($e->getMessage());
                 $logsArray['message_type'] = 'Error';
                 $this->logsHelper->logs($logsArray);
+                $moveFile = false;
             }
 
             //CSV upload to FTP process starts
@@ -665,7 +669,7 @@ class Order extends AbstractModel
         $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
         $this->logsHelper->manualLogsUpdate($logsArray);
 
-        return;
+        return true;
     }
 
     /**
@@ -809,19 +813,10 @@ class Order extends AbstractModel
         $emarsysFields = $this->orderResourceModel->getEmarsysOrderFields($storeId);
 
         $guestOrderExportStatus = $store->getConfig(EmarsysHelper::XPATH_SMARTINSIGHT_EXPORTGUEST_CHECKOUTORDERS);
-        $emailAsIdentifierStatus = $store->getConfig(EmarsysHelper::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
         $taxIncluded = $this->emarsysHelper->isIncludeTax($storeId);
         $useBaseCurrency = $this->emarsysHelper->isUseBaseCurrency($storeId);
 
-        if ($sameFile && !$this->handle) {
-            $this->handle = fopen($filePath, 'w');
-
-            //Get Header for sales csv
-            $header = $this->getSalesCsvHeader($storeId);
-
-            //put headers in sales csv
-            fputcsv($this->handle, $header);
-        } elseif (!$sameFile) {
+        if (($sameFile && !$this->handle) || !$sameFile) {
             $this->handle = fopen($filePath, 'w');
 
             //Get Header for sales csv
@@ -832,17 +827,16 @@ class Order extends AbstractModel
         }
 
         //write data for orders into csv
-        if ($orderCollection) {
+        if ($orderCollection && $orderCollection->getSize()) {
             $dummySnapshot = $this->snapshotFactory->create();
             /** @var \Magento\Sales\Model\Order $order */
             foreach ($orderCollection as $order) {
                 $orderId = $order->getRealOrderId();
                 $createdDate = date('Y-m-d', strtotime($order->getCreatedAt()));
                 $customerEmail = $order->getCustomerEmail();
-                $customerId = $order->getCustomerId();
 
                 $fullyInvoiced = false;
-                if ($order->getTotalPaid() == $order->getGrandTotal()) {
+                if ($order->getState() == \Magento\Sales\Model\Order::STATE_COMPLETE) {
                     $fullyInvoiced = true;
                 }
 
@@ -864,13 +858,8 @@ class Order extends AbstractModel
                     $values[] = $orderId;
                     //set timestamp
                     $values[] = $createdDate;
-
                     //set customer
-                    if ($emailAsIdentifierStatus) {
-                        $values[] = $customerEmail;
-                    } else {
-                        $values[] = $customerId;
-                    }
+                    $values[] = $customerEmail;
                     //set product sku/id
                     $values[] = $item->getSku();
 
@@ -914,7 +903,7 @@ class Order extends AbstractModel
                             $values[] = $this->getValueForType($emarsysOrderFieldValueOrder, $order->getData($magentoColumnName));
                         }
                     }
-                    if (!($order->getCustomerIsGuest() == 1 && ($guestOrderExportStatus == 0 || $emailAsIdentifierStatus == 0))) {
+                    if (!($order->getCustomerIsGuest() == 1 && $guestOrderExportStatus == 0)) {
                         fputcsv($this->handle, $values);
                     }
                 }
@@ -922,23 +911,28 @@ class Order extends AbstractModel
         }
 
         //write data for credit-memo into csv
-        if ($creditMemoCollection) {
+        if ($creditMemoCollection && $creditMemoCollection->getSize()) {
             $dummySnapshot = $this->snapshotFactory->create();
             /** @var \Magento\Sales\Model\Order\Creditmemo $creditMemo */
             foreach ($creditMemoCollection as $creditMemo) {
                 $creditMemoOrder = $this->salesOrderFactory->create()->load($creditMemo->getOrderId());
-                $orderId = $creditMemo->getOrderId();
+                $orderId = $creditMemoOrder->getRealOrderId();
                 $createdDate = date('Y-m-d', strtotime($creditMemo->getCreatedAt()));
                 $customerEmail = $creditMemo->getOrder()->getCustomerEmail();
-                $customerId = $creditMemo->getOrder()->getCustomerId();
 
-                $parentId = null;
+                $parentSku = null;
                 $items = $this->creditmemoItemCollectionFactory->create(['entitySnapshot' => $dummySnapshot])
                     ->addFieldToFilter('parent_id', ['eq' => $creditMemo->getId()]);
 
                 /** @var \Magento\Sales\Model\Order\Creditmemo\Item $item */
                 foreach ($items as $item) {
-                    if ($item->getOrderItem()->getParentItem()) {
+                    if ($item->getOrderItem()->getProductType() == Configurable::TYPE_CODE) {
+                        $parentSku = $item->getSku();
+                    }
+                    if ($parentSku && $item->getOrderItem()->getSku() == $parentSku
+                        && $item->getOrderItem()->getProductType() != Configurable::TYPE_CODE
+                    ) {
+                        $parentSku = null;
                         continue;
                     }
 
@@ -947,13 +941,8 @@ class Order extends AbstractModel
                     $values[] = $orderId;
                     //set timestamp
                     $values[] = $createdDate;
-
                     //set customer
-                    if ($emailAsIdentifierStatus) {
-                        $values[] = $customerEmail;
-                    } else {
-                        $values[] = $customerId;
-                    }
+                    $values[] = $customerEmail;
                     //set product sku/id
                     $values[] = $item->getSku();
 
@@ -997,7 +986,7 @@ class Order extends AbstractModel
                             $values[] = $this->getValueForType($emarsysOrderFieldValueOrder, $creditMemo->getData($magentoColumnName));
                         }
                     }
-                    if (!($creditMemoOrder->getCustomerIsGuest() == 1 && ($guestOrderExportStatus == 0 || $emailAsIdentifierStatus == 0))) {
+                    if (!($creditMemoOrder->getCustomerIsGuest() == 1 && $guestOrderExportStatus == 0)) {
                         fputcsv($this->handle, $values);
                     }
                 }
@@ -1024,32 +1013,25 @@ class Order extends AbstractModel
 
     /**
      * Get Sales CSV Header
+     *
      * @param int $storeId
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getSalesCsvHeader($storeId = 0)
     {
-        $store = $this->storeManager->getStore($storeId);
-        $emailAsIdentifierStatus = (bool)$store->getConfig(EmarsysHelper::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
-
         if (!isset($this->salesCsvHeader[$storeId])) {
             //default header
-            $header = $this->emarsysHelper->getSalesOrderCsvDefaultHeader($storeId);
+            $header = $this->emarsysHelper->getSalesOrderCsvDefaultHeader();
 
             //header collected from mapped order attributes
             $emarsysFields = $this->orderResourceModel->getEmarsysOrderFields($storeId);
             foreach ($emarsysFields as $field) {
                 $emarsysOrderFieldValue = trim($field['emarsys_order_field']);
                 if ($emarsysOrderFieldValue != '' && $emarsysOrderFieldValue != "'") {
-                    if ($emailAsIdentifierStatus) {
-                        if ($emarsysOrderFieldValue != 'customer') {
-                            $header[] = $emarsysOrderFieldValue;
-                        }
-                    } else {
-                        if ($emarsysOrderFieldValue != 'email') {
-                            $header[] = $emarsysOrderFieldValue;
-                        }
+                    if ($emarsysOrderFieldValue != 'customer') {
+                        $header[] = $emarsysOrderFieldValue;
                     }
                 }
             }
@@ -1075,13 +1057,9 @@ class Order extends AbstractModel
                 ->addFieldToFilter('entity_type_id', 1);
 
             if ($orderQueueCollection && $orderQueueCollection->getSize()) {
-                $orderIds = [];
-                foreach ($orderQueueCollection as $orderQueue) {
-                    $orderIds[] = $orderQueue->getEntityId();
-                }
                 $orderCollection = $this->emarsysOrderExportFactory->create()
                     ->addFieldToFilter('store_id', ['eq' => $storeId])
-                    ->addFieldToFilter('entity_id', ['in' => $orderIds])
+                    ->addFieldToFilter('entity_id', ['in' => $orderQueueCollection->getColumnValues('entity_id')])
                     ->addFieldToFilter('status', ['nin' => \Magento\Sales\Model\Order::STATE_CLOSED]);
             }
         } else {
@@ -1132,13 +1110,9 @@ class Order extends AbstractModel
                 ->addFieldToFilter('entity_type_id', 2);
 
             if ($creditMemoQueueCollection && $creditMemoQueueCollection->getSize()) {
-                $creditMemoIds = [];
-                foreach ($creditMemoQueueCollection as $creditMemoQueue) {
-                    $creditMemoIds[] = $creditMemoQueue->getEntityId();
-                }
                 $creditMemoCollection = $this->emarsysCreditmemoExportFactory->create()
                     ->addFieldToFilter('store_id', ['eq' => $storeId])
-                    ->addFieldToFilter('entity_id', ['in' => $creditMemoIds]);
+                    ->addFieldToFilter('order_id', ['in' => $creditMemoQueueCollection->getColumnValues('entity_id')]);
             }
         } else {
             $creditMemoCollection = $this->emarsysCreditmemoExportFactory->create()
@@ -1193,7 +1167,7 @@ class Order extends AbstractModel
 
         //remove credit-memo records from queue table
         if ($creditMemoCollection) {
-            $allCreditmemoOrderIds = $creditMemoCollection->getAllIds();
+            $allCreditmemoOrderIds = $creditMemoCollection->getColumnValues('order_id');
             $creditmemoIdsArrays = array_chunk($allCreditmemoOrderIds, 100);
             foreach ($creditmemoIdsArrays as $creditmemoIds) {
                 $creditMemoQueueCollection = $this->orderQueueFactory->create()

@@ -101,7 +101,7 @@ class SaveSchema extends Action
 
             $data = $this->orderResourceModel->getSalesOrderColumnNames();
 
-            $header = $this->emarsysHelper->getSalesOrderCsvDefaultHeader($storeId);
+            $header = $this->emarsysHelper->getSalesOrderCsvDefaultHeader();
             foreach ($header as $column) {
                 $manData[$column] = $column;
             }

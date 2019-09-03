@@ -37,14 +37,14 @@ class CreditmemoSave implements ObserverInterface
         $orderQueue = $this->orderQueueFactory->create();
 
         $orderQueueData = $orderQueue->getCollection()
-            ->addFieldToFilter('entity_id', $observer->getEvent()->getDataObject()->getId())
+            ->addFieldToFilter('entity_id', $observer->getEvent()->getDataObject()->getOrder()->getId())
             ->addFieldToFilter('entity_type_id', 2);
 
         if ($orderQueueData->getSize()) {
             $orderQueue = $orderQueueData->getFirstItem();
         }
 
-        $orderQueue->setEntityId($observer->getEvent()->getDataObject()->getId());
+        $orderQueue->setEntityId($observer->getEvent()->getDataObject()->getOrder()->getId());
         $orderQueue->setEntityTypeId(2);
         $orderQueue->setWebsiteId($observer->getEvent()->getDataObject()->getOrder()->getStore()->getWebsiteId());
         $orderQueue->setStoreId($observer->getEvent()->getDataObject()->getOrder()->getStoreId());
