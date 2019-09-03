@@ -253,7 +253,7 @@ class Product extends AbstractModel
      * @return bool
      * @throws \Exception
      */
-    public function consolidatedCatalogExport($mode = EmarsysHelper::ENTITY_EXPORT_MODE_AUTOMATIC, $includeBundle = null, $excludedCategories = null)
+    public function consolidatedCatalogExport($mode = EmarsysHelper::ENTITY_EXPORT_MODE_AUTOMATIC, $includeBundle = null)
     {
         set_time_limit(0);
 
@@ -306,10 +306,9 @@ class Product extends AbstractModel
                         $defaultStoreID = $store['store']->getWebsite()->getDefaultStore()->getId();
                     }
 
-                    if (is_null($excludedCategories)) {
-                        $excludedCategories = $store['store']->getConfig(EmarsysHelper::XPATH_PREDICT_EXCLUDED_CATEGORIES);
-                    }
-                    if ($excludedCategories) {
+                    $excludedCategories = $store['store']->getConfig(EmarsysHelper::XPATH_PREDICT_EXCLUDED_CATEGORIES);
+
+                    if (!empty($excludedCategories)) {
                         $excludedCategories = explode(',', str_replace(' ', '', $excludedCategories));
                     }
 
@@ -420,22 +419,15 @@ class Product extends AbstractModel
             $this->logsHelper->manualLogsUpdate($logsArray);
             $result = true;
         } catch (\Exception $e) {
-            $msg = $e->getMessage();
             $logsArray['messages'] = __('consolidatedCatalogExport Exception');
             $logsArray['status'] = 'error';
             $logsArray['finished_at'] = $this->date->date('Y-m-d H:i:s', time());
             $this->logsHelper->manualLogsUpdate($logsArray);
 
             $logsArray['emarsys_info'] = __('consolidatedCatalogExport Exception');
-            $logsArray['description'] = __("Exception %1", $e->getMessage());
+            $logsArray['description'] = __("Exception %1", $e->getMessage() . ' trace: ' . $e->getTraceAsString());
             $logsArray['message_type'] = 'Error';
             $this->logsHelper->logs($logsArray);
-
-            if ($mode == EmarsysHelper::ENTITY_EXPORT_MODE_MANUAL) {
-                $this->messageManager->addErrorMessage(
-                    __("Exception " . $msg)
-                );
-            }
         }
 
         return $result;
@@ -785,6 +777,7 @@ class Product extends AbstractModel
                         } else {
                             $attributeData[] = 'FALSE';
                         }
+
                         break;
                     case 'category_ids':
                         $attributeData[] = implode('|', $categoryNames);

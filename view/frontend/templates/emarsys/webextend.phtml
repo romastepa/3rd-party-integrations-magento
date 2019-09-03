@@ -31,13 +31,14 @@
         window.Emarsys.Magento2 = window.Emarsys.Magento2 || {};
 
         var dataEmarsys = <?php echo $block->getTrackingData(); ?>;
+        var uniqueIdentifier = '<?php echo $block->getUniqueIdentifier(); ?>';
 
         require([
             'jquery',
             'Magento_Customer/js/customer-data'
         ], function (jQuery, customerData) {
             dataEmarsys.order = window.Emarsys.Magento2.orderData;
-            dataEmarsys.exchangeRate = dataEmarsys.exchangeRate || 1;
+
             let firstOnData = true;
             let timeout;
 
@@ -54,7 +55,7 @@
                 if (firstOnData) {
                     var processed = 0;
                     if (dataEmarsys.product) {
-                        ScarabQueue.push(['view', dataEmarsys.product.sku]);
+                        ScarabQueue.push(['view', (uniqueIdentifier == 'product_id') ? dataEmarsys.product.id : dataEmarsys.product.sku]);
                     }
 
                     if (!dataEmarsys.product && dataEmarsys.category) {
@@ -69,12 +70,13 @@
                         if (dataEmarsys.slug) {
                             ScarabQueue.push(['availabilityZone', dataEmarsys.slug]);
                         }
-                        if (dataEmarsys.displayCurrency) {
-                            ScarabQueue.push(['displayCurrency', dataEmarsys.displayCurrency]);
-                        }
                         if (dataEmarsys.slug) {
                             ScarabQueue.push(['language', dataEmarsys.slug]);
                         }
+                    }
+
+                    if (dataEmarsys.displayCurrency) {
+                        ScarabQueue.push(['displayCurrency', dataEmarsys.displayCurrency]);
                     }
 
                     if (dataEmarsys.order) {
@@ -95,8 +97,8 @@
                         'cart',
                         dataEmarsys.cart.items.map(product => {
                             return {
-                                item: product.product_sku,
-                                price: parseFloat(parseFloat(product.product_price_value / dataEmarsys.exchangeRate).toFixed(2)),
+                                item: (uniqueIdentifier == 'product_id') ? product.product_real_id : product.product_sku,
+                                price: dataEmarsys.useBaseCurrency ? product.base_product_price_value : product.product_price_value,
                                 quantity: parseInt(product.qty)
                             };
                         })
@@ -105,47 +107,47 @@
 
                 if (!processed) {
                     if (firstOnData) {
-                        <?php if ($pageHandleData['status'] && $pageHandleData['logic'] != ''): ?>
-                            <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
-                                <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
-                                    for (var i = 1; i < 11; i++) {
-                                        ScarabQueue.push(['recommend', {
-                                            logic: 'DEPARTMENT_' + i,
-                                            limit: 6,
-                                            containerId: 'dept' + i,
-                                            templateId: '<?php echo $pageHandleData['templateId']; ?>',
-                                            success: function (SC, render) {
-                                                if (SC.topicLocalized) {
-                                                    SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
-                                                    render(SC);
-                                                }
-                                            }
-                                        }]);
+                        <?php if (isset($pageHandleData['status']) && isset($pageHandleData['logic']) && $pageHandleData['logic'] != ''): ?>
+                        <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
+                        <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
+                        for (var i = 1; i < 11; i++) {
+                            ScarabQueue.push(['recommend', {
+                                logic: 'DEPARTMENT_' + i,
+                                limit: 6,
+                                containerId: 'dept' + i,
+                                templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                                success: function (SC, render) {
+                                    if (SC.topicLocalized) {
+                                        SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                                        render(SC);
                                     }
-                                <?php else: ?>
-                                    ScarabQueue.push(['recommend', {
-                                        logic: '<?php echo $pageHandleData["logic"]; ?>',
-                                        containerId: 'recommended-product',
-                                        templateId: '<?php echo $pageHandleData['templateId']; ?>',
-                                        limit: 6
-                                    }]);
-                                <?php endif; ?>
-                            <?php else: ?>
-                                for (var i = 1; i < 11; i++) {
-                                    ScarabQueue.push(['recommend', {
-                                        logic: '<?php echo $pageHandleData['logic'] ?>' + i,
-                                        limit: 6,
-                                        containerId: 'home' + i,
-                                        templateId: '<?php echo $pageHandleData['templateId'] ?>',
-                                        success: function (SC, render) {
-                                            if (SC.topicLocalized) {
-                                                SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
-                                                render(SC);
-                                            }
-                                        }
-                                    }]);
                                 }
-                            <?php endif; ?>
+                            }]);
+                        }
+                        <?php else: ?>
+                        ScarabQueue.push(['recommend', {
+                            logic: '<?php echo $pageHandleData["logic"]; ?>',
+                            containerId: 'recommended-product',
+                            templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                            limit: 6
+                        }]);
+                        <?php endif; ?>
+                        <?php else: ?>
+                        for (var i = 1; i < 11; i++) {
+                            ScarabQueue.push(['recommend', {
+                                logic: '<?php echo $pageHandleData['logic'] ?>' + i,
+                                limit: 6,
+                                containerId: 'home' + i,
+                                templateId: '<?php echo $pageHandleData['templateId'] ?>',
+                                success: function (SC, render) {
+                                    if (SC.topicLocalized) {
+                                        SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                                        render(SC);
+                                    }
+                                }
+                            }]);
+                        }
+                        <?php endif; ?>
                         <?php endif; ?>
                     }
                     ScarabQueue.push(['go']);
@@ -168,7 +170,7 @@
             }
         });
     </script>
-    <?php if ($pageHandleData['status'] && $pageHandleData['logic'] != ''): ?>
+    <?php if (isset($pageHandleData['status']) && isset($pageHandleData['logic']) && $pageHandleData['logic'] != ''): ?>
         <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
             <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
                 <div id="dept1"></div>

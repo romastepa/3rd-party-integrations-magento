@@ -518,8 +518,8 @@ class Customer extends AbstractDb
 
     /**
      *
-     * @param type $email
-     * @param type $websiteId
+     * @param string $email
+     * @param int $websiteId
      * @return string
      */
     public function checkCustomerExistsInMagento($email, $websiteId)

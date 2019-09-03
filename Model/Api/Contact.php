@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2018 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
  */
 namespace Emarsys\Emarsys\Model\Api;
 
@@ -196,7 +196,6 @@ class Contact
      * @param $storeId
      * @param int $cron
      * @param null|\Magento\Customer\Model\Address $customerAddress
-     * @return bool
      * @throws \Exception
      */
     public function syncContact($customer, $websiteId, $storeId, $cron = 0, $customerAddress = null)
@@ -327,8 +326,6 @@ class Contact
             $logsArray['messages'] = 'Customer in Emarsys created';
         }
         $this->logsHelper->manualLogsUpdate($logsArray);
-
-        return $errorMsg ? false : true;
     }
 
     /**

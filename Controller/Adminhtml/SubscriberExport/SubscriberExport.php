@@ -143,11 +143,12 @@ class SubscriberExport extends Action
                     //save details in cron details table
                     $this->emarsysCronDetails->addEmarsysCronDetails($cron->getScheduleId(), $params);
 
-                    $this->messageManager->addSuccessMessage(__(
-                        'A cron named "%1" have been scheduled for subscribers export for the store %2.',
-                        $cronJobName,
-                        $store->getName()
-                    ));
+                    $this->messageManager->addSuccessMessage(
+                        __(
+                            'A cron named "%1" have been scheduled for subscribers export for the store %2.',
+                            $cronJobName,
+                            $store->getName()
+                        ));
                 } else {
                     //cron job already scheduled
                     $this->messageManager->addErrorMessage(__('A cron is already scheduled to export subscribers for the store %1 ', $store->getName()));

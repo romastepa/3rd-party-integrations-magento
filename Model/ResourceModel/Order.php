@@ -249,7 +249,7 @@ class Order extends AbstractDb
     {
 
         if (!isset($this->emarsysOrderFields[$storeId])) {
-            $heading = $this->emarsysDataHelper->getSalesOrderCsvDefaultHeader($storeId);
+            $heading = $this->emarsysDataHelper->getSalesOrderCsvDefaultHeader();
             $select = $this->getConnection()
                 ->select()
                 ->from($this->getMainTable())
@@ -271,7 +271,7 @@ class Order extends AbstractDb
     public function getOrderColValue($emarsysField, $orderId, $storeId = 0)
     {
         $emarsysField = $this->getConnection()->quote($emarsysField);
-        $heading = $this->emarsysDataHelper->getSalesOrderCsvDefaultHeader($storeId);
+        $heading = $this->emarsysDataHelper->getSalesOrderCsvDefaultHeader();
         if (in_array($emarsysField, $heading)) {
             return;
         }

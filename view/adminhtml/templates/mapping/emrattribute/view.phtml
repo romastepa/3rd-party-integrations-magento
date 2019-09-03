@@ -77,8 +77,7 @@ $editUrl = $block->getUrl('emarsys_emarsys/mapping_emrattribute/edit', ['store' 
 <?php endif; ?>
 <br>
 <br>
-<form method="POST" action="<?php echo $saveUrl; ?>" id="emarAttribute" autocomplete="off">
-    <input type="hidden" name="form_key" value="<?= /* @escapeNotVerified */ $block->getFormKey() ?>" />
+<form method="POST" action="<?php echo $saveUrl; ?>" id="emarAttribute" autocomplete="off"/>
     <div class="emr_tbl header_label">
         <strong>Name</strong><strong>Label</strong>
     </div>
@@ -102,7 +101,7 @@ $editUrl = $block->getUrl('emarsys_emarsys/mapping_emrattribute/edit', ['store' 
     <a href="javascript:void(0);" class="add_button action-default" title="Add field">Add More Attribute</a>
     </br>
     <input type="hidden" name="storeId" value="<?php echo $storeId; ?>">
-    <input type="submit" value="Submit">
+    <button type="submit" value="Submit">Submit</button>
 </form>
 <script>
     require([

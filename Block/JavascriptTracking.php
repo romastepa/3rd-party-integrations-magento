@@ -161,6 +161,15 @@ class JavascriptTracking extends Template
     }
 
     /**
+     * @return mixed
+     * @throws NoSuchEntityException
+     */
+    public function getUniqueIdentifier()
+    {
+        return $this->storeManager->getStore()->getConfig(Data::XPATH_WEBEXTEND_UNIQUE_ID);
+    }
+
+    /**
      * Get Tracking Data
      *
      * @return mixed
@@ -173,7 +182,7 @@ class JavascriptTracking extends Template
             'product' => $this->getCurrentProduct(),
             'category' => $this->getCategory(),
             'search' => $this->getSearchData(),
-            'exchangeRate' => $this->getExchangeRate(),
+            'useBaseCurrency' => $this->useBaseCurrency(),
             'slug' => $this->getStoreSlug(),
             'displayCurrency' => $this->getDisplayCurrency(),
         ]);
@@ -271,30 +280,17 @@ class JavascriptTracking extends Template
     }
 
     /**
-     * @return float
-     * @throws NoSuchEntityException
-     */
-    public function getExchangeRate()
-    {
-        if ($this->useBaseCurrency()) {
-            return 1;
-        } else {
-            $currentCurrency = $this->storeManager->getStore()->getCurrentCurrencyCode();
-            $baseCurrency = $this->storeManager->getStore()->getBaseCurrencyCode();
-            return (float)$this->currencyFactory->create()->load($baseCurrency)->getAnyRate($currentCurrency);
-        }
-    }
-
-    /**
      * @return mixed
      * @throws NoSuchEntityException
      */
     public function getDisplayCurrency()
     {
-        if ($this->useBaseCurrency()) {
-            return $this->storeManager->getStore()->getBaseCurrencyCode();
+        if ($this->storeManager->getStore()->getBaseCurrency()->getCode()
+            != $this->storeManager->getStore()->getCurrentCurrency()->getCode()
+        ) {
+            return $this->storeManager->getStore()->getCurrentCurrency()->getCode();
         } else {
-            return $this->storeManager->getStore()->getCurrentCurrencyCode();
+            return $this->storeManager->getStore()->getBaseCurrency()->getCode();
         }
     }
 
@@ -320,13 +316,5 @@ class JavascriptTracking extends Template
             return true;
         }
         return $store->getGroup()->getDefaultStoreId() == $store->getId();
-    }
-
-    public function getAjaxUrl()
-    {
-        return $this->getUrl(
-            'emarsys/index/ajax',
-            ['_secure' => true]
-        );
     }
 }
