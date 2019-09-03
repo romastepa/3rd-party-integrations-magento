@@ -39,8 +39,7 @@ class Transport extends \Zend_Mail_Transport_Sendmail implements TransportInterf
         MessageInterface $message,
         SendEmail $sendEmail,
         $parameters = null
-    )
-    {
+    ) {
         if (!$message instanceof \Zend_Mail) {
             if (!$message instanceof \Magento\Framework\Mail\MailMessageInterface) {
                 throw new \InvalidArgumentException('Invalid message instance');

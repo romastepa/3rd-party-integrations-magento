@@ -210,7 +210,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $productMetadataInterface;
 
     /**
-     * @var Logs
+     * @var EmarsysHelperLogs
      */
     protected $logHelper;
 
@@ -350,7 +350,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * @param Context $context
      * @param DateTime $date
      * @param Timezone $timezone
-     * @param Logs $logHelper
+     * @param EmarsysHelperLogs $logHelper
      * @param StoreManagerInterface $storeManager
      * @param ModelResourceModelCustomer $customerResourceModel
      * @param Queue $queueModel
@@ -440,6 +440,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->ftp = $ftp;
 
         parent::__construct($context);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function isTestModeEnabled()
+    {
+        return (bool)$this->scopeConfig->getValue(
+            self::XPATH_WEBEXTEND_MODE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
     }
 
     /**
@@ -2278,10 +2289,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     );
 
                     $apiCall = sprintf('export/%s/data/offset=%s&limit=%s', $exportId, $offset, $limit);
-                    $message = 'Request ' . $apiCall . ' ';
                     $this->api->setWebsiteId($websiteId);
                     $response = $this->api->sendRequest('GET', $apiCall);
-                    $message .= "\nResponse: " . (\Zend_Json::encode($response));
+                    $message = 'Request ' . $apiCall . ' ' . "\nResponse: " . (\Zend_Json::encode($response));
                     $logsArray['messages'] = $message;
                     $this->logHelper->logs($logsArray);
                     $offset += $limit;
@@ -2482,27 +2492,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * @param int $storeId
-     * @param bool $getAllheaders
      * @return array
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getSalesOrderCsvDefaultHeader($storeId = 0, $getAllheaders = false)
+    public function getSalesOrderCsvDefaultHeader()
     {
-        $header = ['order', 'timestamp', 'customer', 'email', 'item', 'price', 'quantity'];
-
-        if (!$getAllheaders) {
-            /** @var \Magento\Store\Model\Store $store */
-            $store = $this->storeManager->getStore($storeId);
-            $emailAsIdentifierStatus = (bool)$store->getConfig(self::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
-            if ($emailAsIdentifierStatus) {
-                unset($header[2]);
-            } else {
-                unset($header[3]);
-            }
-        }
-
-        return $header;
+        return ['order', 'timestamp', 'email', 'item', 'price', 'quantity'];
     }
 
     /**
