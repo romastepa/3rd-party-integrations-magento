@@ -80,45 +80,23 @@ class Subscriber extends \Magento\Newsletter\Model\Subscriber
         DataObjectHelper $dataObjectHelper = null
     ) {
         $this->emarsysHelper = $emarsysHelper;
-        $this->productMetadata = $productMetadata;
 
-        if (version_compare($this->productMetadata->getVersion(), '2.2.6', '>=')) {
-            parent::__construct(
-                $context,
-                $registry,
-                $newsletterData,
-                $scopeConfig,
-                $transportBuilder,
-                $storeManager,
-                $customerSession,
-                $customerRepository,
-                $customerAccountManagement,
-                $inlineTranslation,
-                $resource,
-                $resourceCollection,
-                $data,
-                $dateTime
-            );
-        } else {
-            parent::__construct(
-                $context,
-                $registry,
-                $newsletterData,
-                $scopeConfig,
-                $transportBuilder,
-                $storeManager,
-                $customerSession,
-                $customerRepository,
-                $customerAccountManagement,
-                $inlineTranslation,
-                $resource,
-                $resourceCollection,
-                $data,
-                $dateTime,
-                $customerFactory,
-                $dataObjectHelper
-            );
-        }
+        parent::__construct(
+            $context,
+            $registry,
+            $newsletterData,
+            $scopeConfig,
+            $transportBuilder,
+            $storeManager,
+            $customerSession,
+            $customerRepository,
+            $customerAccountManagement,
+            $inlineTranslation,
+            $resource,
+            $resourceCollection,
+            $data,
+            $dateTime
+        );
     }
 
     /**
