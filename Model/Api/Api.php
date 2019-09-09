@@ -184,7 +184,7 @@ class Api extends \Magento\Framework\DataObject
                 'Created="' . $timestamp . '"',
                 'Content-type: application/json;charset="utf-8"',
             ],
-            'Extension-Version' => '1.0.12+easyspirit',
+            'Extension-Version' => '1.0.15+peppermayo',
         ]);
         $response = $client->request();
 
@@ -250,7 +250,7 @@ class Api extends \Magento\Framework\DataObject
             'Nonce="' . $nonce . '", ' .
             'Created="' . $timestamp . '"',
             'Content-type: application/json;charset="utf-8"',
-            'Extension-Version: 1.0.12+easyspirit',
+            'Extension-Version: 1.0.15+peppermayo',
         ]);
 
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
