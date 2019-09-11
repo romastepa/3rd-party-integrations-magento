@@ -349,11 +349,18 @@ class Contact
             } elseif ($customerAddress && $primaryShipping->getId() == $customerAddress->getId()) {
                 $primaryShipping = $customerAddress;
             }
+            if (!$primaryShipping) {
+                $primaryShipping = current($customer->getAddresses());
+            }
+
             $primaryBilling = $customer->getPrimaryBillingAddress();
             if (($customerAddress && $customerAddress->getDefaultBilling()) || !$primaryBilling) {
                 $primaryBilling = $customerAddress;
             } elseif ($customerAddress && $primaryBilling->getId() == $customerAddress->getId()) {
                 $primaryBilling = $customerAddress;
+            }
+            if (!$primaryBilling) {
+                $primaryBilling = $primaryShipping;
             }
 
             $mappedCountries = $this->emarsysCountryHelper->getMapping($storeId);

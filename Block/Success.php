@@ -24,7 +24,7 @@ use Magento\{
 class Success extends Template
 {
     /**
-     * @var Session 
+     * @var Session
      */
     protected $checkoutSession;
 
