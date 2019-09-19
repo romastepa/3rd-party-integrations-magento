@@ -81,7 +81,7 @@
                 <testmode>0</testmode>
                 <identityregistered>email_address</identityregistered>
                 <uniqueidentifier>sku</uniqueidentifier>
-                <use_base_currency>0</use_base_currency>
+                <use_base_currency>1</use_base_currency>
                 <tax_included>0</tax_included>
             </javascript_tracking>
         </web_extend>
