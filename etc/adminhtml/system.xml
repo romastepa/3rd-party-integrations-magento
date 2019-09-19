@@ -215,22 +215,9 @@
                     <label>Smart Insight Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="exportusing_emailidentifier" translate="label" type="select" sortOrder="21" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
-                    <label>Export using email as identifier</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <depends>
-                        <field id="smartinsight_enabled">1</field>
-                    </depends>
-                </field>
-                <field id="exportguest_checkoutorders" translate="label" type="select" sortOrder="22" showInDefault="1"
-                       showInWebsite="1" showInStore="0">
+                <field id="exportguest_checkoutorders" translate="label" type="select" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Export guest checkout orders</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <depends>
-                        <field id="smartinsight_enabled">1</field>
-                        <field id="exportusing_emailidentifier">1</field>
-                    </depends>
                 </field>
                 <field id="execute_at" translate="label comment" sortOrder="23" type="time" showInDefault="1"
                        showInWebsite="1" showInStore="0">

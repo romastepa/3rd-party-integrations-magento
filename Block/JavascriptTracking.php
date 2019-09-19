@@ -98,12 +98,12 @@ class JavascriptTracking extends Template
             'catalog_product_view' => Data::XPATH_CATALOG_PRODUCT_VIEW,
             'checkout_cart_index' => Data::XPATH_CHECKOUT_CART_INDEX,
             'checkout_onepage_success' => Data::XPATH_CHECKOUT_ONEPAGE_SUCCESS,
-            'catalogsearch_result_index' => Data::XPATH_CATALOGSEARCH_RESULT_INDEX
+            'catalogsearch_result_index' => Data::XPATH_CATALOGSEARCH_RESULT_INDEX,
+            'search' => Data::XPATH_CATALOGSEARCH_RESULT_INDEX,
         ];
 
         if (array_key_exists($handle, $pageHandles)) {
-            $jsStatus = $this->getJsEnableStatusForAllPages();
-            if ($jsStatus == 1) {
+            if ($this->getJsEnableStatusForAllPages()) {
                 $path = $pageHandles[$handle];
                 $pageValue = $this->storeManager->getStore()->getConfig($path);
                 $pageData = explode('||', $pageValue);

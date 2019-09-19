@@ -50,8 +50,8 @@
         <smart_insight>
             <smart_insight>
                 <smartinsight_enabled>0</smartinsight_enabled>
-                <exportusing_emailidentifier>0</exportusing_emailidentifier>
-                <exportguest_checkoutorders>0</exportguest_checkoutorders>
+                <exportusing_emailidentifier>1</exportusing_emailidentifier>
+                <exportguest_checkoutorders>1</exportguest_checkoutorders>
                 <smartinsightfrequency>Daily</smartinsightfrequency>
                 <orderexportforstatus>complete,processing,closed</orderexportforstatus>
             </smart_insight>
@@ -81,7 +81,7 @@
                 <testmode>0</testmode>
                 <identityregistered>email_address</identityregistered>
                 <uniqueidentifier>sku</uniqueidentifier>
-                <use_base_currency>0</use_base_currency>
+                <use_base_currency>1</use_base_currency>
                 <tax_included>0</tax_included>
             </javascript_tracking>
         </web_extend>
