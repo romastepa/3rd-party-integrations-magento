@@ -349,11 +349,18 @@ class Contact
             } elseif ($customerAddress && $primaryShipping->getId() == $customerAddress->getId()) {
                 $primaryShipping = $customerAddress;
             }
+            if (!$primaryShipping) {
+                $primaryShipping = current($customer->getAddresses());
+            }
+
             $primaryBilling = $customer->getPrimaryBillingAddress();
             if (($customerAddress && $customerAddress->getDefaultBilling()) || !$primaryBilling) {
                 $primaryBilling = $customerAddress;
             } elseif ($customerAddress && $primaryBilling->getId() == $customerAddress->getId()) {
                 $primaryBilling = $customerAddress;
+            }
+            if (!$primaryBilling) {
+                $primaryBilling = $primaryShipping;
             }
 
             $mappedCountries = $this->emarsysCountryHelper->getMapping($storeId);
@@ -600,7 +607,7 @@ class Contact
 
     public function processBatch($allCustomersPayload, $logsArray)
     {
-         if (empty($allCustomersPayload)) {
+        if (empty($allCustomersPayload)) {
             //no Customers data found
             $logsArray['emarsys_info'] = 'No Customers Found.';
             $logsArray['action'] = 'Magento to Emarsys';
