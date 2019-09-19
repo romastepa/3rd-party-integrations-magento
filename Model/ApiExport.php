@@ -305,28 +305,15 @@ class ApiExport extends ZendClient
         $store = $this->storeManagerInterface->getStore($store);
         $sampleResult = [];
 
-        $emailAsIdentifierStatus = (bool)$store->getConfig(DATA::XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER);
-        if ($emailAsIdentifierStatus) {
-            //header ['order', 'timestamp', 'email', 'item', 'price', 'quantity'];
-            $sampleData = [
-                'order' => '00000',
-                'timestamp' => '2017-07-07T07:07:07Z',
-                'email' => 'sample@data.com',
-                'item' => 'test_product_item_1',
-                'price' => '0.00',
-                'quantity' => '0'
-            ];
-        } else {
-            //header ['order', 'timestamp', 'customer', 'item', 'price', 'quantity'];
-            $sampleData = [
-                'order' => '00000',
-                'timestamp' => '2017-07-07T07:07:07Z',
-                'customer' => 'cutomer_id',
-                'item' => 'test_product_item_1',
-                'price' => '0.00',
-                'quantity' => '0'
-            ];
-        }
+        //header ['order', 'timestamp', 'email', 'item', 'price', 'quantity'];
+        $sampleData = [
+            'order' => '00000',
+            'timestamp' => '2017-07-07T07:07:07Z',
+            'email' => 'sample@data.com',
+            'item' => 'test_product_item_1',
+            'price' => '0.00',
+            'quantity' => '0'
+        ];
 
         foreach ($headers as $item) {
             $itemVal = '';

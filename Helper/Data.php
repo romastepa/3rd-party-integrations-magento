@@ -109,8 +109,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const XPATH_SMARTINSIGHT_EXPORTGUEST_CHECKOUTORDERS = 'smart_insight/smart_insight/exportguest_checkoutorders';
 
-    const XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER = 'smart_insight/smart_insight/exportusing_emailidentifier';
-
     //Smart Insight API Settings
     const XPATH_EMARSYS_SIEXPORT_API_ENABLED = 'smart_insight/api_settings/enableapi';
 
