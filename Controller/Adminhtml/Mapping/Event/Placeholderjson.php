@@ -70,8 +70,7 @@ class Placeholderjson extends Action
     }
 
     /**
-     * @return void
-     * @throws \Magento\Framework\Exception\MailException
+     * @return $this|\Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface
      */
     public function execute()
     {

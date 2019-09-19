@@ -2,7 +2,7 @@
 /**
  * @category   Emarsys
  * @package    Emarsys_Emarsys
- * @copyright  Copyright (c) 2017 Emarsys. (http://www.emarsys.net/)
+ * @copyright  Copyright (c) 2019 Emarsys. (http://www.emarsys.net/)
  */
 ?>
 <?php
@@ -32,15 +32,15 @@ $editUrl = $block->getUrl('emarsys_emarsys/mapping_emrattribute/edit', ['store' 
         <?php endif; ?>
         <div class="emr_tbl emr_content">
             <input <?php echo $disabled; ?>
-                type="text"
-                value="<?php echo $row['code'] ?>"
-                name="field_name"
-                id="field_name_<?php echo $row['id'] ?>"/>
+                    type="text"
+                    value="<?php echo $row['code'] ?>"
+                    name="field_name"
+                    id="field_name_<?php echo $row['id'] ?>"/>
             <input <?php echo $disabled; ?>
-                type="text"
-                value="<?php echo $row['label']; ?>"
-                name="field_label"
-                id="field_label_<?php echo $row['id'] ?>"/>
+                    type="text"
+                    value="<?php echo $row['label']; ?>"
+                    name="field_label"
+                    id="field_label_<?php echo $row['id'] ?>"/>
             <span class="attributetype">
                 <input type="hidden"
                        value="<?php echo $fieldType; ?>"

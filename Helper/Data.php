@@ -109,8 +109,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     const XPATH_SMARTINSIGHT_EXPORTGUEST_CHECKOUTORDERS = 'smart_insight/smart_insight/exportguest_checkoutorders';
 
-    const XPATH_SMARTINSIGHT_EXPORTUSING_EMAILIDENTIFIER = 'smart_insight/smart_insight/exportusing_emailidentifier';
-
     //Smart Insight API Settings
     const XPATH_EMARSYS_SIEXPORT_API_ENABLED = 'smart_insight/api_settings/enableapi';
 
@@ -455,7 +453,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * @param null|int $storeId
-     * @return bool
+     * @return string
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getUniqueIdentifier($storeId = null)
@@ -1271,7 +1269,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $magentoEventColl = $this->magentoEventsCollection->create()
                 ->addFieldToFilter('id', $emarsysEventMappingItem->getMagentoEventId());
             $magentoEventItem = $magentoEventColl->getFirstItem();
-            $value = $store->getconfig($magentoEventItem->getConfigPath());
+            $value = $store->getConfig($magentoEventItem->getConfigPath());
         }
 
         if (empty($value)) {
@@ -2457,16 +2455,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             if (!$username || !$password || !$hostname || !$port) {
                 return $result;
             }
-            $result = $this->ftp->open(
-                array(
-                    'host' => $hostname,
-                    'port' => $port,
-                    'user' => $username,
-                    'password' => $password,
-                    'ssl' => $ftpSsl ? true : false,
-                    'passive' => $passiveMode ? true : false
-                )
-            );
+            $result = $this->ftp->open([
+                'host' => $hostname,
+                'port' => $port,
+                'user' => $username,
+                'password' => $password,
+                'ssl' => $ftpSsl ? true : false,
+                'passive' => $passiveMode ? true : false
+            ]);
         } catch (\Exception $e) {
             $this->emarsysLogs->addErrorLog($e->getMessage(), $store->getId(), 'checkFtpConnection');
         }

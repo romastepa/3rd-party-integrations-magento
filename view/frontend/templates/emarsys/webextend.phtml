@@ -86,6 +86,48 @@
                                 delete this.email;
                             }
                             ScarabQueue.push(['purchase', this]);
+                            <?php if (isset($pageHandleData['status']) && isset($pageHandleData['logic']) && $pageHandleData['logic'] != ''): ?>
+                                <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
+                                    <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
+                                    for (var i = 1; i < 11; i++) {
+                                        ScarabQueue.push(['recommend', {
+                                            logic: 'DEPARTMENT_' + i,
+                                            limit: 6,
+                                            containerId: 'dept' + i,
+                                            templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                                            success: function (SC, render) {
+                                                if (SC.topicLocalized) {
+                                                    SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                                                    render(SC);
+                                                }
+                                            }
+                                        }]);
+                                    }
+                                    <?php else: ?>
+                                    ScarabQueue.push(['recommend', {
+                                        logic: '<?php echo $pageHandleData["logic"]; ?>',
+                                        containerId: 'recommended-product',
+                                        templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                                        limit: 6
+                                    }]);
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                for (var i = 1; i < 11; i++) {
+                                    ScarabQueue.push(['recommend', {
+                                        logic: '<?php echo $pageHandleData['logic'] ?>' + i,
+                                        limit: 6,
+                                        containerId: 'home' + i,
+                                        templateId: '<?php echo $pageHandleData['templateId'] ?>',
+                                        success: function (SC, render) {
+                                            if (SC.topicLocalized) {
+                                                SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                                                render(SC);
+                                            }
+                                        }
+                                    }]);
+                                }
+                                <?php endif; ?>
+                            <?php endif; ?>
                             ScarabQueue.push(['go']);
                             processed = 1;
                         });
@@ -108,46 +150,46 @@
                 if (!processed) {
                     if (firstOnData) {
                         <?php if (isset($pageHandleData['status']) && isset($pageHandleData['logic']) && $pageHandleData['logic'] != ''): ?>
-                        <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
-                        <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
-                        for (var i = 1; i < 11; i++) {
-                            ScarabQueue.push(['recommend', {
-                                logic: 'DEPARTMENT_' + i,
-                                limit: 6,
-                                containerId: 'dept' + i,
-                                templateId: '<?php echo $pageHandleData['templateId']; ?>',
-                                success: function (SC, render) {
-                                    if (SC.topicLocalized) {
-                                        SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
-                                        render(SC);
-                                    }
+                            <?php if ($pageHandleData['logic'] != 'HOME_'): ?>
+                                <?php if ($pageHandleData['logic'] == 'DEPARTMENT'): ?>
+                                for (var i = 1; i < 11; i++) {
+                                    ScarabQueue.push(['recommend', {
+                                        logic: 'DEPARTMENT_' + i,
+                                        limit: 6,
+                                        containerId: 'dept' + i,
+                                        templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                                        success: function (SC, render) {
+                                            if (SC.topicLocalized) {
+                                                SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                                                render(SC);
+                                            }
+                                        }
+                                    }]);
                                 }
-                            }]);
-                        }
-                        <?php else: ?>
-                        ScarabQueue.push(['recommend', {
-                            logic: '<?php echo $pageHandleData["logic"]; ?>',
-                            containerId: 'recommended-product',
-                            templateId: '<?php echo $pageHandleData['templateId']; ?>',
-                            limit: 6
-                        }]);
-                        <?php endif; ?>
-                        <?php else: ?>
-                        for (var i = 1; i < 11; i++) {
-                            ScarabQueue.push(['recommend', {
-                                logic: '<?php echo $pageHandleData['logic'] ?>' + i,
-                                limit: 6,
-                                containerId: 'home' + i,
-                                templateId: '<?php echo $pageHandleData['templateId'] ?>',
-                                success: function (SC, render) {
-                                    if (SC.topicLocalized) {
-                                        SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
-                                        render(SC);
+                                <?php else: ?>
+                                ScarabQueue.push(['recommend', {
+                                    logic: '<?php echo $pageHandleData["logic"]; ?>',
+                                    containerId: 'recommended-product',
+                                    templateId: '<?php echo $pageHandleData['templateId']; ?>',
+                                    limit: 6
+                                }]);
+                                <?php endif; ?>
+                            <?php else: ?>
+                            for (var i = 1; i < 11; i++) {
+                                ScarabQueue.push(['recommend', {
+                                    logic: '<?php echo $pageHandleData['logic'] ?>' + i,
+                                    limit: 6,
+                                    containerId: 'home' + i,
+                                    templateId: '<?php echo $pageHandleData['templateId'] ?>',
+                                    success: function (SC, render) {
+                                        if (SC.topicLocalized) {
+                                            SC.title = SC.topicLocalized.replace(/Root Catalog>/g, '');
+                                            render(SC);
+                                        }
                                     }
-                                }
-                            }]);
-                        }
-                        <?php endif; ?>
+                                }]);
+                            }
+                            <?php endif; ?>
                         <?php endif; ?>
                     }
                     ScarabQueue.push(['go']);
@@ -239,53 +281,5 @@
                 ]]>
             </script>
         <?php endif; ?>
-        <style>
-            .rec-item {
-                text-align: center;
-            }
-            .rec-image {
-                max-width: 80px;
-                max-height: 80px;
-            }
-            .scarab-itemlist {
-                padding: 0px 20px;
-                position: relative;
-                border: 1px solid #C5D7EF;
-            }
-            .scarab-item {
-                display: inline-block;
-                width: 120px;
-                margin: 5px;
-                vertical-align: top;
-                font-size: 12px;
-                font-family: Arial, sans-serif;
-                text-align: center;
-            }
-            .scarab-item img {
-                max-width: 100px;
-                max-height: 100px;
-                display: block;
-                margin: 0px auto;
-                border: 0px;
-            }
-            .scarab-prev, .scarab-next {
-                position: absolute;
-                width: 20px;
-                height: 20px;
-                line-height: 20px;
-                top: 50%;
-                margin-top: -10px;
-                cursor: pointer;
-                text-align: center;
-                font-size: 16px;
-                color: #C5D7EF;
-            }
-            .scarab-prev {
-                left: 0px;
-            }
-            .scarab-next {
-                right: 0px;
-            }
-        </style>
     <?php endif; ?>
 <?php endif; ?>

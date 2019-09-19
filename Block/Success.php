@@ -19,12 +19,12 @@ use Magento\{
 
 /**
  * Class Success
- * @package Emartech\Emarsys\Block
+ * @package Emarsys\Emarsys\Block
  */
 class Success extends Template
 {
     /**
-     * @var Session 
+     * @var Session
      */
     protected $checkoutSession;
 
