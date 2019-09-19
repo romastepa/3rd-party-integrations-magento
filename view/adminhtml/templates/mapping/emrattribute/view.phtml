@@ -77,7 +77,7 @@ $editUrl = $block->getUrl('emarsys_emarsys/mapping_emrattribute/edit', ['store' 
 <?php endif; ?>
 <br>
 <br>
-<form method="POST" action="<?php echo $saveUrl; ?>" id="emarAttribute" autocomplete="off"/>
+<form method="POST" action="<?php echo $saveUrl; ?>" id="emarAttribute" autocomplete="off">
     <input type="hidden" name="form_key" value="<?= /* @escapeNotVerified */ $block->getFormKey() ?>" />
     <div class="emr_tbl header_label">
         <strong>Name</strong><strong>Label</strong>
